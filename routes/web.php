@@ -33,9 +33,6 @@ Route::get('/dashboard', function () {
 
 Route::get('/zonas', [zonasController::class, 'index'])
     ->name('zonas.index');
-  
-Route::get('/zonas/home', [zonasController::class, 'index'])
-    ->name('zonasHome');
 
 Route::get('/zonas/crear', [zonasController::class, 'create'])
     ->name('createZona');
@@ -51,3 +48,30 @@ Route::get('/zonas/{id}/editar', [zonasController::class, 'edit'])
 
 Route::delete('/zonas/{id}', [zonasController::class, 'destroy'])
     ->name('deleteZona');
+
+
+// ==================================================
+// CIRCUITOS
+// ==================================================
+
+
+Route::get('/circuitos', [circuitosController::class, 'index'])
+    ->name('circuitos.index');
+
+Route::get('/circuitos/crear', [circuitosController::class, 'create'])
+    ->name('createCircuito');
+
+Route::post('/circuitos/guardar', [circuitosController::class, 'store'])
+    ->name('storeCircuito');
+
+Route::put('/circuitos/{circuito}', [circuitosController::class, 'update'])
+    ->name('updateCircuito');
+
+Route::get('/circuitos/{id}/editar', [circuitosController::class, 'edit'])
+    ->name('editCircuito');
+
+Route::delete('/circuitos/{id}', [circuitosController::class, 'destroy'])
+    ->name('deleteCircuito');
+
+
+    
