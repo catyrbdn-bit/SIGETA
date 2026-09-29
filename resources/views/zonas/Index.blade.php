@@ -24,6 +24,15 @@
 
     <h3>Lista de Zonas</h3>
 
+    @if (session('success'))
+    <p id="mensaje-exito" style="color:green;">{{ session('success') }}</p>
+    <script>
+        setTimeout(function() {
+            document.getElementById('mensaje-exito').style.display = 'none';
+        }, 3000);
+    </script>
+    @endif
+
   
     <button>
         <a href="{{ route('createZona') }}">Registrar nueva colonia</a>
@@ -36,6 +45,7 @@
                 <th>Colonia</th>
                 <th>Descripción</th>
                 <th>Activo</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -44,6 +54,18 @@
                     <td>{{ $zona->nombre }}</td>
                     <td>{{ $zona->descripcion }}</td>
                     <td>{{ $zona->activo ? 'Sí' : 'No' }}</td>
+                    <td>
+                        <button>
+                            <a href="{{ route('editZona', $zona->id) }}">Editar</a>
+                        </button>
+
+                        <form action="{{ route('deleteZona', $zona->id) }}" method="POST" style="display:inline;" 
+                        onsubmit="return confirm('¿Esta seguro de eliminar la colonia ' + '{{ $zona->nombre }}' + '?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit">Eliminar</button>
+                        </form>
+                    </td>
                 </tr>
             @endforeach
         </tbody>
@@ -51,8 +73,9 @@
       <br>
 
     <button>
-        volver al panel principal 
-        <a href="{{ route('dashboard') }}"></a> 
+        <a href="{{ route('dashboard') }}">
+            Volver 
+        </a> 
     </button>
 
     <form action="{{ route('cerrarSesion') }}" method="POST">

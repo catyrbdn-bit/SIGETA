@@ -10,14 +10,14 @@ class zonasController extends Controller
     public function index()
     {
         $zonas = zonasModel::all();
-        return view('zonasHome', compact('zonas'));
+        return view('zonas.index', compact('zonas'));
     }
 
 
     //funcion create para mostrar el formulario de creacion de zona
     public function create()
     {
-        return view('zonasCreate');
+        return view('zonas.create');
     }
 
 
@@ -80,7 +80,7 @@ class zonasController extends Controller
     public function confirmDelete($id)
     {
         $zona = zonasModel::findOrFail($id);
-        return view('zonas.confirmDelete', compact('zona'));
+        return view('zonas.delete', compact('zona'));
 
     }
 }

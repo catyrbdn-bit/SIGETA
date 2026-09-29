@@ -25,6 +25,12 @@
         Rol: {{ Auth::user()->rol }}
     </p>
 
+    <button>
+        <a href="{{ route('zonas.index') }}">Ir a Zonas</a>
+    </button>
+
+    <br><br>
+
     <form action="{{ route('cerrarSesion') }}" method="POST">
 
         @csrf
