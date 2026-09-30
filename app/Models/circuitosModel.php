@@ -20,14 +20,20 @@ class circuitosModel extends Model
     ];  
 
        
-
     public function zona()
     {
-        //hace que cada circuito pertenezca a una zona
-        return $this->belongsTo(Zona::class); 
-        
+        return $this->belongsTo(zonasModel::class);
     }
 
 
-    //
+    public function tandeos()
+    {
+        //hasMany sirve para definir una relación de uno a muchos, 
+        //donde un circuito puede tener múltiples tandeos programados asociados a él
+        return $this->hasMany(TandeoProgramado::class, 'circuito_id');
+    }
+
+    
+
+
 }

@@ -3,6 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\zonasController;
+use App\Http\Controllers\circuitosController;
+use App\Http\Controllers\tandeosController;
+use App\Http\Controllers\cumplimientoController;
+
 
 // ==================================================
 // INICIO DE SESIÓN
@@ -22,8 +26,13 @@ Route::post('/logout', [LoginController::class, 'cerrarSesion'])
     ->name('cerrarSesion');
 
 // Panel principal
+
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $tandeosHoy = \App\Models\TandeoProgramado::whereDate('fecha', now())
+        ->with('circuito.zona')
+        ->get();
+
+    return view('dashboard', compact('tandeosHoy'));
 })->middleware('auth')->name('dashboard');
 
 
@@ -73,5 +82,46 @@ Route::get('/circuitos/{id}/editar', [circuitosController::class, 'edit'])
 Route::delete('/circuitos/{id}', [circuitosController::class, 'destroy'])
     ->name('deleteCircuito');
 
+Route::put('/circuitos/{id}/desactivar', [circuitosController::class, 'desactivar'])
+    ->name('desactivarCircuito');
 
+
+
+// ==================================================
+// TANDEOS PROGRAMADOS
+// ==================================================
+
+Route::get('/tandeos', [tandeosController::class, 'index'])
+    ->name('tandeos.index');
+
+Route::get('/tandeos/crear', [tandeosController::class, 'create'])
+    ->name('createTandeo');
+
+Route::post('/tandeos/guardar', [tandeosController::class, 'store'])
+    ->name('storeTandeo');
+
+Route::get('/tandeos/{id}/editar', [tandeosController::class, 'edit'])
+    ->name('editTandeo');
+
+Route::put('/tandeos/{id}', [tandeosController::class, 'update'])
+    ->name('updateTandeo');
+
+Route::delete('/tandeos/{id}', [tandeosController::class, 'destroy'])
+    ->name('deleteTandeo');
     
+
+// ==================================================
+// CUMPLIMIENTO DE TANDEOS
+// ==================================================
+
+Route::get('/cumplimiento', [cumplimientoController::class, 'index'])
+    ->name('cumplimiento.index');
+
+Route::post('/cumplimiento/guardar', [cumplimientoController::class, 'store'])
+    ->name('storeCumplimiento');
+
+Route::post('/cumplimiento/apagon-general', [cumplimientoController::class, 'apagonGeneral'])
+    ->name('apagonGeneral');
+
+Route::post('/cumplimiento/fuga', [cumplimientoController::class, 'fuga'])
+    ->name('registrarFuga');

@@ -29,7 +29,7 @@ class circuitosController extends Controller
                 'required', 'string', 'max:100',
                 Rule::unique('circuitos')->where('zona_id', $request->zona_id),
             ],
-            'duracion' => 'required|integer|min:1',
+            'duracion' => 'required|numeric|min:1',
             'activo' => 'required|boolean',
         ], [
             'nombre.unique' => 'Ya existe un circuito con ese nombre en esta zona.',
@@ -84,8 +84,24 @@ class circuitosController extends Controller
     {
         $circuito = circuitosModel::findOrFail($id);
 
-        // Eliminación lógica: se desactiva en vez de borrarse, para
-        // conservar el historial de tandeos asociados (FN.5)
+        $tandeosAsociados = $circuito->tandeos;
+
+        if ($tandeosAsociados->count() > 0) {
+            // si tiene historial: no se puede borrar, se muestra la lista de asociados
+            // y se ofrece la opción de desactivar
+            return view('circuitos.tandeosAsociados', compact('circuito', 'tandeosAsociados'));
+        }
+
+        // si no hay tandeos asociados: se puede eliminar de forma segura
+        $circuito->delete();
+
+        return redirect()->route('circuitos.index')
+            ->with('success', '¡Circuito eliminado exitosamente!');
+    }
+
+    public function desactivar($id)
+    {
+        $circuito = circuitosModel::findOrFail($id);
         $circuito->update(['activo' => false]);
 
         return redirect()->route('circuitos.index')
