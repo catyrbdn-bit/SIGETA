@@ -6,6 +6,7 @@ use App\Http\Controllers\zonasController;
 use App\Http\Controllers\circuitosController;
 use App\Http\Controllers\tandeosController;
 use App\Http\Controllers\cumplimientoController;
+use App\Http\Controllers\ReprogramacionController;
 
 
 // ==================================================
@@ -125,3 +126,16 @@ Route::post('/cumplimiento/apagon-general', [cumplimientoController::class, 'apa
 
 Route::post('/cumplimiento/fuga', [cumplimientoController::class, 'fuga'])
     ->name('registrarFuga');
+
+// ==================================================
+// REPROGRAMACIONES
+// ==================================================
+
+Route::get('/reprogramaciones/apagon', [reprogramacionController::class, 'create'])
+->name('reprogramaciones.apagon.create');
+
+Route::post('/reprogramaciones/apagon/previa', [reprogramacionController::class, 'previa'])
+->name('reprogramaciones.apagon.previa');
+
+Route::post('/reprogramaciones/apagon', [reprogramacionController::class, 'store'])
+->name('reprogramaciones.apagon.store');

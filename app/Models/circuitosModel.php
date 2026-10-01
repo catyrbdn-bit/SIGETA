@@ -12,6 +12,7 @@ class circuitosModel extends Model
         'zona_id',
         'nombre',
         'duracion',
+        'punto_abastecimiento_id',
         'activo',
     ];
 

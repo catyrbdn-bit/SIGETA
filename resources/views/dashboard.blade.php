@@ -62,23 +62,23 @@
     <br>
 
     <button>
-        <a href="{{ route('zonas.index') }}">Ir a Zonas</a>
+        <a href="{{ route('zonas.index') }}">Colonias</a>
     </button>
 
     <br><br>
     
     <button> 
-        <a href="{{ route('circuitos.index') }}">Ir a Circuitos</a>
+        <a href="{{ route('circuitos.index') }}">Circuitos</a>
     </button>
     <br><br>
 
     <button>
-        <a href="{{ route('tandeos.index') }}">Ver Tandeos Programados</a>
+        <a href="{{ route('tandeos.index') }}">Tandeos Programados</a>
     </button>
     <br><br>
 
     <button>
-    <a href="{{ route('cumplimiento.index') }}">Ir a Cumplimiento de Tandeos</a>
+    <a href="{{ route('cumplimiento.index') }}">Cumplimiento de Tandeos</a>
     </button>
     <br><br>
 

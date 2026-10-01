@@ -23,42 +23,16 @@
         </script>
     @endif
 
-    <h3>Registrar apagón general</h3>
-    <form action="{{ route('apagonGeneral') }}" method="POST">
-        @csrf
-        <label>Horas de atraso:</label>
-        <select name="horas_atraso" required>
-            <option value="1">1 hora</option>
-            <option value="2">2 horas</option>
-            <option value="3">3 horas</option>
-            <option value="4">4 horas</option>
-        </select>
-        <button type="submit">Registrar apagón general</button>
-    </form>
+    <div style="margin-bottom: 15px;">
+        <button type="button" onclick="window.location.href='{{ route('reprogramaciones.apagon.create') }}'">
+            Apagón general
+        </button>
 
-    <br>
-
-    <h3>Registrar fuga</h3>
-    <form action="{{ route('registrarFuga') }}" method="POST">
-        @csrf
-        <label>Zona:</label>
-        <select name="zona_id" required>
-            @foreach ($zonas as $zona)
-                <option value="{{ $zona->id }}">{{ $zona->nombre }}</option>
-            @endforeach
-        </select>
-
-        <label>Horas de atraso:</label>
-        <select name="horas_atraso" required>
-            <option value="1">1 hora</option>
-            <option value="2">2 horas</option>
-            <option value="3">3 horas</option>
-        </select>
-
-        <button type="submit">Registrar fuga</button>
-    </form>
-
-    <br>
+        {{-- Se activa cuando armemos el flujo de la fuga --}}
+        <button type="button" disabled>
+            Fuga
+        </button>
+    </div>
 
     <h3>Tandeos de hoy</h3>
     <table>
