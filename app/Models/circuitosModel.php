@@ -18,23 +18,22 @@ class circuitosModel extends Model
 
     protected $hidden = [
         // para campos ocultos, si los hubiera
-    ];  
+    ];
 
-       
     public function zona()
     {
         return $this->belongsTo(zonasModel::class);
     }
 
-
     public function tandeos()
     {
-        //hasMany sirve para definir una relación de uno a muchos, 
-        //donde un circuito puede tener múltiples tandeos programados asociados a él
-        return $this->hasMany(TandeoProgramado::class, 'circuito_id');
+        // hasMany define una relación de uno a muchos:
+        // un circuito puede tener múltiples tandeos programados
+        return $this->hasMany(tandeoProgramado::class, 'circuito_id');
     }
 
-    
-
-
+    public function puntoAbastecimiento()
+    {
+        return $this->belongsTo(PuntoAbastecimiento::class, 'punto_abastecimiento_id');
+    }
 }

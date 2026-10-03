@@ -6,19 +6,21 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\circuitosModel;
 use App\Models\zonasModel;
+use App\Models\PuntoAbastecimiento;
 
 class circuitosController extends Controller
 {
     public function index()
     {
-        $circuitos = circuitosModel::all();
+        $circuitos = circuitosModel::with('zona', 'puntoAbastecimiento')->get();
         return view('circuitos.index', compact('circuitos'));
     }
 
     public function create()
     {
         $zonas = zonasModel::all();
-        return view('circuitos.create', compact('zonas'));
+        $puntos = PuntoAbastecimiento::where('activo', true)->orderBy('nombre')->get();
+        return view('circuitos.create', compact('zonas', 'puntos'));
     }
 
     public function store(Request $request)
@@ -30,6 +32,7 @@ class circuitosController extends Controller
                 Rule::unique('circuitos')->where('zona_id', $request->zona_id),
             ],
             'duracion' => 'required|numeric|min:1',
+            'punto_abastecimiento_id' => 'nullable|exists:puntos_abastecimiento,id',
             'activo' => 'required|boolean',
         ], [
             'nombre.unique' => 'Ya existe un circuito con ese nombre en esta zona.',
@@ -39,6 +42,7 @@ class circuitosController extends Controller
             'zona_id' => $request->zona_id,
             'nombre' => $request->nombre,
             'duracion' => $request->duracion,
+            'punto_abastecimiento_id' => $request->punto_abastecimiento_id ?: null,
             'activo' => $request->activo,
         ]);
 
@@ -50,7 +54,8 @@ class circuitosController extends Controller
     {
         $circuito = circuitosModel::findOrFail($id);
         $zonas = zonasModel::all();
-        return view('circuitos.edit', compact('circuito', 'zonas'));
+        $puntos = PuntoAbastecimiento::where('activo', true)->orderBy('nombre')->get();
+        return view('circuitos.edit', compact('circuito', 'zonas', 'puntos'));
     }
 
     public function update(Request $request, $id)
@@ -64,6 +69,7 @@ class circuitosController extends Controller
                 Rule::unique('circuitos')->where('zona_id', $request->zona_id)->ignore($circuito->id),
             ],
             'duracion' => 'required|integer|min:1',
+            'punto_abastecimiento_id' => 'nullable|exists:puntos_abastecimiento,id',
             'activo' => 'required|boolean',
         ], [
             'nombre.unique' => 'Ya existe un circuito con ese nombre en esta zona.',
@@ -73,6 +79,7 @@ class circuitosController extends Controller
             'zona_id' => $request->zona_id,
             'nombre' => $request->nombre,
             'duracion' => $request->duracion,
+            'punto_abastecimiento_id' => $request->punto_abastecimiento_id ?: null,
             'activo' => $request->activo,
         ]);
 

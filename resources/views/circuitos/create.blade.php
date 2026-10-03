@@ -47,6 +47,20 @@
         <br>
 
         <div>
+            <label for="punto_abastecimiento_id">Punto de abastecimiento:</label>
+            <select id="punto_abastecimiento_id" name="punto_abastecimiento_id">
+                <option value="">Sin punto fijo</option>
+                @foreach ($puntos as $punto)
+                    <option value="{{ $punto->id }}" @selected(old('punto_abastecimiento_id') == $punto->id)>
+                        {{ $punto->nombre }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <br>
+
+        <div>
             <select name="activo" required>
                 <option value="1">Activo</option>
                 <option value="0">Inactivo</option>

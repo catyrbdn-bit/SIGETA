@@ -24,11 +24,12 @@
     @endif
 
     <div style="margin-bottom: 15px;">
-        <button type="button" onclick="window.location.href='{{ route('reprogramaciones.apagon.create') }}'">
-            Apagón general
-        </button>
+        <form action="{{ route('reprogramaciones.apagon.previa') }}" method="POST" style="display:inline;">
+            @csrf
+            <button type="submit">Apagón general</button>
+        </form>
 
-        {{-- Se activa cuando armemos el flujo de la fuga --}}
+     
         <button type="button" disabled>
             Fuga
         </button>

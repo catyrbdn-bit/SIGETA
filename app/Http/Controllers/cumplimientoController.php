@@ -4,15 +4,21 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\CumplimientoTandeo;
-use App\Models\TandeoProgramado;
+use App\Models\tandeoProgramado;
 use App\Models\zonasModel;
 
 class cumplimientoController extends Controller
 {
     public function index()
     {
-        $tandeos = TandeoProgramado::whereDate('fecha', now())
+        $inicioSemana = now()->startOfWeek()->toDateString();
+        $finSemana = now()->endOfWeek()->toDateString();
+
+        $tandeos = tandeoProgramado::whereDate('fecha', '>=', $inicioSemana)
+            ->whereDate('fecha', '<=', $finSemana)
             ->with('circuito.zona')
+            ->orderBy('fecha')
+            ->orderBy('hora_inicio_programada')
             ->get();
 
         $zonas = zonasModel::where('activo', true)->get();
@@ -50,7 +56,7 @@ class cumplimientoController extends Controller
             'horas_atraso' => 'required|integer|min:1',
         ]);
 
-        $tandeosHoy = TandeoProgramado::whereDate('fecha', now())
+        $tandeosHoy = tandeoProgramado::whereDate('fecha', now())
             ->where('estado', 'programado')
             ->get();
 
@@ -82,7 +88,7 @@ class cumplimientoController extends Controller
             'horas_atraso' => 'required|integer|min:1',
         ]);
 
-        $tandeosZona = TandeoProgramado::whereDate('fecha', now())
+        $tandeosZona = tandeoProgramado::whereDate('fecha', now())
             ->where('estado', 'programado')
             ->whereHas('circuito', function ($query) use ($request) {
                 $query->where('zona_id', $request->zona_id);
@@ -97,7 +103,6 @@ class cumplimientoController extends Controller
                 'motivo' => 'fuga',
                 'capturado_por_id' => auth()->user()->id,
                 'fecha_captura' => now(),
-                
             ]);
 
             // TODO (FN.8): motor de reprogramaciones para esta zona.

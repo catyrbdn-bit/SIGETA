@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\PuntoAbastecimiento;
 use App\Models\Reprogramacion;
 use App\Models\tandeoProgramado;
 use Carbon\Carbon;
@@ -11,18 +10,21 @@ use Illuminate\Support\Str;
 
 class reprogramacionService
 {
-    // Simula los efectos de un apagón general sin guardar nada.
-    public function simularApagon(PuntoAbastecimiento $punto, Carbon $desde, ?float $horas = null): array
+    /**
+     * Calcula los movimientos de un apagón general SIN guardar nada.
+     * Cada circuito se atrasa según las horas de su punto de abastecimiento.
+     */
+    public function simularApagon(Carbon $desde): array
     {
-        $horas ??= $punto->horas_atraso_apagon;
         $hasta = $desde->copy()->addDays(config('sigeta.ventana_dias'));
 
-        $tandeos = tandeoProgramado::with('circuito')
+        $tandeos = tandeoProgramado::with('circuito.puntoAbastecimiento', 'circuito.zona')
             ->where(function ($q) {
                 $q->whereNull('estado')
-                ->orWhereNotIn('estado', ['cumplido', 'con atraso', 'no cumplido']);
+                  ->orWhereNotIn('estado', ['cumplido', 'atraso', 'no_cumplido', 'con atraso', 'no cumplido']);
             })
-            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
+            ->whereDate('fecha', '>=', $desde->toDateString())
+            ->whereDate('fecha', '<=', $hasta->toDateString())
             ->get()
             ->filter(fn ($t) => $t->inicio >= $desde && $t->inicio <= $hasta)
             ->sortBy('inicio')
@@ -38,13 +40,20 @@ class reprogramacionService
         $advertencias = [];
         $cola = [];
 
-        // 1. Tandeos del punto afectado: se atrasan las horas indicadas
-        $origen = $tandeos->filter(
-            fn ($t) => $t->circuito->punto_abastecimiento_id === $punto->id
-        );
+        // 1. Afectados directos: tandeos del día del apagón cuyo circuito tiene punto de abastecimiento
+        $origen = $tandeos->filter(function ($t) use ($desde) {
+            $punto = $t->circuito->puntoAbastecimiento;
+
+            return $punto
+                && $punto->horas_atraso_apagon > 0
+                && $t->inicio->isSameDay($desde);
+        });
 
         foreach ($origen as $t) {
-            $mov = $this->mover($t, $t->inicio->copy()->addMinutes((int) ($horas * 60)), false);
+            $punto = $t->circuito->puntoAbastecimiento;
+            $minutos = (int) round($punto->horas_atraso_apagon * 60);
+
+            $mov = $this->mover($t, $t->inicio->copy()->addMinutes($minutos), false, $punto->id);
             $movimientos[$t->id] = $mov;
             $cola[] = $mov;
         }
@@ -67,7 +76,7 @@ class reprogramacionService
                     continue;
                 }
 
-                $mov = $this->mover($otro, $actual['fin_nuevo']->copy(), true);
+                $mov = $this->mover($otro, $actual['fin_nuevo']->copy(), true, $actual['punto_id']);
                 $movimientos[$otro->id] = $mov;
                 $cola[] = $mov;
             }
@@ -76,7 +85,6 @@ class reprogramacionService
         return [
             'movimientos'  => array_values($movimientos),
             'advertencias' => $advertencias,
-            'horas'        => $horas,
         ];
     }
 
@@ -84,12 +92,12 @@ class reprogramacionService
      * Guarda los movimientos y el historial en una sola transacción.
      * Devuelve el uuid de la cadena.
      */
-    public function aplicarApagon(PuntoAbastecimiento $punto, Carbon $desde, ?float $horas, int $usuarioId): string
+    public function aplicarApagon(Carbon $desde, int $usuarioId): string
     {
-        $resultado = $this->simularApagon($punto, $desde, $horas);
+        $resultado = $this->simularApagon($desde);
         $cadena = (string) Str::uuid();
 
-        DB::transaction(function () use ($resultado, $cadena, $punto, $usuarioId) {
+        DB::transaction(function () use ($resultado, $cadena, $usuarioId) {
             foreach ($resultado['movimientos'] as $m) {
                 Reprogramacion::create([
                     'tandeo_id'               => $m['tandeo']->id,
@@ -97,7 +105,7 @@ class reprogramacionService
                     'tipo_origen'             => 'apagon_general',
                     'es_manual'               => false,
                     'es_efecto_cadena'        => $m['es_cadena'],
-                    'punto_abastecimiento_id' => $punto->id,
+                    'punto_abastecimiento_id' => $m['punto_id'],
                     'inicio_anterior'         => $m['inicio_anterior'],
                     'fin_anterior'            => $m['fin_anterior'],
                     'inicio_nuevo'            => $m['inicio_nuevo'],
@@ -113,7 +121,7 @@ class reprogramacionService
         return $cadena;
     }
 
-    private function mover(tandeoProgramado $t, Carbon $nuevoInicio, bool $esCadena): array
+    private function mover(tandeoProgramado $t, Carbon $nuevoInicio, bool $esCadena, ?int $puntoId): array
     {
         $duracion = $t->inicio->diffInMinutes($t->fin);
 
@@ -124,6 +132,7 @@ class reprogramacionService
             'inicio_nuevo'    => $nuevoInicio,
             'fin_nuevo'       => $nuevoInicio->copy()->addMinutes($duracion),
             'es_cadena'       => $esCadena,
+            'punto_id'        => $puntoId,
         ];
     }
 
