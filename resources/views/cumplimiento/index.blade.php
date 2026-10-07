@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <h1>Cumplimiento de tandeos de hoy</h1>
+    <h1>Cumplimiento de tandeos de la semana</h1>
 
     @if (session('success'))
         <p id="mensaje-exito" style="color:green;">{{ session('success') }}</p>
@@ -29,28 +29,30 @@
             <button type="submit">Apagón general</button>
         </form>
 
-     
+        {{-- Se activa cuando armemos el flujo de la fuga --}}
         <button type="button" disabled>
             Fuga
         </button>
     </div>
 
-    <h3>Tandeos de hoy</h3>
+    <h3>Tandeos de la semana</h3>
     <table>
         <thead>
             <tr>
+                <th>Fecha</th>
                 <th>Circuito</th>
                 <th>Zona</th>
-                <th>Hora programada</th>
+                <th>Horario programado</th>
                 <th>Registrar cumplimiento</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($tandeos as $tandeo)
-                <tr>
+                <tr style="{{ $tandeo->fecha->isToday() ? 'background:#e8f4ff;' : '' }}">
+                    <td>{{ $tandeo->fecha->format('d/m/Y') }}</td>
                     <td>{{ $tandeo->circuito->nombre }}</td>
                     <td>{{ $tandeo->circuito->zona->nombre }}</td>
-                    <td>{{ $tandeo->hora_inicio_programada }}</td>
+                    <td>{{ substr($tandeo->hora_inicio_programada, 0, 5) }} - {{ substr($tandeo->hora_fin_programada, 0, 5) }}</td>
                     <td>
                         <form action="{{ route('storeCumplimiento') }}" method="POST">
                             @csrf

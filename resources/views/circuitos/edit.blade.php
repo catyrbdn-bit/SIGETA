@@ -22,6 +22,8 @@
         @csrf
         @method('PUT')
 
+        <p>Código del circuito: <strong>{{ $circuito->nombre }}</strong></p>
+
         <div>
             <label for="zona_id">Zona:</label>
             <select id="zona_id" name="zona_id" required>
@@ -31,13 +33,16 @@
                     </option>
                 @endforeach
             </select>
+            <br>
+            <small>Si cambias la zona, el código se genera de nuevo.</small>
         </div>
 
         <br>
 
         <div>
-            <label for="nombre">Nombre del circuito:</label>
-            <input type="text" id="nombre" name="nombre" value="{{ $circuito->nombre }}" required>
+            <label for="descripcion">Descripción (calles):</label>
+            <input type="text" id="descripcion" name="descripcion" maxlength="255" size="50"
+                   value="{{ old('descripcion', $circuito->descripcion) }}">
         </div>
 
         <br>

@@ -27,20 +27,16 @@ class circuitosController extends Controller
     {
         $request->validate([
             'zona_id' => 'required|exists:zonas,id',
-            'nombre' => [
-                'required', 'string', 'max:100',
-                Rule::unique('circuitos')->where('zona_id', $request->zona_id),
-            ],
+            'descripcion' => 'nullable|string|max:255',
             'duracion' => 'required|numeric|min:1',
             'punto_abastecimiento_id' => 'nullable|exists:puntos_abastecimiento,id',
             'activo' => 'required|boolean',
-        ], [
-            'nombre.unique' => 'Ya existe un circuito con ese nombre en esta zona.',
         ]);
 
         circuitosModel::create([
             'zona_id' => $request->zona_id,
-            'nombre' => $request->nombre,
+            'nombre' => circuitosModel::generarCodigo((int) $request->zona_id),
+            'descripcion' => $request->descripcion,
             'duracion' => $request->duracion,
             'punto_abastecimiento_id' => $request->punto_abastecimiento_id ?: null,
             'activo' => $request->activo,
@@ -64,20 +60,22 @@ class circuitosController extends Controller
 
         $request->validate([
             'zona_id' => 'required|exists:zonas,id',
-            'nombre' => [
-                'required', 'string', 'max:100',
-                Rule::unique('circuitos')->where('zona_id', $request->zona_id)->ignore($circuito->id),
-            ],
+            'descripcion' => 'nullable|string|max:255',
             'duracion' => 'required|integer|min:1',
             'punto_abastecimiento_id' => 'nullable|exists:puntos_abastecimiento,id',
             'activo' => 'required|boolean',
-        ], [
-            'nombre.unique' => 'Ya existe un circuito con ese nombre en esta zona.',
         ]);
+
+        // Si cambia de zona, el código se regenera para que las iniciales coincidan
+        $nombre = $circuito->nombre;
+        if ((int) $request->zona_id !== (int) $circuito->zona_id) {
+            $nombre = circuitosModel::generarCodigo((int) $request->zona_id);
+        }
 
         $circuito->update([
             'zona_id' => $request->zona_id,
-            'nombre' => $request->nombre,
+            'nombre' => $nombre,
+            'descripcion' => $request->descripcion,
             'duracion' => $request->duracion,
             'punto_abastecimiento_id' => $request->punto_abastecimiento_id ?: null,
             'activo' => $request->activo,

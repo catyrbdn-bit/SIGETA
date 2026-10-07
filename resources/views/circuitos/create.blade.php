@@ -25,23 +25,26 @@
             <label for="zona_id">Zona:</label>
             <select id="zona_id" name="zona_id" required>
                 @foreach ($zonas as $zona)
-                    <option value="{{ $zona->id }}">{{ $zona->nombre }}</option>
+                    <option value="{{ $zona->id }}" @selected(old('zona_id') == $zona->id)>{{ $zona->nombre }}</option>
                 @endforeach
             </select>
+            <br>
+            <small>El código del circuito (por ejemplo C01-LJ) se genera automáticamente al guardar.</small>
         </div>
 
         <br>
 
         <div>
-            <label for="nombre">Nombre del circuito:</label>
-            <input type="text" id="nombre" name="nombre" required>
+            <label for="descripcion">Descripción (calles):</label>
+            <input type="text" id="descripcion" name="descripcion" maxlength="255" size="50"
+                   value="{{ old('descripcion') }}" placeholder="Ej. Lauro Ortega y Pipila por las antenas">
         </div>
 
         <br>
 
         <div>
             <label for="duracion">Duración (horas):</label>
-            <input type="number" id="duracion" name="duracion" step="0.5" required>
+            <input type="number" id="duracion" name="duracion" step="0.5" value="{{ old('duracion') }}" required>
         </div>
 
         <br>

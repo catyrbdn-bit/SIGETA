@@ -12,9 +12,11 @@ class reprogramacionService
 {
     /**
      * Calcula los movimientos de un apagón general SIN guardar nada.
-     * Cada circuito se atrasa según las horas de su punto de abastecimiento.
+     *
+     * $ajustes: [tandeo_id => Carbon] horarios nuevos escritos a mano
+     * $motivos: [tandeo_id => string] motivos escritos a mano
      */
-    public function simularApagon(Carbon $desde): array
+    public function simularApagon(Carbon $desde, array $ajustes = [], array $motivos = []): array
     {
         $hasta = $desde->copy()->addDays(config('sigeta.ventana_dias'));
 
@@ -30,8 +32,8 @@ class reprogramacionService
             ->sortBy('inicio')
             ->values();
 
-        // Tandeos que ya fueron movidos a mano: el motor los respeta
-        $manuales = Reprogramacion::whereIn('tandeo_id', $tandeos->pluck('id'))
+        // Tandeos movidos a mano en eventos anteriores: el motor los respeta
+        $yaManuales = Reprogramacion::whereIn('tandeo_id', $tandeos->pluck('id'))
             ->where('es_manual', true)
             ->pluck('tandeo_id')
             ->all();
@@ -51,34 +53,60 @@ class reprogramacionService
 
         foreach ($origen as $t) {
             $punto = $t->circuito->puntoAbastecimiento;
-            $minutos = (int) round($punto->horas_atraso_apagon * 60);
+            $nuevo = $t->inicio->copy()->addMinutes((int) round($punto->horas_atraso_apagon * 60));
+            $manual = false;
 
-            $mov = $this->mover($t, $t->inicio->copy()->addMinutes($minutos), false, $punto->id);
+            if (isset($ajustes[$t->id])) {
+                $nuevo = $ajustes[$t->id]->copy();
+                $manual = true;
+            }
+
+            $mov = $this->mover($t, $nuevo, false, $punto->id, $manual, $motivos[$t->id] ?? null);
             $movimientos[$t->id] = $mov;
             $cola[] = $mov;
         }
 
-        // 2. Cadena: si un tandeo movido empalma con otro, ese se recorre más tarde
+        // 2. Cadena: si el atraso provoca un empalme nuevo con otro tandeo, ese se recorre
         while ($actual = array_shift($cola)) {
             foreach ($tandeos as $otro) {
                 if (isset($movimientos[$otro->id])) {
                     continue;
                 }
-                if (! $this->mismoAlcance($actual['tandeo'], $otro)) {
-                    continue;
-                }
+
+                // Solo hay conflicto si el atraso lo provoca ahora
                 if (! $this->seEmpalman($actual['inicio_nuevo'], $actual['fin_nuevo'], $otro->inicio, $otro->fin)) {
                     continue;
                 }
 
-                if (in_array($otro->id, $manuales)) {
-                    $advertencias[] = "El tandeo #{$otro->id} fue reprogramado manualmente y choca con la cadena; no se movió.";
+                // Si ya se empalmaban en el programa original, se tolera
+                if ($this->seEmpalman($actual['inicio_anterior'], $actual['fin_anterior'], $otro->inicio, $otro->fin)) {
                     continue;
                 }
 
-                $mov = $this->mover($otro, $actual['fin_nuevo']->copy(), true, $actual['punto_id']);
+                $ajuste = $ajustes[$otro->id] ?? null;
+
+                // Un tandeo ya movido a mano antes no se toca, salvo que se ajuste ahora
+                if (! $ajuste && in_array($otro->id, $yaManuales)) {
+                    $advertencias[] = "El tandeo de {$otro->circuito->nombre} fue reprogramado manualmente y choca con la cadena; no se movió.";
+                    continue;
+                }
+
+                $mov = $this->mover(
+                    $otro,
+                    $ajuste ? $ajuste->copy() : $actual['fin_nuevo']->copy(),
+                    true,
+                    $actual['punto_id'],
+                    (bool) $ajuste,
+                    $motivos[$otro->id] ?? null
+                );
                 $movimientos[$otro->id] = $mov;
                 $cola[] = $mov;
+            }
+        }
+
+        foreach ($movimientos as $m) {
+            if ($m['inicio_nuevo'] < $m['inicio_anterior']) {
+                $advertencias[] = "El tandeo de {$m['tandeo']->circuito->nombre} se está adelantando en lugar de atrasarse.";
             }
         }
 
@@ -92,9 +120,9 @@ class reprogramacionService
      * Guarda los movimientos y el historial en una sola transacción.
      * Devuelve el uuid de la cadena.
      */
-    public function aplicarApagon(Carbon $desde, int $usuarioId): string
+    public function aplicarApagon(Carbon $desde, int $usuarioId, array $ajustes = [], array $motivos = []): string
     {
-        $resultado = $this->simularApagon($desde);
+        $resultado = $this->simularApagon($desde, $ajustes, $motivos);
         $cadena = (string) Str::uuid();
 
         DB::transaction(function () use ($resultado, $cadena, $usuarioId) {
@@ -103,7 +131,7 @@ class reprogramacionService
                     'tandeo_id'               => $m['tandeo']->id,
                     'cadena_uuid'             => $cadena,
                     'tipo_origen'             => 'apagon_general',
-                    'es_manual'               => false,
+                    'es_manual'               => $m['manual'],
                     'es_efecto_cadena'        => $m['es_cadena'],
                     'punto_abastecimiento_id' => $m['punto_id'],
                     'inicio_anterior'         => $m['inicio_anterior'],
@@ -112,6 +140,7 @@ class reprogramacionService
                     'fin_nuevo'               => $m['fin_nuevo'],
                     'horas_atraso'            => round($m['inicio_anterior']->diffInMinutes($m['inicio_nuevo']) / 60, 1),
                     'usuario_id'              => $usuarioId,
+                    'observaciones'           => $m['motivo'],
                 ]);
 
                 $m['tandeo']->aplicarHorario($m['inicio_nuevo'], $m['fin_nuevo']);
@@ -121,7 +150,7 @@ class reprogramacionService
         return $cadena;
     }
 
-    private function mover(tandeoProgramado $t, Carbon $nuevoInicio, bool $esCadena, ?int $puntoId): array
+    private function mover(tandeoProgramado $t, Carbon $nuevoInicio, bool $esCadena, ?int $puntoId, bool $manual, ?string $motivo): array
     {
         $duracion = $t->inicio->diffInMinutes($t->fin);
 
@@ -133,21 +162,13 @@ class reprogramacionService
             'fin_nuevo'       => $nuevoInicio->copy()->addMinutes($duracion),
             'es_cadena'       => $esCadena,
             'punto_id'        => $puntoId,
+            'manual'          => $manual,
+            'motivo'          => $motivo,
         ];
     }
 
     private function seEmpalman(Carbon $inicioA, Carbon $finA, Carbon $inicioB, Carbon $finB): bool
     {
         return $inicioA < $finB && $inicioB < $finA;
-    }
-
-    private function mismoAlcance(tandeoProgramado $a, tandeoProgramado $b): bool
-    {
-        $campo = config('sigeta.alcance_cadena') === 'punto'
-            ? 'punto_abastecimiento_id'
-            : 'zona_id';
-
-        return $a->circuito->$campo !== null
-            && $a->circuito->$campo === $b->circuito->$campo;
     }
 }
