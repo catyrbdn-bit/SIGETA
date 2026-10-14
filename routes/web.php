@@ -30,7 +30,14 @@ Route::post('/logout', [LoginController::class, 'cerrarSesion'])
 
 Route::get('/dashboard', function () {
     $tandeosHoy = \App\Models\TandeoProgramado::whereDate('fecha', now())
-        ->with('circuito.zona')
+        ->with([
+            'circuito.zona',
+            'circuito.puntoAbastecimiento',
+            'cumplimientos' => function ($consulta) {
+                $consulta->orderByDesc('fecha_captura')->orderByDesc('id');
+            },
+        ])
+        ->orderBy('hora_inicio_programada')
         ->get();
 
     return view('dashboard', compact('tandeosHoy'));

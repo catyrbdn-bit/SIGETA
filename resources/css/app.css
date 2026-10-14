@@ -9,3 +9,36 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+:root {
+    --sigeta-azul: #1f4e79;
+    --sigeta-fondo: #f5f7fa;
+    --sigeta-borde: #d5dce3;
+}
+
+body {
+    background-color: var(--sigeta-fondo);
+    color: #243447;
+    font-family: Arial, sans-serif;
+}
+
+.sigeta-titulo {
+    color: var(--sigeta-azul);
+}
+
+.sigeta-panel {
+    border: 1px solid var(--sigeta-borde);
+    border-radius: 6px;
+    background-color: #fff;
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--sigeta-azul);
+    --bs-btn-border-color: var(--sigeta-azul);
+    --bs-btn-hover-bg: #173b5c;
+    --bs-btn-hover-border-color: #173b5c;
+}
+
+.table thead th {
+    background-color: #eaf0f5;
+}

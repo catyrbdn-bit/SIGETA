@@ -1,80 +1,91 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Circuitos - SIGETA</title>
+@extends('layouts.app')
 
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        th, td {
-            border: 1px solid #333;
-            padding: 8px;
-            text-align: left;
-        }
-    </style>
-</head>
-<body>
-    
-    <h1>Circuitos registrados</h1>
+@section('titulo', 'Circuitos registrados - SIGETA')
 
-    <h3>Lista de Circuitos</h3>
+@section('content')
+    <h1 class="sigeta-titulo mb-2">SIGETA</h1>
+    <h2 class="h4 mb-4">Circuitos registrados</h2>
 
     @if (session('success'))
-    <p id="mensaje-exito" style="color:green;">{{ session('success') }}</p>
-    <script>
-        setTimeout(function() {
-            document.getElementById('mensaje-exito').style.display = 'none';
-        }, 3000);
-    </script>
+        <div class="alert alert-success" id="mensaje-exito">
+            {{ session('success') }}
+        </div>
+
+        <script>
+            setTimeout(function () {
+                const mensaje = document.getElementById('mensaje-exito');
+
+                if (mensaje) {
+                    mensaje.style.display = 'none';
+                }
+            }, 3000);
+        </script>
     @endif
 
-    <button>
-        <a href="{{ route('createCircuito') }}">Registrar nuevo circuito</a>
-    </button>
-    <br><br>
+    <a href="{{ route('createCircuito') }}" class="btn btn-primary mb-3">
+        Registrar nuevo circuito
+    </a>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Circuito</th>
-                <th>Zona</th>
-                <th>Duración (h)</th>
-                <th>Activo</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($circuitos as $circuito)
-                <tr>
-                    <td>{{ $circuito->nombre }}</td>
-                    <td>{{ $circuito->zona->nombre }}</td>
-                    <td>{{ $circuito->duracion }}</td>
-                    <td>{{ $circuito->activo ? 'Sí' : 'No' }}</td>
-                    <td>
-                        <button>
-                            <a href="{{ route('editCircuito', $circuito->id) }}">Editar</a>
-                        </button>
+    @if ($circuitos->isEmpty())
+        <div class="sigeta-panel p-3">
+            Todavía no hay circuitos registrados.
+        </div>
+    @else
+        <div class="table-responsive sigeta-panel">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Circuito</th>
+                        <th>Zona</th>
+                        <th>Punto de abastecimiento</th>
+                        <th>Calles o descripción</th>
+                        <th>Duración (horas)</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($circuitos as $circuito)
+                        <tr>
+                            <td>{{ $circuito->nombre }}</td>
+                            <td>{{ $circuito->zona->nombre ?? 'Sin zona' }}</td>
+                            <td>
+                                {{ $circuito->puntoAbastecimiento->nombre ?? 'Sin punto fijo' }}
+                            </td>
+                            <td>
+                                {{ $circuito->descripcion ?: 'Sin descripción registrada' }}
+                            </td>
+                            <td>{{ $circuito->duracion }}</td>
+                            <td>{{ $circuito->activo ? 'Activo' : 'Inactivo' }}</td>
+                            <td class="text-nowrap">
+                                <a
+                                    href="{{ route('editCircuito', $circuito->id) }}"
+                                    class="btn btn-sm btn-outline-primary"
+                                >
+                                    Editar
+                                </a>
 
-                        <form action="{{ route('deleteCircuito', $circuito->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Desactivar este circuito?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit">Desactivar</button>
-                        </form>
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
+                                <form
+                                    action="{{ route('deleteCircuito', $circuito->id) }}"
+                                    method="POST"
+                                    class="d-inline"
+                                    onsubmit="return confirm('¿Desactivar este circuito?');"
+                                >
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        Desactivar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
 
-    <br>
-
-    <button>
-        <a href="{{ route('dashboard') }}">Volver</a>
-    </button>
-
-</body>
-</html>
+    <a href="{{ route('dashboard') }}" class="btn btn-secondary mt-3">
+        Volver
+    </a>
+@endsection

@@ -1,91 +1,119 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar circuito - SIGETA</title>
-</head>
-<body>
+@extends('layouts.app')
 
-    <h1>SIGETA</h1>
-    <h2>Editar circuito</h2>
+@section('titulo', 'Editar circuito - SIGETA')
+
+@section('content')
+    <h1 class="sigeta-titulo mb-2">SIGETA</h1>
+    <h2 class="h4 mb-4">Editar circuito</h2>
 
     @if ($errors->any())
-        <ul style="color:red;">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
+        <div class="alert alert-danger">
+            <strong>Revisa estos datos:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
     @endif
 
-    <form action="{{ route('updateCircuito', $circuito->id) }}" method="POST">
+    <form
+        action="{{ route('updateCircuito', $circuito->id) }}"
+        method="POST"
+        class="sigeta-panel p-4"
+    >
         @csrf
         @method('PUT')
 
-        <p>Código del circuito: <strong>{{ $circuito->nombre }}</strong></p>
+        <p class="mb-3">
+            Código del circuito:
+            <strong>{{ $circuito->nombre }}</strong>
+        </p>
 
-        <div>
-            <label for="zona_id">Zona:</label>
-            <select id="zona_id" name="zona_id" required>
+        <div class="mb-3">
+            <label for="zona_id" class="form-label">Zona o colonia</label>
+            <select id="zona_id" name="zona_id" class="form-select" required>
                 @foreach ($zonas as $zona)
-                    <option value="{{ $zona->id }}" {{ $circuito->zona_id == $zona->id ? 'selected' : '' }}>
+                    <option
+                        value="{{ $zona->id }}"
+                        @selected(old('zona_id', $circuito->zona_id) == $zona->id)
+                    >
                         {{ $zona->nombre }}
                     </option>
                 @endforeach
             </select>
-            <br>
-            <small>Si cambias la zona, el código se genera de nuevo.</small>
+            <div class="form-text">
+                Si cambias la zona, el código del circuito se generará de nuevo.
+            </div>
         </div>
 
-        <br>
-
-        <div>
-            <label for="descripcion">Descripción (calles):</label>
-            <input type="text" id="descripcion" name="descripcion" maxlength="255" size="50"
-                   value="{{ old('descripcion', $circuito->descripcion) }}">
+        <div class="mb-3">
+            <label for="descripcion" class="form-label">Calles o descripción</label>
+            <input
+                type="text"
+                id="descripcion"
+                name="descripcion"
+                class="form-control"
+                maxlength="255"
+                value="{{ old('descripcion', $circuito->descripcion) }}"
+                placeholder="Ej. Lauro Ortega y Pípila por las antenas"
+            >
         </div>
 
-        <br>
-
-        <div>
-            <label for="duracion">Duración (horas):</label>
-            <input type="number" id="duracion" name="duracion" value="{{ $circuito->duracion }}" required>
+        <div class="mb-3">
+            <label for="duracion" class="form-label">Duración en horas</label>
+            <input
+                type="number"
+                id="duracion"
+                name="duracion"
+                class="form-control"
+                min="1"
+                step="1"
+                value="{{ old('duracion', $circuito->duracion) }}"
+                required
+            >
         </div>
 
-        <br>
-
-        <div>
-            <label for="punto_abastecimiento_id">Punto de abastecimiento:</label>
-            <select id="punto_abastecimiento_id" name="punto_abastecimiento_id">
+        <div class="mb-3">
+            <label for="punto_abastecimiento_id" class="form-label">
+                Punto de abastecimiento
+            </label>
+            <select
+                id="punto_abastecimiento_id"
+                name="punto_abastecimiento_id"
+                class="form-select"
+            >
                 <option value="">Sin punto fijo</option>
                 @foreach ($puntos as $punto)
-                    <option value="{{ $punto->id }}"
-                        {{ old('punto_abastecimiento_id', $circuito->punto_abastecimiento_id) == $punto->id ? 'selected' : '' }}>
+                    <option
+                        value="{{ $punto->id }}"
+                        @selected(old('punto_abastecimiento_id', $circuito->punto_abastecimiento_id) == $punto->id)
+                    >
                         {{ $punto->nombre }}
                     </option>
                 @endforeach
             </select>
         </div>
 
-        <br>
-
-        <div>
-            <select name="activo" required>
-                <option value="1" {{ $circuito->activo ? 'selected' : '' }}>Activo</option>
-                <option value="0" {{ !$circuito->activo ? 'selected' : '' }}>Inactivo</option>
+        <div class="mb-3">
+            <label for="activo" class="form-label">Estado</label>
+            <select id="activo" name="activo" class="form-select" required>
+                <option
+                    value="1"
+                    @selected(old('activo', $circuito->activo ? '1' : '0') == '1')
+                >
+                    Activo
+                </option>
+                <option
+                    value="0"
+                    @selected(old('activo', $circuito->activo ? '1' : '0') == '0')
+                >
+                    Inactivo
+                </option>
             </select>
         </div>
 
-        <br>
-
-        <button type="submit">Guardar cambios</button>
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        <a href="{{ route('circuitos.index') }}" class="btn btn-secondary">Volver</a>
     </form>
-
-    <br>
-
-    <button>
-        <a href="{{ url()->previous() }}">Volver</a>
-    </button>
-
-</body>
-</html>
+@endsection

@@ -1,85 +1,97 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar circuito - SIGETA</title>
-</head>
-<body>
+@extends('layouts.app')
 
-    <h1>SIGETA</h1>
-    <h2>Registrar nuevo circuito</h2>
+@section('titulo', 'Registrar circuito - SIGETA')
+
+@section('content')
+    <h1 class="sigeta-titulo mb-2">SIGETA</h1>
+    <h2 class="h4 mb-4">Registrar nuevo circuito</h2>
 
     @if ($errors->any())
-        <ul style="color:red;">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
+        <div class="alert alert-danger">
+            <strong>Revisa estos datos:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
     @endif
 
-    <form action="{{ route('storeCircuito') }}" method="POST">
+    <form action="{{ route('storeCircuito') }}" method="POST" class="sigeta-panel p-4">
         @csrf
 
-        <div>
-            <label for="zona_id">Zona:</label>
-            <select id="zona_id" name="zona_id" required>
+        <div class="mb-3">
+            <label for="zona_id" class="form-label">Zona o colonia</label>
+            <select id="zona_id" name="zona_id" class="form-select" required>
+                <option value="">Selecciona una zona</option>
                 @foreach ($zonas as $zona)
-                    <option value="{{ $zona->id }}" @selected(old('zona_id') == $zona->id)>{{ $zona->nombre }}</option>
+                    <option value="{{ $zona->id }}" @selected(old('zona_id') == $zona->id)>
+                        {{ $zona->nombre }}
+                    </option>
                 @endforeach
             </select>
-            <br>
-            <small>El código del circuito (por ejemplo C01-LJ) se genera automáticamente al guardar.</small>
+            <div class="form-text">
+                El código del circuito se generará automáticamente al guardar.
+            </div>
         </div>
 
-        <br>
-
-        <div>
-            <label for="descripcion">Descripción (calles):</label>
-            <input type="text" id="descripcion" name="descripcion" maxlength="255" size="50"
-                   value="{{ old('descripcion') }}" placeholder="Ej. Lauro Ortega y Pipila por las antenas">
+        <div class="mb-3">
+            <label for="descripcion" class="form-label">Calles o descripción</label>
+            <input
+                type="text"
+                id="descripcion"
+                name="descripcion"
+                class="form-control"
+                maxlength="255"
+                value="{{ old('descripcion') }}"
+                placeholder="Ej. Lauro Ortega y Pípila por las antenas"
+            >
         </div>
 
-        <br>
-
-        <div>
-            <label for="duracion">Duración (horas):</label>
-            <input type="number" id="duracion" name="duracion" step="0.5" value="{{ old('duracion') }}" required>
+        <div class="mb-3">
+            <label for="duracion" class="form-label">Duración en horas</label>
+            <input
+                type="number"
+                id="duracion"
+                name="duracion"
+                class="form-control"
+                min="1"
+                step="1"
+                value="{{ old('duracion') }}"
+                required
+            >
         </div>
 
-        <br>
-
-        <div>
-            <label for="punto_abastecimiento_id">Punto de abastecimiento:</label>
-            <select id="punto_abastecimiento_id" name="punto_abastecimiento_id">
+        <div class="mb-3">
+            <label for="punto_abastecimiento_id" class="form-label">
+                Punto de abastecimiento
+            </label>
+            <select
+                id="punto_abastecimiento_id"
+                name="punto_abastecimiento_id"
+                class="form-select"
+            >
                 <option value="">Sin punto fijo</option>
                 @foreach ($puntos as $punto)
-                    <option value="{{ $punto->id }}" @selected(old('punto_abastecimiento_id') == $punto->id)>
+                    <option
+                        value="{{ $punto->id }}"
+                        @selected(old('punto_abastecimiento_id') == $punto->id)
+                    >
                         {{ $punto->nombre }}
                     </option>
                 @endforeach
             </select>
         </div>
 
-        <br>
-
-        <div>
-            <select name="activo" required>
-                <option value="1">Activo</option>
-                <option value="0">Inactivo</option>
+        <div class="mb-3">
+            <label for="activo" class="form-label">Estado</label>
+            <select id="activo" name="activo" class="form-select" required>
+                <option value="1" @selected(old('activo', '1') == '1')>Activo</option>
+                <option value="0" @selected(old('activo') == '0')>Inactivo</option>
             </select>
         </div>
 
-        <br>
-
-        <button type="submit">Guardar circuito</button>
+        <button type="submit" class="btn btn-primary">Guardar circuito</button>
+        <a href="{{ route('circuitos.index') }}" class="btn btn-secondary">Volver</a>
     </form>
-
-    <br>
-
-    <button>
-        <a href="{{ route('circuitos.index') }}">Volver</a>
-    </button>
-
-</body>
-</html>
+@endsection

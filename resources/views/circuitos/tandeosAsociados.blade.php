@@ -15,7 +15,7 @@
         <thead>
             <tr>
                 <th>Fecha</th>
-                <th>Hora</th>
+                <th>Horario</th>
                 <th>Estado</th>
             </tr>
         </thead>
@@ -23,7 +23,7 @@
             @foreach ($tandeosAsociados as $tandeo)
                 <tr>
                     <td>{{ $tandeo->fecha }}</td>
-                    <td>{{ $tandeo->hora_inicio_programada }}</td>
+                    <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }}-{{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                     <td>{{ $tandeo->estado }}</td>
                 </tr>
             @endforeach

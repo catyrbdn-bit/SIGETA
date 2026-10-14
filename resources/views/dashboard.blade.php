@@ -1,96 +1,105 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+@extends('layouts.app')
 
-    <title>Panel principal - SIGETA</title>
+@section('titulo', 'Panel principal - SIGETA')
 
-    <style>
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #333; padding: 8px; text-align: left; }
-    </style>
-</head>
+@section('content')
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+        <h1 class="h3">Panel principal</h1>
+        <p class="mb-1">Bienvenido, {{ Auth::user()->nombre }}</p>
+        <p class="mb-1">Usuario: {{ Auth::user()->usuario }}</p>
+        <p class="mb-0">Rol: {{ Auth::user()->rol }}</p>
+    </div>
 
-<body>
+    <div style="min-width: 220px;">
+        <label for="filtro-estado" class="form-label">Filtrar por estado</label>
+        <select id="filtro-estado" class="form-select">
+            <option value="todos">Todos los estados</option>
+            <option value="programado">Programado</option>
+            <option value="en_curso">En curso</option>
+            <option value="cumplido">Cumplido</option>
+            <option value="atraso">Con atraso</option>
+            <option value="no_cumplido">No cumplido</option>
+        </select>
+    </div>
+</div>
 
-    <h1>SIGETA</h1>
-
-    <h2>Panel principal</h2>
-
-    <p>
-        Bienvenido, {{ Auth::user()->nombre }}
-    </p>
-
-    <p>
-        Usuario: {{ Auth::user()->usuario }}
-    </p>
-
-    <p>
-        Rol: {{ Auth::user()->rol }}
-    </p>
-
-    <h3>Tandeos de hoy</h3>
-
-    <table>
-        <thead>
+<h2 class="h5 mb-3">Tandeos de hoy</h2>
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle" id="tabla-tandeos">
+        <thead class="table-light">
             <tr>
-                <th>Circuito</th>
-                <th>Zona</th>
-                <th>Hora programada</th>
+                <th>Circuito / Zona</th>
+                <th>Horario</th>
                 <th>Estado</th>
-                <th>Acciones</th>
+                <th>Punto de abastecimiento</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($tandeosHoy as $tandeo)
-                <tr>
-                    <td>{{ $tandeo->circuito->nombre }}</td>
-                    <td>{{ $tandeo->circuito->zona->nombre }}</td>
-                    <td>{{ $tandeo->hora_inicio_programada }}</td>
-                    <td>{{ $tandeo->estado }}</td>
+            @forelse ($tandeosHoy as $tandeo)
+                @php
+                    $cumplimiento = $tandeo->cumplimientos->first();
+                    $estado = $cumplimiento->resultado ?? null;
+
+                    if (!$estado) {
+                        $estado = now()->betweenIncluded($tandeo->inicio, $tandeo->fin)
+                            ? 'en_curso'
+                            : $tandeo->estado;
+                    }
+
+                    $nombresEstados = [
+                        'programado' => 'Programado',
+                        'en_curso' => 'En curso',
+                        'cumplido' => 'Cumplido',
+                        'atraso' => 'Con atraso',
+                        'no_cumplido' => 'No cumplido',
+                    ];
+                @endphp
+                <tr class="fila-tandeo" data-estado="{{ $estado }}">
                     <td>
-                        <button>
-                            <a href="{{ route('editTandeo', $tandeo->id) }}">Editar</a>
-                        </button>
+                        <strong>{{ $tandeo->circuito->nombre }}</strong><br>
+                        <span class="text-muted">{{ $tandeo->circuito->zona->nombre }}</span>
                     </td>
+                    <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }}-{{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
+                    <td>{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</td>
+                    <td>{{ $tandeo->circuito->puntoAbastecimiento->nombre ?? 'Sin punto fijo' }}</td>
                 </tr>
-            @endforeach
+            @empty
+                <tr><td colspan="4" class="text-center text-muted">No hay tandeos programados para hoy.</td></tr>
+            @endforelse
+            <tr id="sin-tandeos-filtrados" class="d-none"><td colspan="4" class="text-center text-muted">No hay tandeos con ese estado.</td></tr>
         </tbody>
     </table>
+</div>
 
-    <br>
+<div class="d-flex flex-wrap gap-2 mt-4">
+    <a href="{{ route('cumplimiento.index') }}" class="btn btn-outline-primary">
+        Gestión de cumplimiento</a>
+    <a href="{{ route('zonas.index') }}" class="btn btn-outline-secondary">
+        Colonias</a>
+    <a href="{{ route('circuitos.index') }}" class="btn btn-outline-secondary">
+        Circuitos</a>
+    <a href="{{ route('tandeos.index') }}" class="btn btn-outline-secondary">
+        Tandeos programados</a>
+</div>
 
-    <button>
-        <a href="{{ route('zonas.index') }}">Colonias</a>
-    </button>
+<form action="{{ route('cerrarSesion') }}" method="POST" class="mt-3">
+    @csrf
+    <button type="submit" class="btn btn-link px-0">Cerrar sesión</button>
+</form>
 
-    <br><br>
-    
-    <button> 
-        <a href="{{ route('circuitos.index') }}">Circuitos</a>
-    </button>
-    <br><br>
+<script>
+    document.getElementById('filtro-estado').addEventListener('change', function () {
+        const estadoElegido = this.value;
+        let cantidadVisible = 0;
 
-    <button>
-        <a href="{{ route('tandeos.index') }}">Tandeos Programados</a>
-    </button>
-    <br><br>
+        document.querySelectorAll('.fila-tandeo').forEach(function (fila) {
+            const mostrar = estadoElegido === 'todos' || fila.dataset.estado === estadoElegido;
+            fila.classList.toggle('d-none', !mostrar);
+            if (mostrar) cantidadVisible++;
+        });
 
-    <button>
-    <a href="{{ route('cumplimiento.index') }}">Cumplimiento de Tandeos</a>
-    </button>
-    <br><br>
-
-    <form action="{{ route('cerrarSesion') }}" method="POST">
-
-        @csrf
-
-        <button type="submit">
-            Cerrar sesión
-        </button>
-
-    </form>
-
-</body>
-</html>
+        document.getElementById('sin-tandeos-filtrados').classList.toggle('d-none', cantidadVisible > 0);
+    });
+</script>
+@endsection

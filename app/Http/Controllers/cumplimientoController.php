@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\CumplimientoTandeo;
 use App\Models\tandeoProgramado;
 use App\Models\zonasModel;
@@ -21,40 +22,83 @@ class cumplimientoController extends Controller
             ->orderBy('hora_inicio_programada')
             ->get();
 
+        $cumplimientos = CumplimientoTandeo::whereIn('tandeo_id', $tandeos->pluck('id'))
+            ->orderByDesc('fecha_captura')
+            ->orderByDesc('id')
+            ->get()
+            ->unique('tandeo_id')
+            ->keyBy('tandeo_id');
+
         $zonas = zonasModel::where('activo', true)->get();
 
-        return view('cumplimiento.index', compact('tandeos', 'zonas'));
+        return view('cumplimiento.index', compact('tandeos', 'zonas', 'cumplimientos'));
     }
 
-    // Registro individual de cumplimiento de un tandeo
+    // Guarda de una sola vez los cambios de las filas editadas.
     public function store(Request $request)
     {
-        $request->validate([
-            'tandeo_id' => 'required|exists:tandeos_programados,id',
-            'resultado' => 'required|in:cumplido,atraso,no_cumplido',
-            'horas_atraso' => 'nullable|integer|min:1',
-            'observaciones' => 'nullable|string',
+        $datos = $request->validate([
+            'cumplimientos' => ['required', 'array'],
+            'cumplimientos.*.resultado' => ['nullable', 'in:cumplido,atraso,no_cumplido'],
+            'cumplimientos.*.horas_atraso' => ['nullable', 'integer', 'min:1', 'max:24'],
+            'cumplimientos.*.observaciones' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        CumplimientoTandeo::create([
-            'tandeo_id' => $request->tandeo_id,
-            'resultado' => $request->resultado,
-            'horas_atraso' => $request->horas_atraso,
-            'observaciones' => $request->observaciones,
-            'capturado_por_id' => auth()->user()->id,
-            'fecha_captura' => now(),
-        ]);
+        $tandeosValidos = tandeoProgramado::whereIn('id', array_keys($datos['cumplimientos']))
+            ->whereBetween('fecha', [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()])
+            ->pluck('id')
+            ->all();
+
+        DB::transaction(function () use ($datos, $tandeosValidos) {
+            foreach ($datos['cumplimientos'] as $tandeoId => $fila) {
+                if (!in_array((int) $tandeoId, $tandeosValidos)) {
+                    continue;
+                }
+
+                $resultado = $fila['resultado'] ?? null;
+                if (!$resultado || $resultado === 'en_curso') {
+                    continue;
+                }
+
+                $horasAtraso = $fila['horas_atraso'] ?? null;
+                if ($resultado === 'atraso' && !$horasAtraso) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "cumplimientos.$tandeoId.horas_atraso" => 'Indica cuántas horas de atraso tiene este tandeo.',
+                    ]);
+                }
+                if ($resultado !== 'atraso') {
+                    $horasAtraso = null;
+                }
+
+                $registro = CumplimientoTandeo::where('tandeo_id', $tandeoId)
+                    ->orderByDesc('fecha_captura')
+                    ->orderByDesc('id')
+                    ->first();
+
+                $valores = [
+                    'resultado' => $resultado,
+                    'horas_atraso' => $horasAtraso,
+                    'observaciones' => $fila['observaciones'] ?? null,
+                    'capturado_por_id' => auth()->user()->getKey(),
+                    'fecha_captura' => now(),
+                ];
+
+                if ($registro) {
+                    $registro->update($valores);
+                } else {
+                    CumplimientoTandeo::create(array_merge($valores, ['tandeo_id' => $tandeoId]));
+                }
+            }
+        });
 
         return redirect()->route('cumplimiento.index')
-            ->with('success', '¡Cumplimiento registrado exitosamente!');
+            ->with('success', 'Cambios de cumplimiento guardados correctamente.');
     }
 
-    // Botón "Apagón general": afecta los tandeos de hoy en todas las zonas
+    // Botón "Apagón general": el registro/reprogramación se atiende en FN.8.
     public function apagonGeneral(Request $request)
     {
-        $request->validate([
-            'horas_atraso' => 'required|integer|min:1',
-        ]);
+        $request->validate(['horas_atraso' => 'required|integer|min:1']);
 
         $tandeosHoy = tandeoProgramado::whereDate('fecha', now())
             ->where('estado', 'programado')
@@ -66,21 +110,16 @@ class cumplimientoController extends Controller
                 'resultado' => 'atraso',
                 'horas_atraso' => $request->horas_atraso,
                 'motivo' => 'apagon_general',
-                'capturado_por_id' => auth()->user()->id,
+                'capturado_por_id' => auth()->user()->getKey(),
                 'fecha_captura' => now(),
             ]);
-
-            // TODO (FN.8): el motor de reprogramaciones debe recorrer
-            // hora_inicio_programada / hora_fin_programada / fecha de
-            // $tandeo según $request->horas_atraso, y registrar el
-            // movimiento en la tabla de reprogramaciones.
         }
 
         return redirect()->route('cumplimiento.index')
             ->with('success', 'Apagón general registrado, se aplicó a todas las zonas.');
     }
 
-    // Botón "Fuga": afecta los tandeos de hoy solo en la zona indicada
+    // Botón "Fuga": afecta los tandeos de hoy solo en la zona indicada.
     public function fuga(Request $request)
     {
         $request->validate([
@@ -101,11 +140,9 @@ class cumplimientoController extends Controller
                 'resultado' => 'atraso',
                 'horas_atraso' => $request->horas_atraso,
                 'motivo' => 'fuga',
-                'capturado_por_id' => auth()->user()->id,
+                'capturado_por_id' => auth()->user()->getKey(),
                 'fecha_captura' => now(),
             ]);
-
-            // TODO (FN.8): motor de reprogramaciones para esta zona.
         }
 
         return redirect()->route('cumplimiento.index')

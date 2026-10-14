@@ -6,44 +6,88 @@ use Illuminate\Http\Request;
 use App\Models\TandeoProgramado;
 use App\Models\circuitosModel;
 use App\Models\usuarioModel;
+use App\Models\zonasModel;
 use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class tandeosController extends Controller
 {
     public function index()
     {
-        $tandeos = TandeoProgramado::with('circuito.zona', 'tandeador')->get();
-        return view('tandeos.index', compact('tandeos'));
+        $tandeos = TandeoProgramado::with([
+            'circuito.zona',
+            'tandeador',
+            'cumplimientos' => function ($consulta) {
+                $consulta->orderByDesc('fecha_captura')->orderByDesc('id');
+            },
+        ])
+            ->orderBy('fecha')
+            ->orderBy('hora_inicio_programada')
+            ->get();
+
+        $zonas = zonasModel::where('activo', true)->orderBy('nombre')->get();
+
+        return view('tandeos.index', compact('tandeos', 'zonas'));
     }
 
     public function create()
     {
-        $circuitos = circuitosModel::where('activo', true)->get();
-        $tandeadores = usuarioModel::where('rol', 'tandeador')->get();
-        return view('tandeos.create', compact('circuitos', 'tandeadores'));
+        $zonas = zonasModel::where('activo', true)
+            ->orderBy('nombre')
+            ->get();
+
+        $circuitos = circuitosModel::with('zona')
+            ->where('activo', true)
+            ->orderBy('nombre')
+            ->get();
+
+        $tandeadores = usuarioModel::where('rol', 'tandeador')
+            ->orderBy('nombre')
+            ->get();
+
+        return view('tandeos.create', compact('zonas', 'circuitos', 'tandeadores'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'circuito_id' => 'required|exists:circuitos,id',
-            'fecha' => 'required|date',
-            'hora_inicio_programada' => 'required',
-            'tandeador_id' => 'nullable|exists:usuarios,id',
+        $datos = $request->validate([
+            'zona_id' => ['required', 'exists:zonas,id'],
+            'circuito_id' => ['required', 'exists:circuitos,id'],
+            'fecha' => ['required', 'date'],
+            'hora_inicio_programada' => ['required', 'date_format:H:i'],
+            'duracion' => ['required', 'numeric', 'min:0.25', 'max:24'],
+            'tandeador_id' => ['nullable', 'exists:usuarios,id'],
         ]);
 
-        $circuito = circuitosModel::findOrFail($request->circuito_id);
+        $zonaActiva = zonasModel::whereKey($datos['zona_id'])
+            ->where('activo', true)
+            ->exists();
 
-        $horaInicio = Carbon::parse($request->hora_inicio_programada);
-        $horaFin = $horaInicio->copy()->addHours($circuito->duracion);
+        $circuito = circuitosModel::whereKey($datos['circuito_id'])
+            ->where('zona_id', $datos['zona_id'])
+            ->where('activo', true)
+            ->first();
+
+        if (! $zonaActiva || ! $circuito) {
+            throw ValidationException::withMessages([
+                'circuito_id' => 'Selecciona un circuito activo que pertenezca a la zona elegida.',
+            ]);
+        }
+
+        $horaInicio = Carbon::parse(
+            $datos['fecha'] . ' ' . $datos['hora_inicio_programada']
+        );
+
+        $duracionMinutos = (int) round((float) $datos['duracion'] * 60);
+        $horaFin = $horaInicio->copy()->addMinutes($duracionMinutos);
 
         TandeoProgramado::create([
-            'circuito_id' => $request->circuito_id,
-            'fecha' => $request->fecha,
+            'circuito_id' => $circuito->id,
+            'fecha' => $datos['fecha'],
             'hora_inicio_programada' => $horaInicio->format('H:i'),
             'hora_fin_programada' => $horaFin->format('H:i'),
             'estado' => 'programado',
-            'tandeador_id' => $request->tandeador_id,
+            'tandeador_id' => $datos['tandeador_id'] ?? null,
         ]);
 
         return redirect()->route('tandeos.index')
@@ -53,8 +97,11 @@ class tandeosController extends Controller
     public function edit($id)
     {
         $tandeo = TandeoProgramado::findOrFail($id);
+
         $circuitos = circuitosModel::where('activo', true)->get();
+
         $tandeadores = usuarioModel::where('rol', 'tandeador')->get();
+
         return view('tandeos.edit', compact('tandeo', 'circuitos', 'tandeadores'));
     }
 
@@ -62,24 +109,37 @@ class tandeosController extends Controller
     {
         $tandeo = TandeoProgramado::findOrFail($id);
 
-        $request->validate([
-            'circuito_id' => 'required|exists:circuitos,id',
-            'fecha' => 'required|date',
-            'hora_inicio_programada' => 'required',
-            'tandeador_id' => 'nullable|exists:usuarios,id',
+        $datos = $request->validate([
+            'circuito_id' => ['required', 'exists:circuitos,id'],
+            'fecha' => ['required', 'date'],
+            'hora_inicio_programada' => ['required', 'date_format:H:i'],
+            'tandeador_id' => ['nullable', 'exists:usuarios,id'],
         ]);
 
-        $circuito = circuitosModel::findOrFail($request->circuito_id);
+        $circuito = circuitosModel::findOrFail($datos['circuito_id']);
 
-        $horaInicio = Carbon::parse($request->hora_inicio_programada);
-        $horaFin = $horaInicio->copy()->addHours($circuito->duracion);
+        // Si conserva el circuito, mantiene la duración que tenía este tandeo.
+        // Si cambia de circuito, usa la duración configurada para el nuevo circuito.
+        if ((int) $tandeo->circuito_id === (int) $circuito->id) {
+            $duracionMinutos = (int) round(
+                $tandeo->inicio->diffInMinutes($tandeo->fin)
+            );
+        } else {
+            $duracionMinutos = (int) round((float) $circuito->duracion * 60);
+        }
+
+        $horaInicio = Carbon::parse(
+            $datos['fecha'] . ' ' . $datos['hora_inicio_programada']
+        );
+
+        $horaFin = $horaInicio->copy()->addMinutes($duracionMinutos);
 
         $tandeo->update([
-            'circuito_id' => $request->circuito_id,
-            'fecha' => $request->fecha,
+            'circuito_id' => $circuito->id,
+            'fecha' => $datos['fecha'],
             'hora_inicio_programada' => $horaInicio->format('H:i'),
             'hora_fin_programada' => $horaFin->format('H:i'),
-            'tandeador_id' => $request->tandeador_id,
+            'tandeador_id' => $datos['tandeador_id'] ?? null,
         ]);
 
         return redirect()->route('tandeos.index')
