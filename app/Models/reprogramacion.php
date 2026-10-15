@@ -2,10 +2,21 @@
 
 namespace App\Models;
 
+use App\Traits\TracksSyncChanges;
+
+use App\Traits\HasSyncUuid;
+
 use Illuminate\Database\Eloquent\Model;
 
 class Reprogramacion extends Model
 {
+
+//estos use permiten que el modelo tenga un UUID único para sincronización 
+// y que registre cambios para sincronización
+    use TracksSyncChanges;
+    use HasSyncUuid;
+
+
     protected $table = 'reprogramaciones';
 
     protected $fillable = [

@@ -139,17 +139,17 @@ Route::post('/cumplimiento/fuga', [cumplimientoController::class, 'fuga'])
 // REPROGRAMACIONES
 // ==================================================
 
-Route::get('/reprogramaciones/apagon', [reprogramacionController::class, 'create'])
-->name('reprogramaciones.apagon.create');
-
 Route::post('/reprogramaciones/apagon/previa', [reprogramacionController::class, 'previa'])
-->name('reprogramaciones.apagon.previa');
+    ->name('reprogramaciones.apagon.previa');
 
 Route::post('/reprogramaciones/apagon', [reprogramacionController::class, 'store'])
-->name('reprogramaciones.apagon.store');
+    ->name('reprogramaciones.apagon.store');
 
-Route::post('/reprogramaciones/apagon/previa', [reprogramacionController::class, 'previa'])
-->name('reprogramaciones.apagon.previa');
+Route::get('/reprogramaciones/manual/{id}', [reprogramacionController::class, 'createManual'])
+    ->name('reprogramaciones.manual.create');
 
-Route::post('/reprogramaciones/apagon', [reprogramacionController::class, 'store'])
-->name('reprogramaciones.apagon.store');
+Route::post('/reprogramaciones/manual/previa', [reprogramacionController::class, 'previaManual'])
+    ->name('reprogramaciones.manual.previa');
+
+Route::post('/reprogramaciones/manual/guardar', [reprogramacionController::class, 'storeManual'])
+    ->name('reprogramaciones.manual.store');

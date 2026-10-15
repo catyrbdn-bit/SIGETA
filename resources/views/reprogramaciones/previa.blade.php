@@ -32,6 +32,8 @@
         .aviso { color: #b36b00; }
         button.principal { background: #1f4e79; color: #fff; border: 0; padding: 9px 18px; border-radius: 6px; cursor: pointer; }
         button.secundario { background: #fff; border: 1px solid #aaa; padding: 9px 18px; border-radius: 6px; cursor: pointer; }
+        .acciones-finales { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .acciones-derecha { display: flex; gap: 10px; }
     </style>
 </head>
 <body>
@@ -48,7 +50,7 @@
             ->sortBy(fn ($m) => $m['inicio_anterior']->timestamp);
     @endphp
 
-    <h2>Vista previa del apagón general</h2>
+    <h2>{{ $modo === 'manual' ? 'Vista previa de la modificación manual' : 'Vista previa del apagón general' }}</h2>
     <p class="sub">{{ $fechaTitulo }} &middot; {{ $desde->format('H:i') }}</p>
 
     @if ($errors->any())
@@ -65,16 +67,17 @@
 
     @if ($filas->count())
 
-        <input type="text" id="buscar" placeholder="Buscar circuito o zona…">
+        <input type="text" id="buscar" placeholder="Buscar circuito o colonia…">
 
-        <form action="{{ route('reprogramaciones.apagon.store') }}" method="POST">
+        <form action="{{ $modo === 'manual' ? route('reprogramaciones.manual.store') : route('reprogramaciones.apagon.store') }}" method="POST">
             @csrf
             <input type="hidden" name="desde" value="{{ $desde->format('Y-m-d\TH:i') }}">
+            @if ($modo === 'manual')<input type="hidden" name="tandeo_id" value="{{ $tandeoId }}">@endif
 
             <table>
                 <thead>
                     <tr>
-                        <th>Circuito / Zona</th>
+                        <th>Circuito / Colonia</th>
                         <th>Horario actual</th>
                         <th>Horario nuevo</th>
                         <th style="text-align:center;">Atraso (h)</th>
@@ -86,7 +89,7 @@
                         @php
                             $id = $m['tandeo']->id;
                             $propuesto = $m['inicio_nuevo']->format('Y-m-d\TH:i');
-                            $motivoBase = $m['es_cadena'] ? 'Recorrido por empalme' : 'Afectado por el apagón';
+                            $motivoBase = $m['es_cadena'] ? 'Recorrido por empalme' : ($modo === 'manual' ? 'Reprogramación manual' : 'Afectado por el apagón');
                         @endphp
 
                         <tr class="dato"
@@ -101,7 +104,7 @@
                                     @endif
                                 </div>
                                 <div class="zona">
-                                    {{ $m['tandeo']->circuito->zona->nombre ?? 'Sin zona' }}
+                                    {{ $m['tandeo']->circuito->zona->nombre ?? 'Sin colonia' }}
                                     &middot;
                                     {{ $m['tandeo']->circuito->puntoAbastecimiento->nombre ?? 'Sin punto fijo' }}
                                 </div>
@@ -136,13 +139,13 @@
                 </tbody>
             </table>
 
-            <br>
-
-            <button type="submit" class="secundario"
-                    formaction="{{ route('reprogramaciones.apagon.previa') }}">Recalcular</button>
-            <button type="submit" class="principal">Confirmar y guardar</button>
-            <button type="button" class="secundario"
-                    onclick="window.location.href='{{ route('cumplimiento.index') }}'">Cancelar</button>
+            <div class="acciones-finales">
+                <button type="button" class="secundario" onclick="window.location.href='{{ route('cumplimiento.index') }}'">Cancelar</button>
+                <div class="acciones-derecha">
+                    <button type="submit" class="secundario" formaction="{{ $modo === 'manual' ? route('reprogramaciones.manual.previa') : route('reprogramaciones.apagon.previa') }}">Recalcular</button>
+                    <button type="submit" class="principal">Confirmar y guardar</button>
+                </div>
+            </div>
         </form>
 
         <script>
@@ -187,10 +190,12 @@
             });
         </script>
     @else
-        <p>No hay tandeos de hoy afectados por el apagón.</p>
+        <p>{{ $modo === 'manual' ? 'No hay cambios para mostrar.' : 'No hay tandeos afectados por el apagón.' }}</p>
 
         <button type="button" class="secundario" onclick="window.location.href='{{ route('cumplimiento.index') }}'">Volver</button>
     @endif
 
 </body>
 </html>
+
+

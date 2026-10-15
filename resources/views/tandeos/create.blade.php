@@ -105,7 +105,7 @@
 
         .botones {
             display: flex;
-            gap: 10px;
+            justify-content: space-between;
             margin-top: 20px;
         }
 
@@ -141,7 +141,7 @@
 
     <h1>SIGETA</h1>
     <h2>Programar nuevo tandeo</h2>
-    <p class="subtitulo">Selecciona primero la zona y después el circuito o las calles.</p>
+    <p class="subtitulo">Selecciona primero la colonia y después el circuito o las calles.</p>
 
     @if ($errors->any())
         <div class="mensaje-error">
@@ -158,9 +158,9 @@
         @csrf
 
         <section class="panel">
-            <label for="zona_id">1. Selecciona la zona o colonia</label>
+            <label for="zona_id">1. Selecciona la colonia</label>
             <select id="zona_id" name="zona_id" required>
-                <option value="">Selecciona una zona</option>
+                <option value="">Selecciona una colonia</option>
                 @foreach ($zonas as $zona)
                     <option value="{{ $zona->id }}" @selected(old('zona_id') == $zona->id)>
                         {{ $zona->nombre }}
@@ -172,7 +172,7 @@
         <section class="panel" id="seccion-circuitos" hidden>
             <label>2. Selecciona el circuito por sus calles o descripción</label>
             <p class="ayuda">
-                La tabla solo mostrará circuitos de la zona seleccionada.
+                La tabla solo mostrará circuitos de la colonia seleccionada.
                 El código se muestra como referencia.
             </p>
 
@@ -210,7 +210,7 @@
             </div>
 
             <p id="sin-circuitos" class="ayuda" hidden>
-                Esta zona no tiene circuitos activos registrados.
+                Esta colonia no tiene circuitos activos registrados.
             </p>
         </section>
 
@@ -274,8 +274,8 @@
         </section>
 
         <div class="botones">
-            <button type="submit" class="boton">Registrar tandeo</button>
             <a href="{{ route('tandeos.index') }}" class="boton boton-secundario">Volver</a>
+            <button type="submit" class="boton">Registrar tandeo</button>
         </div>
     </form>
 
@@ -377,3 +377,5 @@
 
 </body>
 </html>
+
+

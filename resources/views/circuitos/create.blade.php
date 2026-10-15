@@ -21,9 +21,9 @@
         @csrf
 
         <div class="mb-3">
-            <label for="zona_id" class="form-label">Zona o colonia</label>
+            <label for="zona_id" class="form-label">Colonia</label>
             <select id="zona_id" name="zona_id" class="form-select" required>
-                <option value="">Selecciona una zona</option>
+                <option value="">Selecciona una colonia</option>
                 @foreach ($zonas as $zona)
                     <option value="{{ $zona->id }}" @selected(old('zona_id') == $zona->id)>
                         {{ $zona->nombre }}
@@ -91,7 +91,11 @@
             </select>
         </div>
 
-        <button type="submit" class="btn btn-primary">Guardar circuito</button>
-        <a href="{{ route('circuitos.index') }}" class="btn btn-secondary">Volver</a>
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ route('circuitos.index') }}" class="btn btn-secondary">Volver</a>
+            <button type="submit" class="btn btn-primary">Registrar circuito</button>
+        </div>
     </form>
 @endsection
+
+

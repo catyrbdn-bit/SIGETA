@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasSyncUuid;
+
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class usuarioModel extends Authenticatable
 {
+    use HasSyncUuid;
     use Notifiable;
 
     protected $table = 'usuarios';

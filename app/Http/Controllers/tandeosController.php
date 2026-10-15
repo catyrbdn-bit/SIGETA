@@ -110,11 +110,16 @@ class tandeosController extends Controller
         $tandeo = TandeoProgramado::findOrFail($id);
 
         $datos = $request->validate([
-            'circuito_id' => ['required', 'exists:circuitos,id'],
-            'fecha' => ['required', 'date'],
-            'hora_inicio_programada' => ['required', 'date_format:H:i'],
-            'tandeador_id' => ['nullable', 'exists:usuarios,id'],
+            'circuito_id' => 'required|exists:circuitos,id',
+            'fecha' => 'required|date',
+            'hora_inicio_programada' => 'required|date_format:H:i',
+            'tandeador_id' => 'nullable|exists:usuarios,id',
+        ], [
+            'hora_inicio_programada.required' => 'La hora de inicio es obligatoria.',
+            'hora_inicio_programada.date_format' => 'La hora debe tener el formato 24 horas, por ejemplo, 18:30.',
         ]);
+       
+        
 
         $circuito = circuitosModel::findOrFail($datos['circuito_id']);
 

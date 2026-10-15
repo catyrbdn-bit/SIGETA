@@ -37,7 +37,7 @@ class zonasController extends Controller
     ]);
 
     return redirect()->route('zonas.index')
-        ->with('success', '¡Zona registrada exitosamente!');
+        ->with('success', '¡Colonia registrada exitosamente!');
 }
 
     //funcion edit para mostrar el formulario de edicion de zona
@@ -61,7 +61,7 @@ class zonasController extends Controller
         $zona->update($request->all());
 
         return redirect()->route('zonas.index')
-                         ->with('success', 'Zona actualizada exitosamente');
+                         ->with('success', 'Colonia actualizada exitosamente');
     }
 
 
@@ -72,7 +72,7 @@ class zonasController extends Controller
         $zona->delete();
 
         return redirect()->route('zonas.index')
-                        ->with('success', 'Zona eliminada exitosamente');
+                        ->with('success', 'Colonia eliminada exitosamente');
 
     }
 
@@ -84,3 +84,4 @@ class zonasController extends Controller
 
     }
 }
+

@@ -2,10 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\TracksSyncChanges;
+
+use App\Traits\HasSyncUuid;
+
 use Illuminate\Database\Eloquent\Model;
 
 class cumplimientoTandeo extends Model
 {
+    use TracksSyncChanges;
+    use HasSyncUuid;
     protected $table = 'cumplimiento_tandeos';
 
     protected $fillable = [

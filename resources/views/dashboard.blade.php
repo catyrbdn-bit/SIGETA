@@ -14,12 +14,25 @@
     <div style="min-width: 220px;">
         <label for="filtro-estado" class="form-label">Filtrar por estado</label>
         <select id="filtro-estado" class="form-select">
-            <option value="todos">Todos los estados</option>
-            <option value="programado">Programado</option>
-            <option value="en_curso">En curso</option>
-            <option value="cumplido">Cumplido</option>
-            <option value="atraso">Con atraso</option>
-            <option value="no_cumplido">No cumplido</option>
+            <option value="todos">
+                Todos los estados
+            </option>
+            <option value="programado">
+                Programado
+            </option>
+            <option value="en_curso">
+                En curso
+            </option>
+            <option value="pendiente">Pendiente de registrar</option>
+            <option value="cumplido">
+                Cumplido
+            </option>
+            <option value="atraso">
+                Con atraso
+            </option>
+            <option value="no_cumplido">
+                No cumplido
+            </option>
         </select>
     </div>
 </div>
@@ -29,27 +42,36 @@
     <table class="table table-bordered table-hover align-middle" id="tabla-tandeos">
         <thead class="table-light">
             <tr>
-                <th>Circuito / Zona</th>
+                <th>Circuito / Colonia</th>
                 <th>Horario</th>
                 <th>Estado</th>
                 <th>Punto de abastecimiento</th>
+                <th>Acción</th>
             </tr>
         </thead>
         <tbody>
             @forelse ($tandeosHoy as $tandeo)
                 @php
                     $cumplimiento = $tandeo->cumplimientos->first();
-                    $estado = $cumplimiento->resultado ?? null;
-
-                    if (!$estado) {
-                        $estado = now()->betweenIncluded($tandeo->inicio, $tandeo->fin)
-                            ? 'en_curso'
-                            : $tandeo->estado;
+                    if ($cumplimiento && $cumplimiento->fecha_captura && \Carbon\Carbon::parse($cumplimiento->fecha_captura)->lt($tandeo->inicio)) {
+                        $cumplimiento = null;
+                    }
+                    if (now()->lt($tandeo->inicio)) {
+                        $estado = 'programado';
+                    } elseif ($tandeo->estado !== 'programado') {
+                        $estado = $tandeo->estado;
+                    } elseif ($cumplimiento) {
+                        $estado = $cumplimiento->resultado;
+                    } elseif (now()->betweenIncluded($tandeo->inicio, $tandeo->fin)) {
+                        $estado = 'en_curso';
+                    } else {
+                        $estado = 'pendiente';
                     }
 
                     $nombresEstados = [
                         'programado' => 'Programado',
                         'en_curso' => 'En curso',
+                        'pendiente' => 'Pendiente de registrar',
                         'cumplido' => 'Cumplido',
                         'atraso' => 'Con atraso',
                         'no_cumplido' => 'No cumplido',
@@ -63,11 +85,12 @@
                     <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }}-{{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                     <td>{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</td>
                     <td>{{ $tandeo->circuito->puntoAbastecimiento->nombre ?? 'Sin punto fijo' }}</td>
+                    <td><a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id]) }}" class="btn btn-sm btn-outline-primary">Ir a cumplimiento</a></td>
                 </tr>
             @empty
-                <tr><td colspan="4" class="text-center text-muted">No hay tandeos programados para hoy.</td></tr>
+                <tr><td colspan="5" class="text-center text-muted">No hay tandeos programados para hoy.</td></tr>
             @endforelse
-            <tr id="sin-tandeos-filtrados" class="d-none"><td colspan="4" class="text-center text-muted">No hay tandeos con ese estado.</td></tr>
+            <tr id="sin-tandeos-filtrados" class="d-none"><td colspan="5" class="text-center text-muted">No hay tandeos con ese estado.</td></tr>
         </tbody>
     </table>
 </div>
@@ -83,7 +106,7 @@
         Tandeos programados</a>
 </div>
 
-<form action="{{ route('cerrarSesion') }}" method="POST" class="mt-3">
+<form action="{{ route('cerrarSesion') }}" method="POST" class="d-flex justify-content-end mt-3">
     @csrf
     <button type="submit" class="btn btn-link px-0">Cerrar sesión</button>
 </form>
@@ -103,3 +126,12 @@
     });
 </script>
 @endsection
+
+
+
+
+
+
+
+
+

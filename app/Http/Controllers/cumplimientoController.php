@@ -37,6 +37,7 @@ class cumplimientoController extends Controller
     // Guarda de una sola vez los cambios de las filas editadas.
     public function store(Request $request)
     {
+        // Validación de los datos recibidos
         $datos = $request->validate([
             'cumplimientos' => ['required', 'array'],
             'cumplimientos.*.resultado' => ['nullable', 'in:cumplido,atraso,no_cumplido'],
@@ -46,18 +47,25 @@ class cumplimientoController extends Controller
 
         $tandeosValidos = tandeoProgramado::whereIn('id', array_keys($datos['cumplimientos']))
             ->whereBetween('fecha', [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()])
-            ->pluck('id')
-            ->all();
+            ->get()
+            ->keyBy('id');
 
         DB::transaction(function () use ($datos, $tandeosValidos) {
             foreach ($datos['cumplimientos'] as $tandeoId => $fila) {
-                if (!in_array((int) $tandeoId, $tandeosValidos)) {
+                $tandeo = $tandeosValidos->get((int) $tandeoId);
+                if (!$tandeo) {
                     continue;
                 }
 
                 $resultado = $fila['resultado'] ?? null;
-                if (!$resultado || $resultado === 'en_curso') {
+                if (!$resultado) {
                     continue;
+                }
+
+                if (now()->lt($tandeo->inicio)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "cumplimientos.$tandeoId.resultado" => 'No se puede registrar un resultado antes de la fecha y hora programadas.',
+                    ]);
                 }
 
                 $horasAtraso = $fila['horas_atraso'] ?? null;
@@ -102,7 +110,8 @@ class cumplimientoController extends Controller
 
         $tandeosHoy = tandeoProgramado::whereDate('fecha', now())
             ->where('estado', 'programado')
-            ->get();
+            ->get()
+            ->filter(fn ($tandeo) => now()->greaterThanOrEqualTo($tandeo->inicio));
 
         foreach ($tandeosHoy as $tandeo) {
             CumplimientoTandeo::create([
@@ -116,7 +125,7 @@ class cumplimientoController extends Controller
         }
 
         return redirect()->route('cumplimiento.index')
-            ->with('success', 'Apagón general registrado, se aplicó a todas las zonas.');
+            ->with('success', 'Apagón general registrado; se aplicó a los tandeos cuyo horario ya había iniciado.');
     }
 
     // Botón "Fuga": afecta los tandeos de hoy solo en la zona indicada.
@@ -132,7 +141,8 @@ class cumplimientoController extends Controller
             ->whereHas('circuito', function ($query) use ($request) {
                 $query->where('zona_id', $request->zona_id);
             })
-            ->get();
+            ->get()
+            ->filter(fn ($tandeo) => now()->greaterThanOrEqualTo($tandeo->inicio));
 
         foreach ($tandeosZona as $tandeo) {
             CumplimientoTandeo::create([
@@ -146,6 +156,11 @@ class cumplimientoController extends Controller
         }
 
         return redirect()->route('cumplimiento.index')
-            ->with('success', 'Fuga registrada, se aplicó a la zona seleccionada.');
+            ->with('success', 'Fuga registrada; se aplicó a los tandeos de la colonia seleccionada cuyo horario ya había iniciado.');
     }
 }
+
+
+
+
+

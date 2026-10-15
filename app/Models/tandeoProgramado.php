@@ -2,11 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\TracksSyncChanges;
+
+use App\Traits\HasSyncUuid;
+
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class tandeoProgramado extends Model
 {
+    use TracksSyncChanges;
+    use HasSyncUuid;
     protected $table = 'tandeos_programados';
 
     protected $fillable = [

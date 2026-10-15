@@ -5,7 +5,7 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
     <h1 class="h3 mb-0">Tandeos programados</h1>
-    <a href="{{ route('createTandeo') }}" class="btn btn-primary">Programar nuevo tandeo</a>
+    <a href="{{ route('createTandeo') }}" class="btn btn-primary">Registrar tandeo</a>
 </div>
 
 @if (session('success'))
@@ -19,13 +19,13 @@
 
 <div class="row g-2 align-items-end mb-3">
     <div class="col-md-4">
-        <label for="buscar-tandeo" class="form-label">Circuito o zona</label>
+        <label for="buscar-tandeo" class="form-label">Circuito o colonia</label>
         <input type="search" id="buscar-tandeo" class="form-control" placeholder="Escribe para buscar">
     </div>
     <div class="col-md-3">
-        <label for="filtro-zona" class="form-label">Zona</label>
+        <label for="filtro-zona" class="form-label">Colonia</label>
         <select id="filtro-zona" class="form-select">
-            <option value="todas">Todas las zonas</option>
+            <option value="todas">Todas las colonias</option>
             @foreach ($zonas as $zona)
                 <option value="{{ $zona->id }}">{{ $zona->nombre }}</option>
             @endforeach
@@ -58,7 +58,7 @@
         <thead class="table-light">
             <tr>
                 <th>Circuito</th>
-                <th>Zona</th>
+                <th>Colonia</th>
                 <th>Fecha</th>
                 <th>Horario</th>
                 <th>Estado</th>
@@ -70,18 +70,19 @@
             @forelse ($tandeos as $tandeo)
                 @php
                     $cumplimiento = $tandeo->cumplimientos->first();
-                    $estado = $cumplimiento->resultado ?? null;
-
-                    if (!$estado) {
-                        if ($tandeo->estado !== 'programado') {
-                            $estado = $tandeo->estado;
-                        } elseif (now()->lt($tandeo->inicio)) {
-                            $estado = 'programado';
-                        } elseif (now()->betweenIncluded($tandeo->inicio, $tandeo->fin)) {
-                            $estado = 'en_curso';
-                        } else {
-                            $estado = 'pendiente';
-                        }
+                    if ($cumplimiento && $cumplimiento->fecha_captura && \Carbon\Carbon::parse($cumplimiento->fecha_captura)->lt($tandeo->inicio)) {
+                        $cumplimiento = null;
+                    }
+                    if (now()->lt($tandeo->inicio)) {
+                        $estado = 'programado';
+                    } elseif ($tandeo->estado !== 'programado') {
+                        $estado = $tandeo->estado;
+                    } elseif ($cumplimiento) {
+                        $estado = $cumplimiento->resultado;
+                    } elseif (now()->betweenIncluded($tandeo->inicio, $tandeo->fin)) {
+                        $estado = 'en_curso';
+                    } else {
+                        $estado = 'pendiente';
                     }
 
                     $nombresEstados = [
@@ -107,6 +108,7 @@
                     <td>{{ $tandeo->tandeador->nombre ?? 'Sin asignar' }}</td>
                     <td class="text-nowrap">
                         <a href="{{ route('editTandeo', $tandeo->id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        <a href="{{ route('reprogramaciones.manual.create', $tandeo->id) }}" class="btn btn-sm btn-outline-primary">Modificar horario</a>
                         <form action="{{ route('deleteTandeo', $tandeo->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar este tandeo?');">
                             @csrf
                             @method('DELETE')
@@ -154,3 +156,9 @@
     });
 </script>
 @endsection
+
+
+
+
+
+

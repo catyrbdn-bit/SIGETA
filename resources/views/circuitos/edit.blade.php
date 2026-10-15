@@ -31,7 +31,7 @@
         </p>
 
         <div class="mb-3">
-            <label for="zona_id" class="form-label">Zona o colonia</label>
+            <label for="zona_id" class="form-label">Colonia</label>
             <select id="zona_id" name="zona_id" class="form-select" required>
                 @foreach ($zonas as $zona)
                     <option
@@ -43,7 +43,7 @@
                 @endforeach
             </select>
             <div class="form-text">
-                Si cambias la zona, el código del circuito se generará de nuevo.
+                Si cambias la colonia, el código del circuito se generará de nuevo.
             </div>
         </div>
 
@@ -113,7 +113,10 @@
             </select>
         </div>
 
-        <button type="submit" class="btn btn-primary">Guardar cambios</button>
-        <a href="{{ route('circuitos.index') }}" class="btn btn-secondary">Volver</a>
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ route('circuitos.index') }}" class="btn btn-secondary">Volver</a>
+            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </div>
     </form>
 @endsection
+
