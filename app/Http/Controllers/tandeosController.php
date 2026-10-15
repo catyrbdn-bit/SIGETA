@@ -98,57 +98,11 @@ class tandeosController extends Controller
     {
         $tandeo = TandeoProgramado::findOrFail($id);
 
-        $circuitos = circuitosModel::where('activo', true)->get();
+        $circuitos = circuitosModel::with('zona')->where('activo', true)->get();
 
         $tandeadores = usuarioModel::where('rol', 'tandeador')->get();
 
         return view('tandeos.edit', compact('tandeo', 'circuitos', 'tandeadores'));
-    }
-
-    public function update(Request $request, $id)
-    {
-        $tandeo = TandeoProgramado::findOrFail($id);
-
-        $datos = $request->validate([
-            'circuito_id' => 'required|exists:circuitos,id',
-            'fecha' => 'required|date',
-            'hora_inicio_programada' => 'required|date_format:H:i',
-            'tandeador_id' => 'nullable|exists:usuarios,id',
-        ], [
-            'hora_inicio_programada.required' => 'La hora de inicio es obligatoria.',
-            'hora_inicio_programada.date_format' => 'La hora debe tener el formato 24 horas, por ejemplo, 18:30.',
-        ]);
-       
-        
-
-        $circuito = circuitosModel::findOrFail($datos['circuito_id']);
-
-        // Si conserva el circuito, mantiene la duración que tenía este tandeo.
-        // Si cambia de circuito, usa la duración configurada para el nuevo circuito.
-        if ((int) $tandeo->circuito_id === (int) $circuito->id) {
-            $duracionMinutos = (int) round(
-                $tandeo->inicio->diffInMinutes($tandeo->fin)
-            );
-        } else {
-            $duracionMinutos = (int) round((float) $circuito->duracion * 60);
-        }
-
-        $horaInicio = Carbon::parse(
-            $datos['fecha'] . ' ' . $datos['hora_inicio_programada']
-        );
-
-        $horaFin = $horaInicio->copy()->addMinutes($duracionMinutos);
-
-        $tandeo->update([
-            'circuito_id' => $circuito->id,
-            'fecha' => $datos['fecha'],
-            'hora_inicio_programada' => $horaInicio->format('H:i'),
-            'hora_fin_programada' => $horaFin->format('H:i'),
-            'tandeador_id' => $datos['tandeador_id'] ?? null,
-        ]);
-
-        return redirect()->route('tandeos.index')
-            ->with('success', '¡Tandeo actualizado exitosamente!');
     }
 
     public function destroy($id)

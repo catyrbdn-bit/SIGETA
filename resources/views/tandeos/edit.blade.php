@@ -1,16 +1,14 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar tandeo - SIGETA</title>
+@extends('layouts.app')
 
-    <style>
+@section('titulo', 'Editar tandeo - SIGETA')
+
+@section('estilos')
+<style>
+
         * {
             box-sizing: border-box;
         }
-
-        body {
+.contenido-vista {
             max-width: 800px;
             margin: 32px auto;
             padding: 0 20px;
@@ -89,13 +87,15 @@
             color: #657482;
             font-size: 14px;
         }
-    </style>
-</head>
-<body>
+    
+</style>
+@endsection
 
-    <h1>SIGETA</h1>
+@section('content')
+<div class="contenido-vista">
+<h1>SIGETA</h1>
     <h2>Editar tandeo</h2>
-    <p class="subtitulo">Modifica los datos del tandeo y guarda los cambios.</p>
+    <p class="subtitulo">Modifica los datos del tandeo. Antes de guardar, revisa cómo se acomodarán los horarios afectados.</p>
 
     @if ($errors->any())
         <div class="mensaje-error">
@@ -108,9 +108,9 @@
         </div>
     @endif
 
-    <form action="{{ route('updateTandeo', $tandeo->id) }}" method="POST">
+    <form action="{{ route('reprogramaciones.manual.previa') }}" method="POST">
         @csrf
-        @method('PUT')
+        <input type="hidden" name="tandeo_id" value="{{ $tandeo->id }}">
 
         <section class="panel">
             <label for="circuito_id">Circuito:</label>
@@ -124,26 +124,38 @@
         </section>
 
         <section class="panel">
-            <label for="fecha">Fecha:</label>
+            <label for="fecha_nueva">Fecha:</label>
             <input
                 type="date"
-                id="fecha"
-                name="fecha"
-                value="{{ old('fecha', \Carbon\Carbon::parse($tandeo->fecha)->format('Y-m-d')) }}"
+                id="fecha_nueva"
+                name="fecha_nueva"
+                value="{{ old('fecha_nueva', \Carbon\Carbon::parse($tandeo->fecha)->format('Y-m-d')) }}"
                 required
             >
         </section>
 
         <section class="panel">
-            <label for="hora_inicio_programada">Hora de inicio:</label>
+            <label for="hora_inicio_nueva">Hora de inicio:</label>
             <input
                 type="time"
-                id="hora_inicio_programada"
-                name="hora_inicio_programada"
-                value="{{ old('hora_inicio_programada', substr($tandeo->hora_inicio_programada, 0, 5)) }}"
+                id="hora_inicio_nueva"
+                name="hora_inicio_nueva"
+                value="{{ old('hora_inicio_nueva', substr($tandeo->hora_inicio_programada, 0, 5)) }}"
                 required
             >
             <p class="ayuda">Usa formato de 24 horas, por ejemplo: 18:30.</p>
+        </section>
+
+        <section class="panel">
+            <label for="motivo_inicio">Motivo del cambio:</label>
+            <input
+                type="text"
+                id="motivo_inicio"
+                name="motivo_inicio"
+                maxlength="255"
+                value="{{ old('motivo_inicio', 'Reprogramación manual') }}"
+                required
+            >
         </section>
 
         <section class="panel">
@@ -159,13 +171,9 @@
         </section>
 
         <div class="botones">
-            <a href="{{ route('tandeos.index') }}" class="boton boton-secundario">Volver</a>
-            <button type="submit" class="boton">Guardar cambios</button>
+            <a href="{{ route('tandeos.index') }}" class="boton boton-secundario" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver</a>
+            <button type="submit" class="boton">Ver vista previa</button>
         </div>
     </form>
-
-</body>
-</html>
-
-
-
+</div>
+@endsection

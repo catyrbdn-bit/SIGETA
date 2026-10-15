@@ -114,7 +114,7 @@
         </div>
 
         <div class="d-flex justify-content-between mt-4">
-            <a href="{{ route('circuitos.index') }}" class="btn btn-secondary">Volver</a>
+            <a href="{{ route('circuitos.index') }}" class="btn btn-secondary" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver</a>
             <button type="submit" class="btn btn-primary">Guardar cambios</button>
         </div>
     </form>

@@ -1,16 +1,14 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Programar tandeo - SIGETA</title>
+@extends('layouts.app')
 
-    <style>
+@section('titulo', 'Programar tandeo - SIGETA')
+
+@section('estilos')
+<style>
+
         * {
             box-sizing: border-box;
         }
-
-        body {
+.contenido-vista {
             max-width: 1000px;
             margin: 32px auto;
             padding: 0 20px;
@@ -135,11 +133,13 @@
                 overflow-x: auto;
             }
         }
-    </style>
-</head>
-<body>
+    
+</style>
+@endsection
 
-    <h1>SIGETA</h1>
+@section('content')
+<div class="contenido-vista">
+<h1>SIGETA</h1>
     <h2>Programar nuevo tandeo</h2>
     <p class="subtitulo">Selecciona primero la colonia y después el circuito o las calles.</p>
 
@@ -274,7 +274,7 @@
         </section>
 
         <div class="botones">
-            <a href="{{ route('tandeos.index') }}" class="boton boton-secundario">Volver</a>
+            <a href="{{ route('tandeos.index') }}" class="boton boton-secundario" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver</a>
             <button type="submit" class="boton">Registrar tandeo</button>
         </div>
     </form>
@@ -374,8 +374,5 @@
 
         mostrarCircuitos();
     </script>
-
-</body>
-</html>
-
-
+</div>
+@endsection

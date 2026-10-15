@@ -1,14 +1,12 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Circuito con tandeos - SIGETA</title>
+@extends('layouts.app')
 
-    <style>
+@section('titulo', 'Circuito con tandeos - SIGETA')
+
+@section('estilos')
+<style>
+
         * { box-sizing: border-box; }
-
-        body {
+.contenido-vista {
             max-width: 900px;
             margin: 32px auto;
             padding: 0 20px;
@@ -55,11 +53,13 @@
             .tabla-contenedor { overflow-x: auto; }
             table { min-width: 500px; }
         }
-    </style>
-</head>
-<body>
+    
+</style>
+@endsection
 
-    <h1>SIGETA</h1>
+@section('content')
+<div class="contenido-vista">
+<h1>SIGETA</h1>
     <h2>No se puede eliminar este circuito</h2>
 
     <section class="panel">
@@ -88,7 +88,7 @@
         </div>
 
         <div class="acciones">
-            <a href="{{ route('circuitos.index') }}" class="boton boton-secundario">Volver a circuitos</a>
+            <a href="{{ route('circuitos.index') }}" class="boton boton-secundario" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver a circuitos</a>
 
             <form action="{{ route('desactivarCircuito', $circuito->id) }}" method="POST"
                   onsubmit="return confirm('¿Desactivar este circuito?');">
@@ -98,6 +98,5 @@
             </form>
         </div>
     </section>
-
-</body>
-</html>
+</div>
+@endsection

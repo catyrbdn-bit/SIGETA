@@ -1,16 +1,14 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Colonias atendidas por SAPUA - SIGETA</title>
+@extends('layouts.app')
 
-    <style>
+@section('titulo', 'Colonias atendidas por SAPUA - SIGETA')
+
+@section('estilos')
+<style>
+
         * {
             box-sizing: border-box;
         }
-
-        body {
+.contenido-vista {
             max-width: 1000px;
             margin: 32px auto;
             padding: 0 20px;
@@ -112,11 +110,13 @@
                 min-width: 560px;
             }
         }
-    </style>
-</head>
-<body>
+    
+</style>
+@endsection
 
-    <h1>SIGETA</h1>
+@section('content')
+<div class="contenido-vista">
+<h1>SIGETA</h1>
     <h2>Colonias atendidas por SAPUA</h2>
     <p class="subtitulo">Lista de colonias registradas en el sistema.</p>
 
@@ -176,16 +176,9 @@
     </section>
 
     <div class="volver">
-        <a href="{{ route('dashboard') }}" class="boton boton-secundario">Volver al panel</a>
+        <a href="{{ route('dashboard') }}" class="boton boton-secundario" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver al panel</a>
 
-        <form action="{{ route('cerrarSesion') }}" method="POST" style="display: inline;">
-            @csrf
-            <button type="submit" class="boton boton-secundario">Cerrar sesión</button>
-        </form>
+        
     </div>
-
-</body>
-</html>
-
-
-
+</div>
+@endsection

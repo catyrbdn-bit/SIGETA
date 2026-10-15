@@ -86,7 +86,7 @@
         </div>
     @endif
 
-    <a href="{{ route('dashboard') }}" class="btn btn-secondary mt-3">
+    <a href="{{ route('dashboard') }}" class="btn btn-secondary mt-3" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">
         Volver
     </a>
 @endsection

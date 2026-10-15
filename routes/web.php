@@ -29,7 +29,10 @@ Route::post('/logout', [LoginController::class, 'cerrarSesion'])
 // Panel principal
 
 Route::get('/dashboard', function () {
-    $tandeosHoy = \App\Models\TandeoProgramado::whereDate('fecha', now())
+    $inicioSemana = now()->startOfWeek()->toDateString();
+    $finSemana = now()->endOfWeek()->toDateString();
+
+    $tandeosSemana = \App\Models\TandeoProgramado::whereBetween('fecha', [$inicioSemana, $finSemana])
         ->with([
             'circuito.zona',
             'circuito.puntoAbastecimiento',
@@ -37,10 +40,11 @@ Route::get('/dashboard', function () {
                 $consulta->orderByDesc('fecha_captura')->orderByDesc('id');
             },
         ])
+        ->orderBy('fecha')
         ->orderBy('hora_inicio_programada')
         ->get();
 
-    return view('dashboard', compact('tandeosHoy'));
+    return view('dashboard', compact('tandeosSemana'));
 })->middleware('auth')->name('dashboard');
 
 
@@ -111,8 +115,6 @@ Route::post('/tandeos/guardar', [tandeosController::class, 'store'])
 Route::get('/tandeos/{id}/editar', [tandeosController::class, 'edit'])
     ->name('editTandeo');
 
-Route::put('/tandeos/{id}', [tandeosController::class, 'update'])
-    ->name('updateTandeo');
 
 Route::delete('/tandeos/{id}', [tandeosController::class, 'destroy'])
     ->name('deleteTandeo');
@@ -145,8 +147,6 @@ Route::post('/reprogramaciones/apagon/previa', [reprogramacionController::class,
 Route::post('/reprogramaciones/apagon', [reprogramacionController::class, 'store'])
     ->name('reprogramaciones.apagon.store');
 
-Route::get('/reprogramaciones/manual/{id}', [reprogramacionController::class, 'createManual'])
-    ->name('reprogramaciones.manual.create');
 
 Route::post('/reprogramaciones/manual/previa', [reprogramacionController::class, 'previaManual'])
     ->name('reprogramaciones.manual.previa');

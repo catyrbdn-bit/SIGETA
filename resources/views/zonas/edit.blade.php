@@ -1,14 +1,12 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar colonia - SIGETA</title>
+@extends('layouts.app')
 
-    <style>
+@section('titulo', 'Editar colonia - SIGETA')
+
+@section('estilos')
+<style>
+
         * { box-sizing: border-box; }
-
-        body {
+.contenido-vista {
             max-width: 800px;
             margin: 32px auto;
             padding: 0 20px;
@@ -85,11 +83,13 @@
             color: #243447;
             background: #e1e7ed;
         }
-    </style>
-</head>
-<body>
+    
+</style>
+@endsection
 
-    <h1>SIGETA</h1>
+@section('content')
+<div class="contenido-vista">
+<h1>SIGETA</h1>
     <h2>Editar colonia</h2>
     <p class="subtitulo">Actualiza los datos de la colonia seleccionada.</p>
 
@@ -122,15 +122,9 @@
         </section>
 
         <div class="botones">
-            <a href="{{ route('zonas.index') }}" class="boton boton-secundario">Volver a colonias</a>
+            <a href="{{ route('zonas.index') }}" class="boton boton-secundario" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver a colonias</a>
             <button type="submit" class="boton">Guardar cambios</button>
         </div>
     </form>
-
-</body>
-</html>
-
-
-
-
-
+</div>
+@endsection

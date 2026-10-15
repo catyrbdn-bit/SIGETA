@@ -1,12 +1,10 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vista previa - SIGETA</title>
+@extends('layouts.app')
 
-    <style>
-        body { font-family: Arial, sans-serif; color: #222; margin: 24px; }
+@section('titulo', 'Vista previa - SIGETA')
+
+@section('estilos')
+<style>
+.contenido-vista { font-family: Arial, sans-serif; color: #222; margin: 24px; }
         h2 { margin: 0; }
         .sub { color: #666; margin: 4px 0 16px; }
 
@@ -34,11 +32,13 @@
         button.secundario { background: #fff; border: 1px solid #aaa; padding: 9px 18px; border-radius: 6px; cursor: pointer; }
         .acciones-finales { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
         .acciones-derecha { display: flex; gap: 10px; }
-    </style>
-</head>
-<body>
+    
+</style>
+@endsection
 
-    @php
+@section('content')
+<div class="contenido-vista">
+@php
         $hora = fn ($i, $f) => $i->format('H:i') . ' – ' . $f->format('H:i')
             . ($f->isSameDay($i) ? '' : ' (+1 día)');
 
@@ -50,7 +50,7 @@
             ->sortBy(fn ($m) => $m['inicio_anterior']->timestamp);
     @endphp
 
-    <h2>{{ $modo === 'manual' ? 'Vista previa de la modificación manual' : 'Vista previa del apagón general' }}</h2>
+    <h2>{{ $modo === 'manual' ? 'Vista previa de los cambios al tandeo' : 'Vista previa del apagón general' }}</h2>
     <p class="sub">{{ $fechaTitulo }} &middot; {{ $desde->format('H:i') }}</p>
 
     @if ($errors->any())
@@ -72,7 +72,11 @@
         <form action="{{ $modo === 'manual' ? route('reprogramaciones.manual.store') : route('reprogramaciones.apagon.store') }}" method="POST">
             @csrf
             <input type="hidden" name="desde" value="{{ $desde->format('Y-m-d\TH:i') }}">
-            @if ($modo === 'manual')<input type="hidden" name="tandeo_id" value="{{ $tandeoId }}">@endif
+            @if ($modo === 'manual')
+                <input type="hidden" name="tandeo_id" value="{{ $tandeoId }}">
+                <input type="hidden" name="circuito_id" value="{{ $circuitoId }}">
+                <input type="hidden" name="tandeador_id" value="{{ $tandeadorId }}">
+            @endif
 
             <table>
                 <thead>
@@ -192,10 +196,7 @@
     @else
         <p>{{ $modo === 'manual' ? 'No hay cambios para mostrar.' : 'No hay tandeos afectados por el apagón.' }}</p>
 
-        <button type="button" class="secundario" onclick="window.location.href='{{ route('cumplimiento.index') }}'">Volver</button>
+        <button type="button" class="secundario" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); } else { window.location.href='{{ route('cumplimiento.index') }}'; }">Volver</button>
     @endif
-
-</body>
-</html>
-
-
+</div>
+@endsection

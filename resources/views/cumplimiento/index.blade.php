@@ -104,7 +104,7 @@
                                 @endif
                             </td>
                             <td><input class="form-control" type="text" maxlength="1000" name="cumplimientos[{{ $tandeo->id }}][observaciones]" value="{{ old("cumplimientos.{$tandeo->id}.observaciones", $registro->observaciones ?? '') }}" placeholder="Agregar observación..."></td>
-                            <td><a class="btn btn-sm btn-outline-primary" href="{{ route('reprogramaciones.manual.create', $tandeo->id) }}">Modificar horario</a></td>
+                            <td><a class="btn btn-sm btn-outline-primary" href="{{ route('editTandeo', $tandeo->id) }}">Editar tandeo</a></td>
                         </tr>
                     @empty
                         <tr><td colspan="6" class="text-center text-muted">No hay tandeos programados esta semana</td></tr>
@@ -115,7 +115,7 @@
         </div>
     </form>
 
-    <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary mt-2">Volver</a>
+    <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary mt-2" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver</a>
 </div>
 
 <script>

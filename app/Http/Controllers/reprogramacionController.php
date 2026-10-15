@@ -12,26 +12,20 @@ class reprogramacionController extends Controller
     {
     }
 
-    public function createManual(int $id)
-    {
-        $tandeo = \App\Models\tandeoProgramado::with('circuito.zona', 'circuito.puntoAbastecimiento')->findOrFail($id);
-        return view('reprogramaciones.manual', compact('tandeo'));
-    }
-
     public function previaManual(Request $request)
     {
-        [$id, $inicio, $ajustes, $motivos, $motivo] = $this->datosManual($request);
-        $resultado = $this->servicio->simularManual($id, $inicio, $ajustes, $motivos, $motivo);
+        [$id, $inicio, $ajustes, $motivos, $motivo, $circuitoId, $tandeadorId] = $this->datosManual($request);
+        $resultado = $this->servicio->simularManual($id, $inicio, $ajustes, $motivos, $motivo, $circuitoId);
         $desde = $inicio;
         $modo = 'manual';
         $tandeoId = $id;
-        return view('reprogramaciones.previa', compact('desde', 'resultado', 'modo', 'tandeoId'));
+        return view('reprogramaciones.previa', compact('desde', 'resultado', 'modo', 'tandeoId', 'circuitoId', 'tandeadorId'));
     }
 
     public function storeManual(Request $request)
     {
-        [$id, $inicio, $ajustes, $motivos, $motivo] = $this->datosManual($request);
-        $this->servicio->aplicarManual($id, $inicio, (int) auth()->user()->id, $ajustes, $motivos, $motivo);
+        [$id, $inicio, $ajustes, $motivos, $motivo, $circuitoId, $tandeadorId] = $this->datosManual($request);
+        $this->servicio->aplicarManual($id, $inicio, (int) auth()->user()->id, $ajustes, $motivos, $motivo, $circuitoId, $tandeadorId);
         return redirect()->route('cumplimiento.index')
             ->with('success', 'Horario reprogramado y tandeos afectados recorridos correctamente.');
     }
@@ -40,7 +34,11 @@ class reprogramacionController extends Controller
     {
         $request->validate([
             'tandeo_id' => ['required', 'exists:tandeos_programados,id'],
+            'circuito_id' => ['required', 'exists:circuitos,id'],
+            'tandeador_id' => ['nullable', 'exists:usuarios,id'],
             'inicio_nuevo' => ['nullable', 'date'],
+            'fecha_nueva' => ['nullable', 'date'],
+            'hora_inicio_nueva' => ['nullable', 'date_format:H:i'],
             'nuevo.*' => ['nullable', 'date'],
             'motivo_inicio' => ['nullable', 'string', 'max:255'],
             'motivo.*' => ['nullable', 'string', 'max:255'],
@@ -48,7 +46,12 @@ class reprogramacionController extends Controller
 
         $id = (int) $request->tandeo_id;
         [$ajustes, $motivos] = $this->leerAjustes($request);
+        $circuitoId = (int) $request->circuito_id;
+        $tandeadorId = $request->tandeador_id ? (int) $request->tandeador_id : null;
         $inicioTexto = $request->input("nuevo.$id") ?: $request->input('inicio_nuevo');
+        if (! $inicioTexto && $request->filled('fecha_nueva') && $request->filled('hora_inicio_nueva')) {
+            $inicioTexto = $request->fecha_nueva . ' ' . $request->hora_inicio_nueva;
+        }
         if (! $inicioTexto) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'inicio_nuevo' => 'Indica la nueva fecha y hora del tandeo.',
@@ -59,7 +62,7 @@ class reprogramacionController extends Controller
         unset($ajustes[$id]);
         unset($motivos[$id]);
 
-        return [$id, Carbon::parse($inicioTexto), $ajustes, $motivos, $motivo ?: 'Reprogramación manual'];
+        return [$id, Carbon::parse($inicioTexto), $ajustes, $motivos, $motivo ?: 'Reprogramación manual', $circuitoId, $tandeadorId];
     }
     // Vista previa: calcula los movimientos pero NO guarda nada.
     // También se usa para "Recalcular" con los ajustes escritos a mano.

@@ -108,7 +108,7 @@
                     <td>{{ $tandeo->tandeador->nombre ?? 'Sin asignar' }}</td>
                     <td class="text-nowrap">
                         <a href="{{ route('editTandeo', $tandeo->id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
-                        <a href="{{ route('reprogramaciones.manual.create', $tandeo->id) }}" class="btn btn-sm btn-outline-primary">Modificar horario</a>
+                        
                         <form action="{{ route('deleteTandeo', $tandeo->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar este tandeo?');">
                             @csrf
                             @method('DELETE')
@@ -124,7 +124,7 @@
     </table>
 </div>
 
-<a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">Volver</a>
+<a href="{{ route('dashboard') }}" class="btn btn-outline-secondary" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver</a>
 
 <script>
     function filtrarTandeos() {
