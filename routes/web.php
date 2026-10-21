@@ -29,6 +29,8 @@ Route::post('/logout', [LoginController::class, 'cerrarSesion'])
 // Panel principal
 
 Route::get('/dashboard', function () {
+    app(\App\Services\repeticionTandeoService::class)->crearSiguientes();
+
     $inicioSemana = now()->startOfWeek()->toDateString();
     $finSemana = now()->endOfWeek()->toDateString();
 
@@ -146,6 +148,12 @@ Route::post('/reprogramaciones/apagon/previa', [reprogramacionController::class,
 
 Route::post('/reprogramaciones/apagon', [reprogramacionController::class, 'store'])
     ->name('reprogramaciones.apagon.store');
+
+Route::post('/reprogramaciones/fuga/previa', [reprogramacionController::class, 'previaFuga'])
+    ->name('reprogramaciones.fuga.previa');
+
+Route::post('/reprogramaciones/fuga', [reprogramacionController::class, 'storeFuga'])
+    ->name('reprogramaciones.fuga.store');
 
 
 Route::post('/reprogramaciones/manual/previa', [reprogramacionController::class, 'previaManual'])

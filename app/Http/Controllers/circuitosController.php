@@ -89,7 +89,13 @@ class circuitosController extends Controller
     {
         $circuito = circuitosModel::findOrFail($id);
 
-        $tandeosAsociados = $circuito->tandeos;
+        $tandeosAsociados = $circuito->tandeos()
+            ->with(['cumplimientos' => function ($consulta) {
+                $consulta->orderByDesc('fecha_captura')->orderByDesc('id');
+            }])
+            ->orderBy('fecha')
+            ->orderBy('hora_inicio_programada')
+            ->get();
 
         if ($tandeosAsociados->count() > 0) {
             // si tiene historial: no se puede borrar, se muestra la lista de asociados

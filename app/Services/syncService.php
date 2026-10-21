@@ -6,6 +6,7 @@ use App\Models\circuitosModel;
 use App\Models\cumplimientoTandeo;
 use App\Models\PuntoAbastecimiento;
 use App\Models\Reprogramacion;
+use App\Models\TandeoRepeticion;
 use App\Models\syncChange;
 use App\Models\syncDevice;
 use App\Models\tandeoProgramado;
@@ -50,6 +51,7 @@ class syncService
             PuntoAbastecimiento::class => 'puntos_abastecimiento',
             circuitosModel::class => 'circuitos',
             tandeoProgramado::class => 'tandeos_programados',
+            TandeoRepeticion::class => 'tandeo_repeticiones',
             cumplimientoTandeo::class => 'cumplimiento_tandeos',
             Reprogramacion::class => 'reprogramaciones',
         ];
@@ -80,6 +82,12 @@ class syncService
         }
 
         if ($model instanceof tandeoProgramado) {
+            $datos['circuito_sync_uuid'] = $this->uuidRelacionado(circuitosModel::class, $model->circuito_id);
+            $datos['tandeador_usuario'] = $this->nombreUsuario($model->tandeador_id);
+            unset($datos['circuito_id'], $datos['tandeador_id']);
+        }
+
+        if ($model instanceof TandeoRepeticion) {
             $datos['circuito_sync_uuid'] = $this->uuidRelacionado(circuitosModel::class, $model->circuito_id);
             $datos['tandeador_usuario'] = $this->nombreUsuario($model->tandeador_id);
             unset($datos['circuito_id'], $datos['tandeador_id']);

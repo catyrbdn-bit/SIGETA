@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\CumplimientoTandeo;
 use App\Models\Reprogramacion;
+use App\Models\TandeoRepeticion;
 use App\Models\circuitosModel;
 use App\Models\tandeoProgramado;
 use Carbon\Carbon;
@@ -17,7 +19,14 @@ class reprogramacionService
      * $ajustes: [tandeo_id => Carbon] horarios nuevos escritos a mano
      * $motivos: [tandeo_id => string] motivos escritos a mano
      */
-    public function simularApagon(Carbon $desde, array $ajustes = [], array $motivos = []): array
+    public function simularApagon(
+        Carbon $desde,
+        array $ajustes = [],
+        array $motivos = [],
+        ?string $tipoPunto = null,
+        ?int $horasFuga = null,
+        string $motivoIncidencia = 'Afectado por el apagón'
+    ): array
     {
         $hasta = $desde->copy()->addDays(config('sigeta.ventana_dias'));
 
@@ -63,7 +72,9 @@ class reprogramacionService
         // Aplicamos el atraso del punto a cada tandeo del periodo.
         foreach ($tandeos as $tandeo) {
             $punto = $tandeo->circuito->puntoAbastecimiento;
-            $esAfectado = $punto && $punto->horas_atraso_apagon > 0;
+            $esAfectado = $tipoPunto
+                ? ($punto && $punto->tipo === $tipoPunto)
+                : ($punto && $punto->horas_atraso_apagon > 0);
             $ajusteManual = $ajustes[$tandeo->id] ?? null;
             $esManual = $ajusteManual !== null;
             $esCadena = false;
@@ -72,10 +83,21 @@ class reprogramacionService
             if ($ajusteManual) {
                 $nuevoInicio = $ajusteManual->copy();
             } elseif ($esAfectado) {
-                $minutosAtraso = (int) round($punto->horas_atraso_apagon * 60);
+                $minutosAtraso = (int) round(($horasFuga ?? $punto->horas_atraso_apagon) * 60);
                 $nuevoInicio = $tandeo->inicio->copy()->addMinutes($minutosAtraso);
             } else {
                 $nuevoInicio = $tandeo->inicio->copy();
+            }
+
+            if ($tipoPunto && $esAfectado && $ajusteManual) {
+                $minutosElegidos = $nuevoInicio->getTimestamp() - $tandeo->inicio->getTimestamp();
+                $minutosMinimos = (int) round(($horasFuga ?? 0) * 60);
+
+                if ($minutosElegidos < $minutosMinimos) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'nuevo' => "El atraso de esta fuga no puede ser menor a {$horasFuga} horas.",
+                    ]);
+                }
             }
 
             $duracion = $tandeo->inicio->diffInMinutes($tandeo->fin);
@@ -122,7 +144,7 @@ class reprogramacionService
                     $esCadena,
                     $puntoId,
                     $esManual,
-                    $motivos[$tandeo->id] ?? ($esCadena ? 'Recorrido por empalme' : null)
+                    $motivos[$tandeo->id] ?? ($esCadena ? 'Recorrido por empalme' : ($esAfectado ? $motivoIncidencia : null))
                 );
             }
         }
@@ -140,15 +162,17 @@ class reprogramacionService
     }
 
     /** Calcula una reprogramación manual y los empalmes nuevos que provoca. */
-    public function simularManual(int $tandeoId, Carbon $nuevoInicio, array $ajustes = [], array $motivos = [], ?string $motivoInicial = null, ?int $circuitoId = null): array
+    public function simularManual(int $tandeoId, Carbon $nuevoInicio, array $ajustes = [], array $motivos = [], ?string $motivoInicial = null, ?int $circuitoId = null, ?int $duracionManual = null): array
     {
         $seleccionado = tandeoProgramado::with('circuito.puntoAbastecimiento', 'circuito.zona')->findOrFail($tandeoId);
         $circuitoNuevo = null;
-        $duracionNueva = null;
+        $duracionNueva = $duracionManual;
 
         if ($circuitoId && (int) $seleccionado->circuito_id !== $circuitoId) {
             $circuitoNuevo = circuitosModel::with('puntoAbastecimiento', 'zona')->findOrFail($circuitoId);
-            $duracionNueva = (int) round((float) $circuitoNuevo->duracion * 60);
+            if ($duracionNueva === null) {
+                $duracionNueva = (int) round((float) $circuitoNuevo->duracion * 60);
+            }
         }
         // Elegimos la fecha menor para revisar los tandeos cercanos.
         $inicioOriginal = $seleccionado->inicio;
@@ -167,14 +191,14 @@ class reprogramacionService
 
         $inicioVentana->startOfDay();
         $finVentana = $finReferencia->addDays(config('sigeta.ventana_dias'))->endOfDay();
+        $inicioOriginal = $seleccionado->inicio;
 
         $tandeos = tandeoProgramado::with('circuito.puntoAbastecimiento', 'circuito.zona')
             ->where(function ($q) {
                 $q->whereNull('estado')
                   ->orWhereNotIn('estado', ['cumplido', 'atraso', 'no_cumplido', 'con atraso', 'no cumplido']);
             })
-            ->whereDate('fecha', '>=', $inicioVentana->toDateString())
-            ->whereDate('fecha', '<=', $finVentana->toDateString())
+            ->whereBetween('fecha', [$inicioVentana->toDateString(), $finVentana->toDateString()])
             ->get()
             ->filter(fn ($t) => $t->inicio >= $inicioVentana && $t->inicio <= $finVentana)
             ->sortBy('inicio')
@@ -234,17 +258,19 @@ class reprogramacionService
             }
         }
 
+        $this->validarHorariosUnicos($movimientos);
+
         return ['movimientos' => array_values($movimientos), 'advertencias' => $advertencias];
     }
 
     /** Guarda una reprogramación manual y sus recorridos en una sola transacción. */
-    public function aplicarManual(int $tandeoId, Carbon $nuevoInicio, int $usuarioId, array $ajustes = [], array $motivos = [], ?string $motivoInicial = null, ?int $circuitoId = null, ?int $tandeadorId = null): string
+    public function aplicarManual(int $tandeoId, Carbon $nuevoInicio, int $usuarioId, array $ajustes = [], array $motivos = [], ?string $motivoInicial = null, ?int $circuitoId = null, ?int $tandeadorId = null, ?int $duracionManual = null, ?int $horasAtraso = null, ?int $cumplimientoId = null, ?string $observacionesCumplimiento = null): string
     {
-        $resultado = $this->simularManual($tandeoId, $nuevoInicio, $ajustes, $motivos, $motivoInicial, $circuitoId);
+        $resultado = $this->simularManual($tandeoId, $nuevoInicio, $ajustes, $motivos, $motivoInicial, $circuitoId, $duracionManual);
         $cadena = (string) Str::uuid();
 
         // Guardamos el historial y los horarios juntos para evitar registros incompletos.
-        DB::transaction(function () use ($resultado, $cadena, $usuarioId, $tandeoId, $circuitoId, $tandeadorId) {
+        DB::transaction(function () use ($resultado, $cadena, $usuarioId, $tandeoId, $circuitoId, $tandeadorId, $horasAtraso, $cumplimientoId, $observacionesCumplimiento) {
             foreach ($resultado['movimientos'] as $m) {
                 Reprogramacion::create([
                     'tandeo_id' => $m['tandeo']->id,
@@ -270,23 +296,60 @@ class reprogramacionService
                         'tandeador_id' => $tandeadorId,
                     ]);
                 }
+
+                if ((int) $m['tandeo']->id === $tandeoId) {
+                    if ($horasAtraso !== null) {
+                        $valoresCumplimiento = [
+                            'resultado' => 'atraso',
+                            'horas_atraso' => $horasAtraso,
+                            'motivo' => 'otro',
+                            'observaciones' => $observacionesCumplimiento ?: 'Atraso registrado desde Cumplimiento.',
+                            'capturado_por_id' => $usuarioId,
+                            'fecha_captura' => now(),
+                        ];
+                        $cumplimiento = $cumplimientoId
+                            ? CumplimientoTandeo::where('id', $cumplimientoId)->where('tandeo_id', $tandeoId)->first()
+                            : null;
+                        if ($cumplimiento) $cumplimiento->update($valoresCumplimiento);
+                        else CumplimientoTandeo::create(array_merge($valoresCumplimiento, ['tandeo_id' => $tandeoId]));
+                    }
+                }
             }
+
         });
 
         return $cadena;
     }
     public function aplicarApagon(Carbon $desde, int $usuarioId, array $ajustes = [], array $motivos = []): string
     {
-        $resultado = $this->simularApagon($desde, $ajustes, $motivos);
+        return $this->guardarIncidencia($this->simularApagon($desde, $ajustes, $motivos), $usuarioId, 'apagon_general');
+    }
+
+    public function aplicarFuga(
+        Carbon $desde,
+        int $usuarioId,
+        string $tipoPunto,
+        int $horasAtraso,
+        array $ajustes = [],
+        array $motivos = []
+    ): string {
+        $etiqueta = $tipoPunto === 'laguna' ? 'Fuga en laguna' : 'Fuga en pozo';
+        $resultado = $this->simularApagon($desde, $ajustes, $motivos, $tipoPunto, $horasAtraso, $etiqueta);
+
+        return $this->guardarIncidencia($resultado, $usuarioId, 'fuga_' . $tipoPunto);
+    }
+
+    private function guardarIncidencia(array $resultado, int $usuarioId, string $tipoOrigen): string
+    {
         $cadena = (string) Str::uuid();
 
         // Guardamos el historial y los horarios juntos para evitar registros incompletos.
-        DB::transaction(function () use ($resultado, $cadena, $usuarioId, $tandeoId, $circuitoId, $tandeadorId) {
+        DB::transaction(function () use ($resultado, $cadena, $usuarioId, $tipoOrigen) {
             foreach ($resultado['movimientos'] as $m) {
                 Reprogramacion::create([
                     'tandeo_id'               => $m['tandeo']->id,
                     'cadena_uuid'             => $cadena,
-                    'tipo_origen'             => 'apagon_general',
+                    'tipo_origen'             => $tipoOrigen,
                     'es_manual'               => $m['manual'],
                     'es_efecto_cadena'        => $m['es_cadena'],
                     'punto_abastecimiento_id' => $m['punto_id'],
@@ -320,11 +383,43 @@ class reprogramacionService
             'punto_id'        => $puntoId,
             'manual'          => $manual,
             'motivo'          => $motivo,
+            'es_repeticion'   => false,
         ];
     }
 
     private function seEmpalman(Carbon $inicioA, Carbon $finA, Carbon $inicioB, Carbon $finB): bool
     {
         return $inicioA < $finB && $inicioB < $finA;
+    }
+
+    private function validarHorariosUnicos(array $movimientos): void
+    {
+        $cambios = [];
+
+        foreach ($movimientos as $movimiento) {
+            $cambios[$movimiento['tandeo']->id] = [
+                'circuito_id' => $movimiento['tandeo']->circuito_id,
+                'inicio' => $movimiento['inicio_nuevo'],
+            ];
+        }
+
+        $tandeos = tandeoProgramado::all();
+        $horarios = [];
+
+        foreach ($tandeos as $tandeo) {
+            $cambio = $cambios[$tandeo->id] ?? null;
+            $circuitoId = $cambio['circuito_id'] ?? $tandeo->circuito_id;
+            $inicio = $cambio['inicio'] ?? $tandeo->inicio;
+            $clave = $circuitoId . '|' . $inicio->format('Y-m-d H:i');
+            $horarios[$clave][] = $cambio !== null;
+        }
+
+        foreach ($horarios as $coincidencias) {
+            if (count($coincidencias) > 1 && in_array(true, $coincidencias, true)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'inicio_nuevo' => 'Ya existe un tandeo de este circuito con la misma fecha y hora de inicio.',
+                ]);
+            }
+        }
     }
 }

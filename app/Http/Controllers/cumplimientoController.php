@@ -7,11 +7,17 @@ use Illuminate\Support\Facades\DB;
 use App\Models\CumplimientoTandeo;
 use App\Models\tandeoProgramado;
 use App\Models\zonasModel;
+use App\Models\Reprogramacion;
+use App\Services\reprogramacionService;
+use App\Services\repeticionTandeoService;
+use Carbon\Carbon;
 
 class cumplimientoController extends Controller
 {
-    public function index()
+    public function index(repeticionTandeoService $repeticiones)
     {
+        $repeticiones->crearSiguientes();
+
         $inicioSemana = now()->startOfWeek()->toDateString();
         $finSemana = now()->endOfWeek()->toDateString();
 
@@ -34,10 +40,9 @@ class cumplimientoController extends Controller
         return view('cumplimiento.index', compact('tandeos', 'zonas', 'cumplimientos'));
     }
 
-    // Guarda de una sola vez los cambios de las filas editadas.
-    public function store(Request $request)
+    // Guarda los cambios de la tabla. Si un atraso nuevo provoca empalmes, primero muestra la vista previa.
+    public function store(Request $request, reprogramacionService $servicio)
     {
-        // Validación de los datos recibidos
         $datos = $request->validate([
             'cumplimientos' => ['required', 'array'],
             'cumplimientos.*.resultado' => ['nullable', 'in:cumplido,atraso,no_cumplido'],
@@ -45,43 +50,144 @@ class cumplimientoController extends Controller
             'cumplimientos.*.observaciones' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $tandeosValidos = tandeoProgramado::whereIn('id', array_keys($datos['cumplimientos']))
+        $ids = array_keys($datos['cumplimientos']);
+        $tandeosValidos = tandeoProgramado::with('circuito')
+            ->whereIn('id', $ids)
             ->whereBetween('fecha', [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()])
             ->get()
             ->keyBy('id');
 
-        DB::transaction(function () use ($datos, $tandeosValidos) {
-            foreach ($datos['cumplimientos'] as $tandeoId => $fila) {
-                $tandeo = $tandeosValidos->get((int) $tandeoId);
-                if (!$tandeo) {
-                    continue;
-                }
+        $registros = CumplimientoTandeo::whereIn('tandeo_id', $ids)
+            ->orderByDesc('fecha_captura')
+            ->orderByDesc('id')
+            ->get()
+            ->unique('tandeo_id')
+            ->keyBy('tandeo_id');
 
-                $resultado = $fila['resultado'] ?? null;
-                if (!$resultado) {
-                    continue;
-                }
+        $atrasosNuevos = [];
+        foreach ($datos['cumplimientos'] as $id => $fila) {
+            $horas = $fila['horas_atraso'] ?? null;
+            if ($horas === null || $horas === '') {
+                continue;
+            }
 
-                if (now()->lt($tandeo->inicio)) {
+            $registro = $registros->get((int) $id);
+            if (!$registro || $registro->resultado !== 'atraso' || (int) $registro->horas_atraso !== (int) $horas) {
+                $atrasosNuevos[(int) $id] = (int) $horas;
+            }
+        }
+
+        $atrasosConEmpalme = [];
+        foreach ($atrasosNuevos as $id => $horas) {
+            $tandeo = $tandeosValidos->get($id);
+            if (!$tandeo) {
+                continue;
+            }
+
+            $registro = $registros->get($id);
+            if (now()->lt($tandeo->inicio) && !$this->tieneAtrasoGuardado($registro)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    "cumplimientos.$id.resultado" => 'No se puede registrar un resultado antes del horario programado.',
+                ]);
+            }
+
+            // Si ya hubo un recorrido confirmado, el nuevo valor reemplaza el atraso anterior.
+            $horasMover = $horas;
+            if ($this->tieneAtrasoGuardado($registro)) {
+                $ultimoMovimiento = Reprogramacion::where('tandeo_id', $id)->orderByDesc('id')->first();
+                if ($ultimoMovimiento && Carbon::parse($ultimoMovimiento->inicio_nuevo)->equalTo($tandeo->inicio)) {
+                    $horasMover -= (int) $registro->horas_atraso;
+                }
+            }
+
+            $inicioNuevo = $tandeo->inicio->copy()->addHours($horasMover);
+            $duracion = (int) $tandeo->inicio->diffInMinutes($tandeo->fin);
+            $resultado = $servicio->simularManual(
+                $id,
+                $inicioNuevo,
+                [],
+                [],
+                'Atraso registrado desde Cumplimiento.',
+                (int) $tandeo->circuito_id,
+                $duracion
+            );
+
+            if (count($resultado['movimientos']) > 1) {
+                $atrasosConEmpalme[$id] = [
+                    'resultado' => $resultado,
+                    'inicio' => $inicioNuevo,
+                ];
+            }
+        }
+
+        if (count($atrasosConEmpalme) > 1 || (count($atrasosConEmpalme) === 1 && count($atrasosNuevos) > 1)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'cumplimientos' => 'Guarda un atraso que requiere recorrido a la vez. Después puedes registrar los demás cambios.',
+            ]);
+        }
+
+        if (count($atrasosConEmpalme) === 1) {
+            $id = (int) array_key_first($atrasosConEmpalme);
+            $fila = $datos['cumplimientos'][$id] ?? [];
+            $registro = $registros->get($id);
+
+            // La vista previa interrumpe el guardado; no dejamos cambios de otras filas sin guardar en silencio.
+            foreach ($datos['cumplimientos'] as $otroId => $otraFila) {
+                if ((int) $otroId === $id) continue;
+                $otroRegistro = $registros->get((int) $otroId);
+                $resultadoEnviado = $otraFila['resultado'] ?? $otroRegistro?->resultado;
+                $horasEnviadas = $otraFila['horas_atraso'] ?? $otroRegistro?->horas_atraso;
+                $observacionesEnviadas = $otraFila['observaciones'] ?? $otroRegistro?->observaciones;
+                if ($resultadoEnviado !== ($otroRegistro?->resultado)
+                    || (string) ($horasEnviadas ?? '') !== (string) ($otroRegistro?->horas_atraso ?? '')
+                    || (string) ($observacionesEnviadas ?? '') !== (string) ($otroRegistro?->observaciones ?? '')) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
-                        "cumplimientos.$tandeoId.resultado" => 'No se puede registrar un resultado antes de la fecha y hora programadas.',
+                        'cumplimientos' => 'Guarda primero los cambios de las otras filas; luego registra el atraso que requiere vista previa.',
                     ]);
                 }
+            }
 
+            $tandeo = $tandeosValidos->get($id);
+            $desde = $atrasosConEmpalme[$id]['inicio'];
+            $resultado = $atrasosConEmpalme[$id]['resultado'];
+            $modo = 'manual';
+            $tandeoId = $id;
+            $circuitoId = (int) $tandeo->circuito_id;
+            $tandeadorId = $tandeo->tandeador_id;
+            $duracionManual = (int) $tandeo->inicio->diffInMinutes($tandeo->fin);
+            $horasAtraso = (int) $fila['horas_atraso'];
+            $origenCumplimiento = true;
+            $cumplimientoId = $registro?->id;
+            $cumplimientoObservaciones = $fila['observaciones'] ?? $registro?->observaciones ?? '';
+
+            return view('reprogramaciones.previa', compact(
+                'desde', 'resultado', 'modo', 'tandeoId', 'circuitoId', 'tandeadorId',
+                'duracionManual', 'horasAtraso', 'origenCumplimiento',
+                'cumplimientoId', 'cumplimientoObservaciones'
+            ));
+        }
+
+        DB::transaction(function () use ($datos, $tandeosValidos, $registros) {
+            foreach ($datos['cumplimientos'] as $tandeoId => $fila) {
+                $tandeo = $tandeosValidos->get((int) $tandeoId);
+                if (!$tandeo) continue;
+
+                $resultado = $fila['resultado'] ?? null;
                 $horasAtraso = $fila['horas_atraso'] ?? null;
+                if ($horasAtraso !== null && $horasAtraso !== '') $resultado = 'atraso';
+                if (!$resultado) continue;
+
+                if (now()->lt($tandeo->inicio) && !$this->tieneAtrasoGuardado($registros->get((int) $tandeoId))) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "cumplimientos.$tandeoId.resultado" => 'No se puede registrar un resultado antes del horario programado.',
+                    ]);
+                }
                 if ($resultado === 'atraso' && !$horasAtraso) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
                         "cumplimientos.$tandeoId.horas_atraso" => 'Indica cuántas horas de atraso tiene este tandeo.',
                     ]);
                 }
-                if ($resultado !== 'atraso') {
-                    $horasAtraso = null;
-                }
-
-                $registro = CumplimientoTandeo::where('tandeo_id', $tandeoId)
-                    ->orderByDesc('fecha_captura')
-                    ->orderByDesc('id')
-                    ->first();
+                if ($resultado !== 'atraso') $horasAtraso = null;
 
                 $valores = [
                     'resultado' => $resultado,
@@ -90,17 +196,20 @@ class cumplimientoController extends Controller
                     'capturado_por_id' => auth()->user()->getKey(),
                     'fecha_captura' => now(),
                 ];
-
-                if ($registro) {
-                    $registro->update($valores);
-                } else {
-                    CumplimientoTandeo::create(array_merge($valores, ['tandeo_id' => $tandeoId]));
-                }
+                $registro = $registros->get((int) $tandeoId);
+                if ($registro) $registro->update($valores);
+                else CumplimientoTandeo::create(array_merge($valores, ['tandeo_id' => $tandeoId]));
             }
         });
 
-        return redirect()->route('cumplimiento.index')
-            ->with('success', 'Cambios de cumplimiento guardados correctamente.');
+        return redirect()->route('cumplimiento.index')->with('success', 'Cambios de cumplimiento guardados correctamente.');
+    }
+
+    private function tieneAtrasoGuardado($registro): bool
+    {
+        return $registro
+            && $registro->resultado === 'atraso'
+            && $registro->motivo === 'otro';
     }
 
     // Botón "Apagón general": el registro/reprogramación se atiende en FN.8.

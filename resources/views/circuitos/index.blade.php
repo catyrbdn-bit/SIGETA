@@ -8,14 +8,14 @@
             <h1 class="sigeta-titulo mb-2">SIGETA</h1>
             <h2 class="h4 mb-0">Circuitos registrados</h2>
         </div>
-        <a href="{{ route('createCircuito') }}" class="btn btn-primary">Registrar circuito</a>
+        <a href="{{ route('createCircuito') }}" class="btn btn-primary">+ Nuevo Circuito</a>
     </div>
 
     @if (session('success'))
         <div class="alert alert-success" id="mensaje-exito">
             {{ session('success') }}
         </div>
-
+        <!-- js -->
         <script>
             setTimeout(function () {
                 const mensaje = document.getElementById('mensaje-exito');
@@ -39,7 +39,7 @@
                         <th>Circuito</th>
                         <th>Colonia</th>
                         <th>Punto de abastecimiento</th>
-                        <th>Calles o descripción</th>
+                        <th>Calles</th>
                         <th>Duración (horas)</th>
                         <th>Estado</th>
                         <th>Acciones</th>
@@ -51,13 +51,13 @@
                             <td>{{ $circuito->nombre }}</td>
                             <td>{{ $circuito->zona->nombre ?? 'Sin colonia' }}</td>
                             <td>
-                                {{ $circuito->puntoAbastecimiento->nombre ?? 'Sin punto fijo' }}
+                                {{ $circuito->puntoAbastecimiento->nombre ?? 'Sin punto fijo registrado' }}
                             </td>
                             <td>
                                 {{ $circuito->descripcion ?: 'Sin descripción registrada' }}
                             </td>
                             <td>{{ $circuito->duracion }}</td>
-                            <td>{{ $circuito->activo ? 'Activo' : 'Inactivo' }}</td>
+                            <td><span class="estado-badge estado-{{ $circuito->activo ? 'activo' : 'inactivo' }}">{{ $circuito->activo ? 'Activo' : 'Inactivo' }}</span></td>
                             <td class="text-nowrap">
                                 <a
                                     href="{{ route('editCircuito', $circuito->id) }}"

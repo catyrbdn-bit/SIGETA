@@ -39,6 +39,11 @@
 @section('content')
 <div class="contenido-vista">
 @php
+    $urlCancelar = ($modo === 'apagon' || $modo === 'fuga' || !empty($origenCumplimiento))
+        ? route('cumplimiento.index')
+        : route('editTandeo', $tandeoId);
+@endphp
+@php
         $hora = fn ($i, $f) => $i->format('G:i') . ' - ' . $f->format('G:i') . ($f->isSameDay($i) ? '' : ' (+1 día)');
 
 
@@ -50,7 +55,7 @@
             ->sortBy(fn ($m) => $m['inicio_anterior']->timestamp);
     @endphp
 
-    <h2>{{ $modo === 'manual' ? 'Vista previa de los cambios al tandeo' : 'Vista previa del apagón general' }}</h2>
+    <h2>{{ $modo === 'manual' ? 'Vista previa de los cambios al tandeo' : ($modo === 'fuga' ? 'Vista previa de fuga en ' . ($tipoFuga === 'laguna' ? 'laguna' : 'pozo') : 'Vista previa del apagón general') }}</h2>
     <p class="sub">{{ $fechaTitulo }} &middot; {{ $desde->format('H:i') }}</p>
 
     @if ($errors->any())
@@ -69,13 +74,24 @@
 
         <input type="text" id="buscar" placeholder="Buscar circuito, colonia o calle…">
 
-        <form action="{{ $modo === 'manual' ? route('reprogramaciones.manual.store') : route('reprogramaciones.apagon.store') }}" method="POST">
+        <form action="{{ $modo === 'manual' ? route('reprogramaciones.manual.store') : ($modo === 'fuga' ? route('reprogramaciones.fuga.store') : route('reprogramaciones.apagon.store')) }}" method="POST">
             @csrf
             <input type="hidden" name="desde" value="{{ $desde->format('Y-m-d\TH:i') }}">
+            @if ($modo === 'fuga')
+                <input type="hidden" name="tipo_fuga" value="{{ $tipoFuga }}">
+                <input type="hidden" name="horas_atraso" value="{{ $horasAtraso }}">
+            @endif
             @if ($modo === 'manual')
                 <input type="hidden" name="tandeo_id" value="{{ $tandeoId }}">
                 <input type="hidden" name="circuito_id" value="{{ $circuitoId }}">
                 <input type="hidden" name="tandeador_id" value="{{ $tandeadorId }}">
+                <input type="hidden" name="duracion_manual" value="{{ $duracionManual }}">
+                <input type="hidden" name="horas_atraso" id="horas-atraso-manual" value="{{ $horasAtraso ?? '' }}">
+                @if (!empty($origenCumplimiento))
+                    <input type="hidden" name="origen_cumplimiento" value="1">
+                    <input type="hidden" name="cumplimiento_id" value="{{ $cumplimientoId ?? '' }}">
+                    <input type="hidden" name="cumplimiento_observaciones" value="{{ $cumplimientoObservaciones ?? '' }}">
+                @endif
             @endif
 
             <table>
@@ -96,10 +112,11 @@
                         @php
                             $id = $m['tandeo']->id;
                             $propuesto = $m['inicio_nuevo']->format('Y-m-d\TH:i');
-                            $motivoBase = $m['es_cadena'] ? 'Recorrido por empalme' : ($modo === 'manual' ? 'Reprogramación manual' : 'Afectado por el apagón');
+                            $motivoBase = $m['es_cadena'] ? 'Recorrido por empalme' : ($modo === 'manual' ? 'Reprogramación manual' : ($modo === 'fuga' ? 'Afectado por fuga en ' . $tipoFuga : 'Afectado por el apagón'));
                         @endphp
 
                         <tr class="dato"
+                            data-tandeo-id="{{ $id }}"
                             data-base="{{ $m['inicio_anterior']->format('Y-m-d\TH:i') }}"
                             data-dur="{{ $m['inicio_nuevo']->diffInMinutes($m['fin_nuevo']) }}">
 
@@ -137,7 +154,7 @@
                             </td>
 
                             <td class="num" style="text-align:center;">
-                                <input type="number" class="atraso" step="any"
+                                <input type="number" class="atraso" step="any" @if ($modo === 'fuga' && !$m['es_cadena']) min="{{ $horasAtraso }}" @endif
                                        value="{{ round($m['inicio_anterior']->diffInMinutes($m['inicio_nuevo']) / 60, 2) }}">
                             </td>
 
@@ -152,9 +169,9 @@
             </table>
 
             <div class="acciones-finales">
-                <button type="button" class="secundario" onclick="window.location.href='{{ route('cumplimiento.index') }}'">Cancelar</button>
+                <button type="button" class="secundario" onclick="window.location.href='{{ $urlCancelar }}'">Cancelar</button>
                 <div class="acciones-derecha">
-                    <button type="submit" class="secundario" formaction="{{ $modo === 'manual' ? route('reprogramaciones.manual.previa') : route('reprogramaciones.apagon.previa') }}">Recalcular</button>
+                    <button type="submit" class="secundario" formaction="{{ $modo === 'manual' ? route('reprogramaciones.manual.previa') : ($modo === 'fuga' ? route('reprogramaciones.fuga.previa') : route('reprogramaciones.apagon.previa')) }}">Recalcular</button>
                     <button type="submit" class="principal">Confirmar y guardar</button>
                 </div>
             </div>
@@ -166,6 +183,9 @@
                 + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
             const hhmm = d => pad(d.getHours()) + ':' + pad(d.getMinutes());
 
+            const horasAtrasoManual = document.getElementById('horas-atraso-manual');
+            const tandeoManualId = @json($modo === 'manual' ? (int) $tandeoId : null);
+
             document.querySelectorAll('tr.dato').forEach(function (fila) {
                 const base = new Date(fila.dataset.base);
                 const dur = parseInt(fila.dataset.dur, 10);
@@ -175,6 +195,16 @@
                 const textoFechaNueva = fila.querySelector('.fecha-nueva');
                 const atraso = fila.querySelector('.atraso');
                 const fin = fila.querySelector('.fin');
+
+                function actualizarHorasAtrasoManual() {
+                    if (!horasAtrasoManual || Number(fila.dataset.tandeoId) !== tandeoManualId
+                        || @json(!empty($origenCumplimiento))) return;
+
+                    const diferencia = (new Date(nuevo.value) - base) / 3600000;
+                    horasAtrasoManual.value = Number.isInteger(diferencia) && diferencia >= 1 && diferencia <= 24
+                        ? diferencia
+                        : '';
+                }
 
                 function mostrarFecha(valor) {
                     const fecha = new Date(valor + 'T12:00:00');
@@ -196,6 +226,7 @@
                     nuevo.value = fechaNueva.value + 'T' + horaNueva.value;
                     textoFechaNueva.textContent = mostrarFecha(fechaNueva.value);
                     atraso.value = Math.round((new Date(nuevo.value) - base) / 3600000 * 100) / 100;
+                    actualizarHorasAtrasoManual();
                     pintarFin();
                 }
 
@@ -207,9 +238,11 @@
                     horaNueva.value = valorLocal.slice(11, 16);
                     nuevo.value = valorLocal;
                     textoFechaNueva.textContent = mostrarFecha(fechaNueva.value);
+                    actualizarHorasAtrasoManual();
                     pintarFin();
                 });
 
+                actualizarHorasAtrasoManual();
                 fechaNueva.addEventListener('input', actualizarHorario);
                 horaNueva.addEventListener('input', actualizarHorario);
             });
@@ -222,9 +255,9 @@
             });
         </script>
     @else
-        <p>{{ $modo === 'manual' ? 'No hay cambios para mostrar.' : 'No hay tandeos afectados por el apagón.' }}</p>
+        <p>{{ $modo === 'manual' ? 'No hay cambios para mostrar.' : ($modo === 'fuga' ? 'No hay tandeos afectados por esta fuga.' : 'No hay tandeos afectados por el apagón.') }}</p>
 
-        <button type="button" class="secundario" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); } else { window.location.href='{{ route('cumplimiento.index') }}'; }">Volver</button>
+        <button type="button" class="secundario" onclick="window.location.href='{{ $urlCancelar }}'">Volver</button>
     @endif
 </div>
 @endsection

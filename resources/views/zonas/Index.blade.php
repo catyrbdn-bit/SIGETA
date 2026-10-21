@@ -135,7 +135,7 @@
     <section class="panel">
         <div class="barra-acciones">
             <strong>Lista de colonias</strong>
-            <a href="{{ route('createZona') }}" class="boton">Registrar colonia</a>
+            <a href="{{ route('createZona') }}" class="boton">+ Nueva Colonia</a>
         </div>
 
         <div class="tabla-contenedor">
@@ -151,7 +151,7 @@
                     @forelse ($zonas as $zona)
                         <tr>
                             <td>{{ $zona->nombre }}</td>
-                            <td>{{ $zona->activo ? 'Sí' : 'No' }}</td>
+                            <td><span class="estado-badge estado-{{ $zona->activo ? 'activo' : 'inactivo' }}">{{ $zona->activo ? 'Activa' : 'Inactiva' }}</span></td>
                             <td>
                                 <div class="acciones">
                                     <a href="{{ route('editZona', $zona->id) }}" class="boton boton-secundario">Editar</a>
@@ -167,7 +167,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3">No hay colonias registradas.</td>
+                            <td colspan="3">No hay colonias registradas</td>
                         </tr>
                     @endforelse
                 </tbody>

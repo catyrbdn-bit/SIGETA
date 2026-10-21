@@ -141,7 +141,7 @@
 <div class="contenido-vista">
 <h1>SIGETA</h1>
     <h2>Programar nuevo tandeo</h2>
-    <p class="subtitulo">Selecciona primero la colonia y después el circuito o las calles.</p>
+    <p class="subtitulo">Selecciona primero la colonia y después el circuito o las calles</p>
 
     @if ($errors->any())
         <div class="mensaje-error">
@@ -170,10 +170,10 @@
         </section>
 
         <section class="panel" id="seccion-circuitos" hidden>
-            <label>2. Selecciona el circuito por sus calles o descripción</label>
+            <label>2. Selecciona el circuito por sus calles</label>
             <p class="ayuda">
-                La tabla solo mostrará circuitos de la colonia seleccionada.
-                El código se muestra como referencia.
+                La tabla solo mostrará circuitos de la colonia seleccionada
+                El código se muestra como referencia
             </p>
 
             <div class="tabla-circuitos">
@@ -262,6 +262,36 @@
         </section>
 
         <section class="panel">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input
+                    type="checkbox"
+                    id="repetir"
+                    name="repetir"
+                    value="1"
+                    style="width:18px; min-height:18px;"
+                    @checked(old('repetir'))
+                >
+                <label for="repetir" style="display:inline; margin:0;">Repetir este tandeo</label>
+            </div>
+
+            <div id="opciones-repeticion" style="margin-top:16px;" hidden>
+                <div style="max-width:280px;">
+                    <label for="cada_dias">Repetir cada cuántos días</label>
+                    <input
+                        type="number"
+                        id="cada_dias"
+                        name="cada_dias"
+                        min="1"
+                        max="365"
+                        value="{{ old('cada_dias', 7) }}"
+                    >
+                </div>
+                <p class="ayuda">Se repetirá continuamente hasta que elimines la serie. Al editar un tandeo, esa fecha y las siguientes se ajustarán.</p>
+                <p id="fechas-repeticion" class="ayuda" aria-live="polite"></p>
+            </div>
+        </section>
+
+        <section class="panel">
             <label for="tandeador_id">Tandeador asignado</label>
             <select id="tandeador_id" name="tandeador_id">
                 <option value="">Sin asignar</option>
@@ -346,6 +376,10 @@
 
         const campoFecha = document.getElementById('fecha');
         const fechaLegible = document.getElementById('fecha-legible');
+        const repetir = document.getElementById('repetir');
+        const opcionesRepeticion = document.getElementById('opciones-repeticion');
+        const cadaDias = document.getElementById('cada_dias');
+        const fechasRepeticion = document.getElementById('fechas-repeticion');
 
         function mostrarFechaLegible() {
             if (!campoFecha.value) {
@@ -371,6 +405,42 @@
 
         campoFecha.addEventListener('change', mostrarFechaLegible);
         mostrarFechaLegible();
+
+        function mostrarFechasRepeticion() {
+            opcionesRepeticion.hidden = !repetir.checked;
+            cadaDias.required = repetir.checked;
+            fechasRepeticion.textContent = '';
+
+            if (!repetir.checked || !campoFecha.value || !cadaDias.value) {
+                return;
+            }
+
+            const dias = Number(cadaDias.value);
+            const inicioPartes = campoFecha.value.split('-').map(Number);
+            const fecha = new Date(Date.UTC(inicioPartes[0], inicioPartes[1] - 1, inicioPartes[2]));
+            const fechas = [];
+
+            if (!dias || dias < 1) {
+                fechasRepeticion.textContent = 'Indica cada cuántos días se repetirá.';
+                return;
+            }
+
+            for (let i = 0; i < 4; i++) {
+                if (i > 0) fecha.setUTCDate(fecha.getUTCDate() + dias);
+                fechas.push(new Intl.DateTimeFormat('es-MX', {
+                    weekday: 'long', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC'
+                }).format(fecha));
+            }
+
+            if (fechas.length) {
+                fechasRepeticion.textContent = 'Próximas fechas: ' + fechas.join(', ') + '. La repetición continuará después.';
+            }
+        }
+
+        repetir.addEventListener('change', mostrarFechasRepeticion);
+        campoFecha.addEventListener('change', mostrarFechasRepeticion);
+        cadaDias.addEventListener('input', mostrarFechasRepeticion);
+        mostrarFechasRepeticion();
 
         mostrarCircuitos();
     </script>

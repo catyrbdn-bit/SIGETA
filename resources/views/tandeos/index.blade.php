@@ -5,7 +5,7 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
     <h1 class="h3 mb-0">Tandeos programados</h1>
-    <a href="{{ route('createTandeo') }}" class="btn btn-primary">Registrar tandeo</a>
+    <a href="{{ route('createTandeo') }}" class="btn btn-primary">+ Nuevo Tandeo</a>
 </div>
 
 @if (session('success'))
@@ -106,12 +106,12 @@
                     <td>{{ $tandeo->circuito->descripcion ?: 'Sin calles registradas' }}</td>
                     <td>{{ $tandeo->fecha->locale('es')->translatedFormat('l d/M/Y') }}</td>
                     <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
-                    <td>{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</td>
+                    <td><span class="estado-badge estado-{{ $estado }}">{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</span></td>
                     <td>{{ $tandeo->tandeador->nombre ?? 'Sin asignar' }}</td>
                     <td class="text-nowrap">
                         <a href="{{ route('editTandeo', $tandeo->id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
                         
-                        <form action="{{ route('deleteTandeo', $tandeo->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar este tandeo?');">
+                        <form action="{{ route('deleteTandeo', $tandeo->id) }}" method="POST" class="d-inline" onsubmit="return confirm(@js($tandeo->repeticion_uuid ? 'Se eliminarán todos los tandeos de esta repetición y su historial. Si solo quieres cambiar fechas, usa Editar. ¿Continuar?' : '¿Estás seguro de eliminar este tandeo? Esta acción no se puede deshacer.'))">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>

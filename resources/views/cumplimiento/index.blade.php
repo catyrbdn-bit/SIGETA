@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="container py-4">
-    <h1 class="h3 mb-3">Cumplimiento de tandeos de la semana</h1>
+    <h1 class="h3 mb-3">Cumplimiento de tandeos </h1>
 
     @if (session('success'))
         <div class="alert alert-success" role="alert">{{ session('success') }}</div>
@@ -16,16 +16,27 @@
     @endif
 
 
-    <div class="d-flex gap-2 mb-4">
-        <form action="{{ route('reprogramaciones.apagon.previa') }}" method="POST">
+ 
+
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                <input type="search" id="buscar-tandeo" class="form-control" style="max-width: 340px" placeholder="Buscar por circuito, colonia o calle..." aria-label="Buscar por circuito, colonia o calle">
+                <form action="{{ route('reprogramaciones.apagon.previa') }}" method="POST">
             @csrf
             <button type="submit" class="btn btn-outline-warning">Apagon general</button>
         </form>
-        <button type="button" class="btn btn-outline-secondary" disabled title="Disponible próximamente">Fuga</button>
-    </div>
-
-    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
-        <input type="search" id="buscar-tandeo" class="form-control" style="max-width: 340px" placeholder="Buscar por circuito, colonia o calle..." aria-label="Buscar por circuito, colonia o calle">
+        <form action="{{ route('reprogramaciones.fuga.previa') }}" method="POST">
+            @csrf
+            <input type="hidden" name="tipo_fuga" value="laguna">
+            <input type="hidden" name="horas_atraso" value="6">
+            <button type="submit" class="btn btn-outline-info">Fuga laguna</button>
+        </form>
+        <form action="{{ route('reprogramaciones.fuga.previa') }}" method="POST">
+            @csrf
+            <input type="hidden" name="tipo_fuga" value="pozo">
+            <input type="hidden" name="horas_atraso" value="4">
+            <button type="submit" class="btn btn-outline-info">Fuga pozo</button>
+        </form>
+   
         <button type="submit" form="form-cumplimientos" class="btn btn-primary">Guardar cambios</button>
     </div>
 
@@ -48,24 +59,32 @@
                 <tbody>
                     @forelse ($tandeos as $tandeo)
                         @php
-                            // Buscamos el cumplimiento guardado para este tandeo.
+                            // Buscamos el cumplimiento guardado para este tandeo
                             $registro = $cumplimientos[$tandeo->id] ?? null;
                             $resultado = old("cumplimientos.{$tandeo->id}.resultado", $registro->resultado ?? '');
 
-                            // El tandeo ya conoce su fecha completa de inicio y fin.
+                            // El tandeo ya conoce su fecha completa de inicio y fin
                             $inicio = $tandeo->inicio;
                             $fin = $tandeo->fin;
 
-                            // Ignoramos un cumplimiento capturado antes del horario actual.
-                            if ($registro && $registro->fecha_captura && \Carbon\Carbon::parse($registro->fecha_captura)->lt($inicio)) {
+                            // Conservamos el atraso registrado desde Editar aunque el nuevo horario sea futuro.
+                            $registroAtrasoManual = $registro
+                                && $registro->resultado === 'atraso'
+                                && $registro->motivo === 'otro';
+
+                            // Ignoramos un cumplimiento viejo capturado antes del horario actual.
+                            if ($registro && $registro->fecha_captura && \Carbon\Carbon::parse($registro->fecha_captura)->lt($inicio) && !$registroAtrasoManual) {
                                 $registro = null;
                                 $resultado = '';
                             }
 
-                            $esFuturo = now()->lt($inicio);
+                            $esFuturo = now()->lt($inicio) && !$registroAtrasoManual;
                             $enCurso = now()->betweenIncluded($inicio, $fin);
+                            $estadoActual = $esFuturo
+                                ? 'programado'
+                                : (($enCurso && $resultado === '') ? 'en_curso' : ($resultado ?: 'pendiente'));
 
-                            // Un tandeo futuro todavía no puede tener cumplimiento.
+                            // Un tandeo futuro todavía no puede tener cumplimiento
                             if ($esFuturo) {
                                 $resultado = '';
                             }
@@ -81,11 +100,11 @@
                             <td>{{ $tandeo->fecha->locale('es')->translatedFormat('l d/M/Y') }}</td>
                             <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                             <td>
-                                <select class="form-select estado-select" name="cumplimientos[{{ $tandeo->id }}][resultado]" data-atraso="atraso-{{ $tandeo->id }}">
+                                <select id="estado-{{ $tandeo->id }}" class="form-select estado-select estado-{{ $estadoActual }}" name="cumplimientos[{{ $tandeo->id }}][resultado]" data-automatico="{{ $esFuturo ? 'programado' : ($enCurso ? 'en_curso' : 'pendiente') }}" data-atraso="atraso-{{ $tandeo->id }}">
                                     @if ($esFuturo)
-                                        <option value="" selected disabled>Programado (aún no inicia)</option>
+                                        <option value="" selected disabled>Programado</option>
                                     @elseif ($enCurso && $resultado === '')
-                                        <option value="" selected disabled>En curso (automático)</option>
+                                        <option value="" selected disabled>En curso</option>
                                     @else
                                         <option value="" {{ $resultado === '' ? 'selected' : '' }}>Sin registrar</option>
                                     @endif
@@ -95,7 +114,7 @@
                                 </select>
                             </td>
                             <td>
-                                <select id="atraso-{{ $tandeo->id }}" class="form-select atraso-select" name="cumplimientos[{{ $tandeo->id }}][horas_atraso]" {{ $resultado === 'atraso' ? '' : 'disabled' }}>
+                                <select id="atraso-{{ $tandeo->id }}" class="form-select atraso-select" name="cumplimientos[{{ $tandeo->id }}][horas_atraso]" data-estado="estado-{{ $tandeo->id }}" {{ $esFuturo ? 'disabled' : '' }}>
                                     <option value="">—</option>
                                     @for ($hora = 1; $hora <= 24; $hora++)
                                         <option value="{{ $hora }}" {{ (string) old("cumplimientos.{$tandeo->id}.horas_atraso", $registro->horas_atraso ?? '') === (string) $hora ? 'selected' : '' }}>{{ $hora }}</option>
@@ -104,8 +123,8 @@
                             
                                 @if ($esFuturo)
                                     <small class="text-muted d-block mt-1"></small>
-                                @elseif ($resultado !== 'atraso')
-                                    <small class="text-muted d-block mt-1">Selecciona "Con atraso" en Estado para indicar las horas</small>
+                                @else
+                                    <small class="text-muted d-block mt-1">Elegir horas</small>
                                 @endif
                             </td>
                             <td><input class="form-control" type="text" maxlength="1000" name="cumplimientos[{{ $tandeo->id }}][observaciones]" value="{{ old("cumplimientos.{$tandeo->id}.observaciones", $registro->observaciones ?? '') }}" placeholder="Agregar observación..."></td>
@@ -123,14 +142,41 @@
     <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary mt-2" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver</a>
 </div>
 
+
+
+
 <script>
     document.querySelectorAll('.estado-select').forEach(function (select) {
+        const estadosConColor = ['programado', 'en_curso', 'pendiente', 'cumplido', 'atraso', 'no_cumplido'];
+
+        function actualizarColor() {
+            estadosConColor.forEach(function (estado) {
+                select.classList.remove('estado-' + estado);
+            });
+            select.classList.add('estado-' + (select.value || select.dataset.automatico));
+        }
+
+        actualizarColor();
         select.addEventListener('change', function () {
+            actualizarColor();
             const atraso = document.getElementById(this.dataset.atraso);
             const aplica = this.value === 'atraso';
-            atraso.disabled = !aplica;
             atraso.required = aplica;
             if (!aplica) atraso.value = '';
+        });
+    });
+
+    document.querySelectorAll('.atraso-select').forEach(function (select) {
+        select.addEventListener('change', function () {
+            const estado = document.getElementById(this.dataset.estado);
+
+            if (this.value !== '') {
+                estado.value = 'atraso';
+                estado.dispatchEvent(new Event('change'));
+            } else if (estado.value === 'atraso') {
+                estado.value = '';
+                estado.dispatchEvent(new Event('change'));
+            }
         });
     });
 

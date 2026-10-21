@@ -6,6 +6,7 @@ use App\Models\circuitosModel;
 use App\Models\cumplimientoTandeo;
 use App\Models\PuntoAbastecimiento;
 use App\Models\Reprogramacion;
+use App\Models\TandeoRepeticion;
 use App\Models\syncChange;
 use App\Models\syncConflict;
 use App\Models\syncDevice;
@@ -24,7 +25,7 @@ class syncController extends Controller
             'device_name' => 'nullable|string|max:100',
             'cambios' => 'required|array|max:100',
             'cambios.*.sync_uuid' => 'required|uuid',
-            'cambios.*.entity_type' => 'required|in:zonas,puntos_abastecimiento,circuitos,tandeos_programados,cumplimiento_tandeos,reprogramaciones',
+            'cambios.*.entity_type' => 'required|in:zonas,puntos_abastecimiento,circuitos,tandeos_programados,tandeo_repeticiones,cumplimiento_tandeos,reprogramaciones',
             'cambios.*.record_uuid' => 'required|uuid',
             'cambios.*.operation' => 'required|in:guardar,eliminar',
             'cambios.*.payload' => 'nullable|array',
@@ -128,6 +129,7 @@ class syncController extends Controller
             'puntos_abastecimiento' => PuntoAbastecimiento::class,
             'circuitos' => circuitosModel::class,
             'tandeos_programados' => tandeoProgramado::class,
+            'tandeo_repeticiones' => TandeoRepeticion::class,
             'cumplimiento_tandeos' => cumplimientoTandeo::class,
             'reprogramaciones' => Reprogramacion::class,
         ];
@@ -157,6 +159,14 @@ class syncController extends Controller
         }
 
         if ($registro && (int) $registro->sync_version !== (int) $cambio->base_version) {
+            if ($cambio->entity_type === 'tandeos_programados' && (int) $cambio->base_version === 0) {
+                $datosDuplicados = $this->resolverReferencias($cambio->entity_type, $cambio->payload ?? []);
+                if ($datosDuplicados && $this->mismoTandeo($registro, $datosDuplicados)) {
+                    $cambio->update(['status' => 'aplicado']);
+                    return 'aplicado';
+                }
+            }
+
             return $this->guardarConflicto($cambio, $registro);
         }
 
@@ -189,6 +199,10 @@ class syncController extends Controller
         $registro->sync_version = (int) (($cambio->payload['sync_version'] ?? 0) ?: $cambio->base_version + 1);
         $registro->save();
 
+        if ($registro instanceof TandeoRepeticion && ! $registro->activa) {
+            $this->eliminarOcurrenciasDeLaRepeticion($registro->repeticion_uuid);
+        }
+
         $cambio->update(['status' => 'aplicado']);
         return 'aplicado';
     }
@@ -205,6 +219,15 @@ class syncController extends Controller
         }
 
         if ($tipo === 'tandeos_programados') {
+            $circuito = circuitosModel::where('sync_uuid', $datos['circuito_sync_uuid'] ?? '')->first();
+            $tandeador = $this->buscarUsuario($datos['tandeador_usuario'] ?? null);
+            if (!$circuito || (($datos['tandeador_usuario'] ?? null) && !$tandeador)) return null;
+            $datos['circuito_id'] = $circuito->id;
+            $datos['tandeador_id'] = $tandeador?->id;
+            unset($datos['circuito_sync_uuid'], $datos['tandeador_usuario']);
+        }
+
+        if ($tipo === 'tandeo_repeticiones') {
             $circuito = circuitosModel::where('sync_uuid', $datos['circuito_sync_uuid'] ?? '')->first();
             $tandeador = $this->buscarUsuario($datos['tandeador_usuario'] ?? null);
             if (!$circuito || (($datos['tandeador_usuario'] ?? null) && !$tandeador)) return null;
@@ -248,6 +271,52 @@ class syncController extends Controller
     private function buscarUsuario(?string $nombre)
     {
         return $nombre ? usuarioModel::where('usuario', $nombre)->first() : null;
+    }
+
+    private function mismoTandeo(tandeoProgramado $existente, array $datos): bool
+    {
+        foreach ([
+            'circuito_id', 'fecha', 'hora_inicio_programada', 'hora_fin_programada',
+            'estado', 'tandeador_id', 'repeticion_uuid', 'repetir_cada_dias', 'fecha_repeticion',
+        ] as $campo) {
+            $local = $existente->getAttribute($campo);
+            $remoto = $datos[$campo] ?? null;
+
+            if ($campo === 'fecha' && $local && $remoto) {
+                $local = \Carbon\Carbon::parse($local)->toDateString();
+                $remoto = \Carbon\Carbon::parse($remoto)->toDateString();
+            } elseif (in_array($campo, ['hora_inicio_programada', 'hora_fin_programada'], true) && $local && $remoto) {
+                $local = \Carbon\Carbon::parse($local)->format('H:i:s');
+                $remoto = \Carbon\Carbon::parse($remoto)->format('H:i:s');
+            }
+
+            if ($local != $remoto) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function eliminarOcurrenciasDeLaRepeticion(string $serieId): void
+    {
+        $tandeos = tandeoProgramado::where('repeticion_uuid', $serieId)->get();
+        $ids = $tandeos->pluck('id');
+
+        cumplimientoTandeo::whereIn('tandeo_id', $ids)->get()->each(function ($registro) {
+            $registro->omitirSeguimientoSync();
+            $registro->delete();
+        });
+
+        Reprogramacion::whereIn('tandeo_id', $ids)->get()->each(function ($registro) {
+            $registro->omitirSeguimientoSync();
+            $registro->delete();
+        });
+
+        $tandeos->each(function ($tandeo) {
+            $tandeo->omitirSeguimientoSync();
+            $tandeo->delete();
+        });
     }
 
     private function guardarConflicto(syncChange $cambio, $registro): string

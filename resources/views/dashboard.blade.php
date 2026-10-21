@@ -17,6 +17,8 @@
         </select>
     </div>
 </div>
+<h1>Panel principal</h1>
+<br><br>
 
 <h2 class="h5 mb-3">Tandeos de la semana</h2>
 <div class="table-responsive">
@@ -68,7 +70,7 @@
                     <td>{{ $tandeo->circuito->descripcion ?: 'Sin calles registradas' }}</td>
                     <td>{{ $tandeo->fecha->locale('es')->translatedFormat('l d/M/Y') }}</td>
                     <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
-                    <td>{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</td>
+                    <td><span class="estado-badge estado-{{ $estado }}">{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</span></td>
                     <td>{{ $tandeo->circuito->puntoAbastecimiento->nombre ?? 'Sin punto fijo' }}</td>
                     <td><a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id]) }}" class="btn btn-sm btn-outline-primary">Ir a cumplimiento</a></td>
                 </tr>

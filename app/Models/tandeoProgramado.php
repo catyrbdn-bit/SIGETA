@@ -24,6 +24,9 @@ class tandeoProgramado extends Model
         'hora_fin_real',
         'estado',
         'tandeador_id',
+        'repeticion_uuid',
+        'repetir_cada_dias',
+        'fecha_repeticion',
     ];
 
     protected $casts = [

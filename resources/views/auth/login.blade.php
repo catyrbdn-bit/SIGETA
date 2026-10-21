@@ -61,6 +61,14 @@
             font-size: 15px;
             cursor: pointer;
         }
+
+        @media (max-width: 480px) {
+            body { padding: 14px; }
+            .panel { padding: 18px; }
+            h1 { font-size: 1.6rem; }
+            .botones { justify-content: stretch; }
+            .boton { width: 100%; }
+        }
     </style>
 </head>
 <body>

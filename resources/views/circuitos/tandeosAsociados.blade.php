@@ -78,11 +78,38 @@
                 </thead>
                 <tbody>
                     @foreach ($tandeosAsociados as $tandeo)
+                        @php
+                            $cumplimiento = $tandeo->cumplimientos->first();
+                            if ($cumplimiento && $cumplimiento->fecha_captura && \Carbon\Carbon::parse($cumplimiento->fecha_captura)->lt($tandeo->inicio)) {
+                                $cumplimiento = null;
+                            }
+
+                            if (now()->lt($tandeo->inicio)) {
+                                $estado = 'programado';
+                            } elseif ($tandeo->estado !== 'programado') {
+                                $estado = $tandeo->estado;
+                            } elseif ($cumplimiento) {
+                                $estado = $cumplimiento->resultado;
+                            } elseif (now()->betweenIncluded($tandeo->inicio, $tandeo->fin)) {
+                                $estado = 'en_curso';
+                            } else {
+                                $estado = 'pendiente';
+                            }
+
+                            $nombresEstados = [
+                                'programado' => 'Programado',
+                                'en_curso' => 'En curso',
+                                'pendiente' => 'Pendiente de registrar',
+                                'cumplido' => 'Cumplido',
+                                'atraso' => 'Con atraso',
+                                'no_cumplido' => 'No cumplido',
+                            ];
+                        @endphp
                         <tr>
                             <td>{{ $circuito->descripcion ?: 'Sin calles registradas' }}</td>
                             <td>{{ \Carbon\Carbon::parse($tandeo->fecha)->locale('es')->translatedFormat('l d/M/Y') }}</td>
                             <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
-                            <td>{{ $tandeo->estado }}</td>
+                            <td><span class="estado-badge estado-{{ $estado }}">{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</span></td>
                         </tr>
                     @endforeach
                 </tbody>

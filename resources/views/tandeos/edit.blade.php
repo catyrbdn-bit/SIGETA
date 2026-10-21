@@ -96,6 +96,11 @@
 <h1>SIGETA</h1>
     <h2>Editar tandeo</h2>
     <p class="subtitulo">Modifica los datos del tandeo. Antes de guardar, revisa cómo se acomodarán los horarios afectados.</p>
+    @if ($tandeo->repeticion_uuid)
+        <div class="alert alert-info">
+            Este tandeo pertenece a una repetición cada {{ $tandeo->repetir_cada_dias }} días. Los cambios se aplicarán solo a esta fecha; las demás fechas de la repetición conservarán su horario.
+        </div>
+    @endif
 
     @if ($errors->any())
         <div class="mensaje-error">
@@ -108,7 +113,8 @@
         </div>
     @endif
 
-    <form action="{{ route('reprogramaciones.manual.previa') }}" method="POST">
+    <form id="form-editar-tandeo" action="{{ route('reprogramaciones.manual.previa') }}" method="POST"
+>
         @csrf
         <input type="hidden" name="tandeo_id" value="{{ $tandeo->id }}">
 
@@ -116,11 +122,16 @@
             <label for="circuito_id">Circuito:</label>
             <select id="circuito_id" name="circuito_id" required>
                 @foreach ($circuitos as $circuito)
-                    <option value="{{ $circuito->id }}" @selected(old('circuito_id', $tandeo->circuito_id) == $circuito->id)>
+                    <option value="{{ $circuito->id }}" data-calles="{{ $circuito->descripcion ?: 'Sin calles registradas' }}" @selected(old('circuito_id', $tandeo->circuito_id) == $circuito->id)>
                         {{ $circuito->nombre }} ({{ $circuito->zona->nombre }})
                     </option>
                 @endforeach
             </select>
+        </section>
+
+        <section class="panel">
+            <label>Calles del circuito:</label>
+            <p id="calles_circuito" class="ayuda mb-0">{{ $tandeo->circuito->descripcion ?: 'Sin calles registradas' }}</p>
         </section>
 
         <section class="panel">
@@ -144,6 +155,20 @@
                 required
             >
             <p class="ayuda">Usa formato de 24 horas, por ejemplo: 18:30.</p>
+        </section>
+
+
+
+        <section class="panel">
+            <label for="hora_fin_nueva">Hora de fin:</label>
+            <input
+                type="time"
+                id="hora_fin_nueva"
+                name="hora_fin_nueva"
+                value="{{ old('hora_fin_nueva', substr($tandeo->hora_fin_programada, 0, 5)) }}"
+                required
+            >
+            <p class="ayuda">Si la hora de fin es menor que la de inicio, el tandeo termina al día siguiente</p>
         </section>
 
         <section class="panel">
@@ -176,4 +201,14 @@
         </div>
     </form>
 </div>
+
+<script>
+    const circuitoSelect = document.getElementById('circuito_id');
+    const callesCircuito = document.getElementById('calles_circuito');
+
+    circuitoSelect.addEventListener('change', function () {
+        callesCircuito.textContent = this.options[this.selectedIndex].dataset.calles;
+    });
+
+</script>
 @endsection
