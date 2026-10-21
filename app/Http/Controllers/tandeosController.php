@@ -29,6 +29,9 @@ class tandeosController extends Controller
                 $consulta->orderByDesc('fecha_captura')->orderByDesc('id');
             },
         ])
+            ->when(auth()->user()->rol === 'tandeador', function ($consulta) {
+                $consulta->where('tandeador_id', auth()->id());
+            })
             ->orderBy('fecha')
             ->orderBy('hora_inicio_programada')
             ->get();

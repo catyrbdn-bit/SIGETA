@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\usuarioController;
 use App\Http\Controllers\zonasController;
 use App\Http\Controllers\circuitosController;
 use App\Http\Controllers\tandeosController;
@@ -17,11 +19,27 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::get('/login', [LoginController::class, 'mostrarInicioSesion'])
-    ->name('login');
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'mostrarInicioSesion'])
+        ->name('login');
 
-Route::post('/login', [LoginController::class, 'iniciarSesion'])
-    ->name('iniciarSesion');
+    Route::post('/login', [LoginController::class, 'iniciarSesion'])
+        ->name('iniciarSesion');
+
+    Route::get('/forgot-password', [PasswordResetController::class, 'solicitar'])
+        ->name('password.request');
+
+    Route::post('/forgot-password', [PasswordResetController::class, 'enviarEnlace'])
+        ->name('password.email');
+
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'cambiar'])
+        ->name('password.reset');
+
+    Route::post('/reset-password', [PasswordResetController::class, 'guardarNueva'])
+        ->name('password.update');
+});
+
+Route::middleware('auth')->group(function () {
 
 Route::post('/logout', [LoginController::class, 'cerrarSesion'])
     ->name('cerrarSesion');
@@ -35,6 +53,9 @@ Route::get('/dashboard', function () {
     $finSemana = now()->endOfWeek()->toDateString();
 
     $tandeosSemana = \App\Models\TandeoProgramado::whereBetween('fecha', [$inicioSemana, $finSemana])
+        ->when(auth()->user()->rol === 'tandeador', function ($consulta) {
+            $consulta->where('tandeador_id', auth()->id());
+        })
         ->with([
             'circuito.zona',
             'circuito.puntoAbastecimiento',
@@ -47,37 +68,37 @@ Route::get('/dashboard', function () {
         ->get();
 
     return view('dashboard', compact('tandeosSemana'));
-})->middleware('auth')->name('dashboard');
+})->name('dashboard');
+
+Route::middleware('rol:administrador')->prefix('usuarios')->name('usuarios.')->group(function () {
+    Route::get('/', [usuarioController::class, 'index'])->name('index');
+    Route::get('/crear', [usuarioController::class, 'create'])->name('create');
+    Route::post('/', [usuarioController::class, 'store'])->name('store');
+    Route::get('/{id}/editar', [usuarioController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [usuarioController::class, 'update'])->name('update');
+    Route::delete('/{id}', [usuarioController::class, 'destroy'])->name('destroy');
+});
 
 
 // ==================================================
 // ZONAS
 // ==================================================
 
-Route::get('/zonas', [zonasController::class, 'index'])
-    ->name('zonas.index');
-
-Route::get('/zonas/crear', [zonasController::class, 'create'])
-    ->name('createZona');
-
-Route::post('/zonas/guardar', [zonasController::class, 'store'])
-    ->name('storeZona');
-
-Route::put('/zonas/{zona}', [zonasController::class, 'update'])
-    ->name('updateZona');
-
-Route::get('/zonas/{id}/editar', [zonasController::class, 'edit'])
-    ->name('editZona');
-
-Route::delete('/zonas/{id}', [zonasController::class, 'destroy'])
-    ->name('deleteZona');
+Route::middleware('rol:administrador,capturista')->group(function () {
+    Route::get('/zonas', [zonasController::class, 'index'])->name('zonas.index');
+    Route::get('/zonas/crear', [zonasController::class, 'create'])->name('createZona');
+    Route::post('/zonas/guardar', [zonasController::class, 'store'])->name('storeZona');
+    Route::put('/zonas/{zona}', [zonasController::class, 'update'])->name('updateZona');
+    Route::get('/zonas/{id}/editar', [zonasController::class, 'edit'])->name('editZona');
+    Route::delete('/zonas/{id}', [zonasController::class, 'destroy'])->name('deleteZona');
+});
 
 
 // ==================================================
 // CIRCUITOS
 // ==================================================
 
-
+Route::middleware('rol:administrador,capturista')->group(function () {
 Route::get('/circuitos', [circuitosController::class, 'index'])
     ->name('circuitos.index');
 
@@ -98,7 +119,7 @@ Route::delete('/circuitos/{id}', [circuitosController::class, 'destroy'])
 
 Route::put('/circuitos/{id}/desactivar', [circuitosController::class, 'desactivar'])
     ->name('desactivarCircuito');
-
+});
 
 
 // ==================================================
@@ -108,41 +129,31 @@ Route::put('/circuitos/{id}/desactivar', [circuitosController::class, 'desactiva
 Route::get('/tandeos', [tandeosController::class, 'index'])
     ->name('tandeos.index');
 
-Route::get('/tandeos/crear', [tandeosController::class, 'create'])
-    ->name('createTandeo');
-
-Route::post('/tandeos/guardar', [tandeosController::class, 'store'])
-    ->name('storeTandeo');
-
-Route::get('/tandeos/{id}/editar', [tandeosController::class, 'edit'])
-    ->name('editTandeo');
-
-
-Route::delete('/tandeos/{id}', [tandeosController::class, 'destroy'])
-    ->name('deleteTandeo');
+Route::middleware('rol:administrador,capturista')->group(function () {
+    Route::get('/tandeos/crear', [tandeosController::class, 'create'])->name('createTandeo');
+    Route::post('/tandeos/guardar', [tandeosController::class, 'store'])->name('storeTandeo');
+    Route::get('/tandeos/{id}/editar', [tandeosController::class, 'edit'])->name('editTandeo');
+    Route::delete('/tandeos/{id}', [tandeosController::class, 'destroy'])->name('deleteTandeo');
+});
     
 
 // ==================================================
 // CUMPLIMIENTO DE TANDEOS
 // ==================================================
 
-Route::get('/cumplimiento', [cumplimientoController::class, 'index'])
-    ->name('cumplimiento.index');
-
-Route::post('/cumplimiento/guardar', [cumplimientoController::class, 'store'])
-    ->name('storeCumplimiento');
-
-Route::post('/cumplimiento/apagon-general', [cumplimientoController::class, 'apagonGeneral'])
-    ->name('apagonGeneral');
-
-Route::post('/cumplimiento/fuga', [cumplimientoController::class, 'fuga'])
-    ->name('registrarFuga');
+Route::middleware('rol:administrador,capturista')->group(function () {
+    Route::get('/cumplimiento', [cumplimientoController::class, 'index'])->name('cumplimiento.index');
+    Route::post('/cumplimiento/guardar', [cumplimientoController::class, 'store'])->name('storeCumplimiento');
+    Route::post('/cumplimiento/apagon-general', [cumplimientoController::class, 'apagonGeneral'])->name('apagonGeneral');
+    Route::post('/cumplimiento/fuga', [cumplimientoController::class, 'fuga'])->name('registrarFuga');
+});
 
     
 // ==================================================
 // REPROGRAMACIONES
 // ==================================================
 
+Route::middleware('rol:administrador,capturista')->group(function () {
 Route::post('/reprogramaciones/apagon/previa', [reprogramacionController::class, 'previa'])
     ->name('reprogramaciones.apagon.previa');
 
@@ -161,3 +172,6 @@ Route::post('/reprogramaciones/manual/previa', [reprogramacionController::class,
 
 Route::post('/reprogramaciones/manual/guardar', [reprogramacionController::class, 'storeManual'])
     ->name('reprogramaciones.manual.store');
+
+});
+});

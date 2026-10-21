@@ -31,7 +31,9 @@
                 <th>Horario</th>
                 <th>Estado</th>
                 <th>Punto de abastecimiento</th>
-                <th>Acción</th>
+                @if (Auth::user()->rol !== 'tandeador')
+                    <th>Acción</th>
+                @endif
             </tr>
         </thead>
         <tbody>
@@ -72,12 +74,14 @@
                     <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                     <td><span class="estado-badge estado-{{ $estado }}">{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</span></td>
                     <td>{{ $tandeo->circuito->puntoAbastecimiento->nombre ?? 'Sin punto fijo' }}</td>
-                    <td><a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id]) }}" class="btn btn-sm btn-outline-primary">Ir a cumplimiento</a></td>
+                    @if (Auth::user()->rol !== 'tandeador')
+                        <td><a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id]) }}" class="btn btn-sm btn-outline-primary">Ir a cumplimiento</a></td>
+                    @endif
                 </tr>
             @empty
-                <tr><td colspan="7" class="text-center text-muted">No hay tandeos programados esta semana.</td></tr>
+                <tr><td colspan="{{ Auth::user()->rol === 'tandeador' ? 6 : 7 }}" class="text-center text-muted">{{ Auth::user()->rol === 'tandeador' ? 'No tienes tandeos asignados esta semana.' : 'No hay tandeos programados esta semana.' }}</td></tr>
             @endforelse
-            <tr id="sin-tandeos-filtrados" class="d-none"><td colspan="7" class="text-center text-muted">No hay tandeos con ese estado.</td></tr>
+            <tr id="sin-tandeos-filtrados" class="d-none"><td colspan="{{ Auth::user()->rol === 'tandeador' ? 6 : 7 }}" class="text-center text-muted">No hay tandeos con ese estado.</td></tr>
         </tbody>
     </table>
 </div>

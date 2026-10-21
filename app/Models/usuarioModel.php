@@ -29,6 +29,10 @@ class usuarioModel extends Authenticatable
         'password',
     ];
 
+    protected $casts = [
+        'activo' => 'boolean',
+    ];
+
 
  //Indica a Laravel qué campo utilizar
  //como identificador para iniciar sesión.

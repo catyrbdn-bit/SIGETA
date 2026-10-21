@@ -160,14 +160,22 @@
                     </div>
 
                     <nav class="menu-navegacion">
-                        <a href="{{ route('dashboard') }}" class="btn btn-outline-primary text-start">Panel principal</a>
-                        <a href="{{ route('cumplimiento.index') }}" class="btn btn-outline-secondary text-start">Registrar cumplimiento de un tandeo</a>
-                        <a href="{{ route('tandeos.index') }}" class="btn btn-outline-secondary text-start">Programar un tandeo</a>
-                        <a href="{{ route('circuitos.index') }}" class="btn btn-outline-secondary text-start"> Ver Circuitos</a>
-                        <a href="{{ route('zonas.index') }}" class="btn btn-outline-secondary text-start">Ver Colonias</a>
+                        @if (Auth::user()->rol === 'tandeador')
+                            <a href="{{ route('dashboard') }}" class="btn btn-outline-primary text-start">Panel principal</a>
+                            <a href="{{ route('tandeos.index') }}" class="btn btn-outline-secondary text-start">Mis tandeos asignados</a>
+                        @else
+                            <a href="{{ route('dashboard') }}" class="btn btn-outline-primary text-start">Panel principal</a>
+                            <a href="{{ route('cumplimiento.index') }}" class="btn btn-outline-secondary text-start">Registrar cumplimiento de un tandeo</a>
+                            <a href="{{ route('tandeos.index') }}" class="btn btn-outline-secondary text-start">Programar un tandeo</a>
+                            <a href="{{ route('circuitos.index') }}" class="btn btn-outline-secondary text-start">Ver Circuitos</a>
+                            <a href="{{ route('zonas.index') }}" class="btn btn-outline-secondary text-start">Ver Colonias</a>
 
+                            @if (Auth::user()->rol === 'administrador')
+                                <a href="{{ route('usuarios.index') }}" class="btn btn-outline-secondary text-start">Gestión de usuarios</a>
+                            @endif
 
-                        <a href="{{ route('tandeos.index') }}" class="btn btn-outline-secondary text-start">Calendario</a>
+                            <a href="{{ route('tandeos.index') }}" class="btn btn-outline-secondary text-start">Calendario</a>
+                        @endif
                     </nav>
 
                     <form action="{{ route('cerrarSesion') }}" method="POST" class="mt-auto pt-4">

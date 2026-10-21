@@ -84,6 +84,12 @@
                 </div>
             @endif
 
+            @if (session('success'))
+                <div class="mensaje-error" role="status" style="border-color:#9bc9a5;color:#245b2d;background:#effaf0;">
+                    {{ session('success') }}
+                </div>
+            @endif
+
             <form action="{{ route('iniciarSesion') }}" method="POST">
                 @csrf
 
@@ -98,6 +104,8 @@
                         required
                     >
                 </div>
+
+                <p><a href="{{ route('password.request') }}">¿Olvidaste tu contraseña?</a></p>
 
                 <div class="campo">
                     <label for="password">Contraseña:</label>
