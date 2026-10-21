@@ -19,8 +19,8 @@
 
 <div class="row g-2 align-items-end mb-3">
     <div class="col-md-4">
-        <label for="buscar-tandeo" class="form-label">Circuito o colonia</label>
-        <input type="search" id="buscar-tandeo" class="form-control" placeholder="Escribe para buscar">
+        <label for="buscar-tandeo" class="form-label">Circuito, colonia o calle</label>
+        <input type="search" id="buscar-tandeo" class="form-control" placeholder="Escribe para buscar circuito, colonia o calle">
     </div>
     <div class="col-md-3">
         <label for="filtro-zona" class="form-label">Colonia</label>
@@ -59,6 +59,7 @@
             <tr>
                 <th>Circuito</th>
                 <th>Colonia</th>
+                <th>Calles</th>
                 <th>Fecha</th>
                 <th>Horario</th>
                 <th>Estado</th>
@@ -93,7 +94,7 @@
                         'atraso' => 'Con atraso',
                         'no_cumplido' => 'No cumplido',
                     ];
-                    $textoBusqueda = \Illuminate\Support\Str::lower($tandeo->circuito->nombre.' '.$tandeo->circuito->zona->nombre);
+                    $textoBusqueda = \Illuminate\Support\Str::lower($tandeo->circuito->nombre.' '.$tandeo->circuito->zona->nombre.' '.$tandeo->circuito->descripcion);
                 @endphp
                 <tr class="fila-tandeo"
                     data-busqueda="{{ $textoBusqueda }}"
@@ -102,8 +103,9 @@
                     data-estado="{{ $estado }}">
                     <td>{{ $tandeo->circuito->nombre }}</td>
                     <td>{{ $tandeo->circuito->zona->nombre }}</td>
-                    <td>{{ ucfirst($tandeo->fecha->locale('es')->translatedFormat('l d \\d\\e F \\d\\e Y')) }}</td>
-                    <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }}-{{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
+                    <td>{{ $tandeo->circuito->descripcion ?: 'Sin calles registradas' }}</td>
+                    <td>{{ $tandeo->fecha->locale('es')->translatedFormat('l d/M/Y') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                     <td>{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</td>
                     <td>{{ $tandeo->tandeador->nombre ?? 'Sin asignar' }}</td>
                     <td class="text-nowrap">
@@ -117,9 +119,9 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="7" class="text-center text-muted">No hay tandeos registrados.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted">No hay tandeos registrados.</td></tr>
             @endforelse
-            <tr id="sin-resultados" class="d-none"><td colspan="7" class="text-center text-muted">No se encontraron tandeos con esos filtros.</td></tr>
+            <tr id="sin-resultados" class="d-none"><td colspan="8" class="text-center text-muted">No se encontraron tandeos con esos filtros.</td></tr>
         </tbody>
     </table>
 </div>

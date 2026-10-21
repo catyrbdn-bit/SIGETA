@@ -15,10 +15,6 @@
         </div>
     @endif
 
-    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-        <button type="submit" form="form-cumplimientos" class="btn btn-primary">Guardar cambios</button>
-        <input type="search" id="buscar-tandeo" class="form-control" style="max-width: 340px" placeholder="Buscar por circuito o colonia..." aria-label="Buscar por circuito o colonia">
-    </div>
 
     <div class="d-flex gap-2 mb-4">
         <form action="{{ route('reprogramaciones.apagon.previa') }}" method="POST">
@@ -28,6 +24,11 @@
         <button type="button" class="btn btn-outline-secondary" disabled title="Disponible próximamente">Fuga</button>
     </div>
 
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+        <input type="search" id="buscar-tandeo" class="form-control" style="max-width: 340px" placeholder="Buscar por circuito, colonia o calle..." aria-label="Buscar por circuito, colonia o calle">
+        <button type="submit" form="form-cumplimientos" class="btn btn-primary">Guardar cambios</button>
+    </div>
+
     <form id="form-cumplimientos" action="{{ route('storeCumplimiento') }}" method="POST">
         @csrf
         <div class="table-responsive">
@@ -35,6 +36,8 @@
                 <thead class="table-light">
                     <tr>
                         <th>Circuito / Colonia</th>
+                        <th>Calles</th>
+                        <th>Fecha</th>
                         <th>Horario</th>
                         <th>Estado</th>
                         <th>Atraso (H)</th>
@@ -67,14 +70,16 @@
                                 $resultado = '';
                             }
 
-                            $busqueda = $tandeo->circuito->nombre.' '.$tandeo->circuito->zona->nombre;
+                            $busqueda = $tandeo->circuito->nombre.' '.$tandeo->circuito->zona->nombre.' '.$tandeo->circuito->descripcion;
                         @endphp
                         <tr class="fila-tandeo" id="tandeo-{{ $tandeo->id }}" data-busqueda="{{ \Illuminate\Support\Str::lower($busqueda) }}">
                             <td>
                                 <strong>{{ $tandeo->circuito->nombre }}</strong><br>
                                 <span class="text-muted">{{ $tandeo->circuito->zona->nombre }}</span>
                             </td>
-                            <td>{{ $tandeo->fecha->format('d/m/Y') }}<br>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }}-{{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
+                            <td>{{ $tandeo->circuito->descripcion ?: 'Sin calles registradas' }}</td>
+                            <td>{{ $tandeo->fecha->locale('es')->translatedFormat('l d/M/Y') }}</td>
+                            <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                             <td>
                                 <select class="form-select estado-select" name="cumplimientos[{{ $tandeo->id }}][resultado]" data-atraso="atraso-{{ $tandeo->id }}">
                                     @if ($esFuturo)
@@ -107,9 +112,9 @@
                             <td><a class="btn btn-sm btn-outline-primary" href="{{ route('editTandeo', $tandeo->id) }}">Editar tandeo</a></td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center text-muted">No hay tandeos programados esta semana</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted">No hay tandeos programados esta semana</td></tr>
                     @endforelse
-                    <tr id="sin-resultados" class="d-none"><td colspan="6" class="text-center text-muted">No se encontraron tandeos con esa busqueda</td></tr>
+                    <tr id="sin-resultados" class="d-none"><td colspan="8" class="text-center text-muted">No se encontraron tandeos con esa busqueda</td></tr>
                 </tbody>
             </table>
         </div>

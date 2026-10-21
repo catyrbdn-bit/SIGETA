@@ -24,6 +24,8 @@
         <thead class="table-light">
             <tr>
                 <th>Circuito / Colonia</th>
+                <th>Calles</th>
+                <th>Fecha</th>
                 <th>Horario</th>
                 <th>Estado</th>
                 <th>Punto de abastecimiento</th>
@@ -63,15 +65,17 @@
                         <strong>{{ $tandeo->circuito->nombre }}</strong><br>
                         <span class="text-muted">{{ $tandeo->circuito->zona->nombre }}</span>
                     </td>
-                    <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }}-{{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
+                    <td>{{ $tandeo->circuito->descripcion ?: 'Sin calles registradas' }}</td>
+                    <td>{{ $tandeo->fecha->locale('es')->translatedFormat('l d/M/Y') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                     <td>{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</td>
                     <td>{{ $tandeo->circuito->puntoAbastecimiento->nombre ?? 'Sin punto fijo' }}</td>
                     <td><a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id]) }}" class="btn btn-sm btn-outline-primary">Ir a cumplimiento</a></td>
                 </tr>
             @empty
-                <tr><td colspan="5" class="text-center text-muted">No hay tandeos programados esta semana.</td></tr>
+                <tr><td colspan="7" class="text-center text-muted">No hay tandeos programados esta semana.</td></tr>
             @endforelse
-            <tr id="sin-tandeos-filtrados" class="d-none"><td colspan="5" class="text-center text-muted">No hay tandeos con ese estado.</td></tr>
+            <tr id="sin-tandeos-filtrados" class="d-none"><td colspan="7" class="text-center text-muted">No hay tandeos con ese estado.</td></tr>
         </tbody>
     </table>
 </div>

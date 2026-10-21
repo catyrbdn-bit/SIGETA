@@ -43,6 +43,7 @@
                     </div>
 
                     <nav class="d-flex flex-column gap-2">
+                        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary text-start">Panel principal</a>
                         <a href="{{ route('cumplimiento.index') }}" class="btn btn-outline-primary text-start">Gestión de cumplimiento</a>
                         <a href="{{ route('zonas.index') }}" class="btn btn-outline-secondary text-start">Colonias</a>
                         <a href="{{ route('circuitos.index') }}" class="btn btn-outline-secondary text-start">Circuitos</a>

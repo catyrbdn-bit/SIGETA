@@ -70,6 +70,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th>Calles</th>
                         <th>Fecha</th>
                         <th>Horario</th>
                         <th>Estado</th>
@@ -78,8 +79,9 @@
                 <tbody>
                     @foreach ($tandeosAsociados as $tandeo)
                         <tr>
-                            <td>{{ \Carbon\Carbon::parse($tandeo->fecha)->locale('es')->translatedFormat('l d/m/Y') }}</td>
-                            <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }}-{{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
+                            <td>{{ $circuito->descripcion ?: 'Sin calles registradas' }}</td>
+                            <td>{{ \Carbon\Carbon::parse($tandeo->fecha)->locale('es')->translatedFormat('l d/M/Y') }}</td>
+                            <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                             <td>{{ $tandeo->estado }}</td>
                         </tr>
                     @endforeach

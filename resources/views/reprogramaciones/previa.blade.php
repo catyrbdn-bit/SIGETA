@@ -20,7 +20,7 @@
         .dia { font-size: 11px; color: #888; margin-bottom: 2px; }
         .fin { font-size: 12px; color: #777; margin-top: 4px; }
 
-        input[type=datetime-local], input[type=number], input[type=text] { padding: 6px; border: 1px solid #bbb; border-radius: 6px; }
+        input[type=datetime-local], input[type=date], input[type=time], input[type=number], input[type=text] { padding: 6px; border: 1px solid #bbb; border-radius: 6px; }
         input.atraso { width: 70px; text-align: center; }
         input.motivo { width: 100%; min-width: 200px; box-sizing: border-box; }
 
@@ -39,10 +39,10 @@
 @section('content')
 <div class="contenido-vista">
 @php
-        $hora = fn ($i, $f) => $i->format('H:i') . ' – ' . $f->format('H:i')
-            . ($f->isSameDay($i) ? '' : ' (+1 día)');
+        $hora = fn ($i, $f) => $i->format('G:i') . ' - ' . $f->format('G:i') . ($f->isSameDay($i) ? '' : ' (+1 día)');
 
-        $dia = fn ($c) => ucfirst($c->copy()->locale('es')->translatedFormat('D d/m'));
+
+        $fecha = fn ($c) => $c->copy()->locale('es')->translatedFormat('l d/M/Y');
 
         $fechaTitulo = ucfirst($desde->copy()->locale('es')->translatedFormat('l, j \d\e F \d\e Y'));
 
@@ -67,7 +67,7 @@
 
     @if ($filas->count())
 
-        <input type="text" id="buscar" placeholder="Buscar circuito o colonia…">
+        <input type="text" id="buscar" placeholder="Buscar circuito, colonia o calle…">
 
         <form action="{{ $modo === 'manual' ? route('reprogramaciones.manual.store') : route('reprogramaciones.apagon.store') }}" method="POST">
             @csrf
@@ -82,7 +82,10 @@
                 <thead>
                     <tr>
                         <th>Circuito / Colonia</th>
+                        <th>Calles</th>
+                        <th>Fecha actual</th>
                         <th>Horario actual</th>
+                        <th>Fecha nueva</th>
                         <th>Horario nuevo</th>
                         <th style="text-align:center;">Atraso (h)</th>
                         <th>Motivo</th>
@@ -98,7 +101,7 @@
 
                         <tr class="dato"
                             data-base="{{ $m['inicio_anterior']->format('Y-m-d\TH:i') }}"
-                            data-dur="{{ $m['inicio_anterior']->diffInMinutes($m['fin_anterior']) }}">
+                            data-dur="{{ $m['inicio_nuevo']->diffInMinutes($m['fin_nuevo']) }}">
 
                             <td>
                                 <div class="circuito">
@@ -114,13 +117,18 @@
                                 </div>
                             </td>
 
-                            <td class="hora">
-                                <div class="dia">{{ $dia($m['inicio_anterior']) }}</div>
-                                {{ $hora($m['inicio_anterior'], $m['fin_anterior']) }}
-                            </td>
+                            <td>{{ $m['tandeo']->circuito->descripcion ?: 'Sin calles registradas' }}</td>
+
+                            <td class="dia">{{ $fecha($m['inicio_anterior']) }}</td>
+
+                            <td class="hora">{{ $hora($m['inicio_anterior'], $m['fin_anterior']) }}</td>
+
+                            <td class="dia fecha-nueva">{{ $fecha($m['inicio_nuevo']) }}</td>
 
                             <td class="hora">
-                                <input type="datetime-local" class="nuevo" name="nuevo[{{ $id }}]" value="{{ $propuesto }}">
+                                <input type="hidden" class="nuevo" name="nuevo[{{ $id }}]" value="{{ $propuesto }}">
+                                <input type="date" class="fecha-nueva-input" value="{{ $m['inicio_nuevo']->format('Y-m-d') }}">
+                                <input type="time" class="hora-nueva-input" value="{{ $m['inicio_nuevo']->format('H:i') }}">
                                 <div class="fin">
                                     Termina: {{ $m['fin_nuevo']->format('H:i') }}{{ $m['fin_nuevo']->isSameDay($m['inicio_nuevo']) ? '' : ' (+1 día)' }}
                                 </div>
@@ -162,8 +170,18 @@
                 const base = new Date(fila.dataset.base);
                 const dur = parseInt(fila.dataset.dur, 10);
                 const nuevo = fila.querySelector('.nuevo');
+                const fechaNueva = fila.querySelector('.fecha-nueva-input');
+                const horaNueva = fila.querySelector('.hora-nueva-input');
+                const textoFechaNueva = fila.querySelector('.fecha-nueva');
                 const atraso = fila.querySelector('.atraso');
                 const fin = fila.querySelector('.fin');
+
+                function mostrarFecha(valor) {
+                    const fecha = new Date(valor + 'T12:00:00');
+                    const dia = new Intl.DateTimeFormat('es-MX', { weekday: 'long' }).format(fecha);
+                    const mes = new Intl.DateTimeFormat('es-MX', { month: 'short' }).format(fecha).replace('.', '');
+                    return dia + ' ' + pad(fecha.getDate()) + '/' + mes + '/' + fecha.getFullYear();
+                }
 
                 function pintarFin() {
                     if (!nuevo.value) return;
@@ -173,17 +191,27 @@
                         + (f.toDateString() === ini.toDateString() ? '' : ' (+1 día)');
                 }
 
+                function actualizarHorario() {
+                    if (!fechaNueva.value || !horaNueva.value) return;
+                    nuevo.value = fechaNueva.value + 'T' + horaNueva.value;
+                    textoFechaNueva.textContent = mostrarFecha(fechaNueva.value);
+                    atraso.value = Math.round((new Date(nuevo.value) - base) / 3600000 * 100) / 100;
+                    pintarFin();
+                }
+
                 atraso.addEventListener('input', function () {
                     if (atraso.value === '') return;
-                    nuevo.value = aLocal(new Date(base.getTime() + parseFloat(atraso.value) * 3600000));
+                    const inicio = new Date(base.getTime() + parseFloat(atraso.value) * 3600000);
+                    const valorLocal = aLocal(inicio);
+                    fechaNueva.value = valorLocal.slice(0, 10);
+                    horaNueva.value = valorLocal.slice(11, 16);
+                    nuevo.value = valorLocal;
+                    textoFechaNueva.textContent = mostrarFecha(fechaNueva.value);
                     pintarFin();
                 });
 
-                nuevo.addEventListener('input', function () {
-                    if (!nuevo.value) return;
-                    atraso.value = Math.round((new Date(nuevo.value) - base) / 3600000 * 100) / 100;
-                    pintarFin();
-                });
+                fechaNueva.addEventListener('input', actualizarHorario);
+                horaNueva.addEventListener('input', actualizarHorario);
             });
 
             document.getElementById('buscar').addEventListener('input', function () {
