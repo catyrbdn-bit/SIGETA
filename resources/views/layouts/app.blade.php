@@ -173,6 +173,7 @@
 
                             @if (Auth::user()->rol === 'administrador')
                                 <a href="{{ route('usuarios.index') }}" class="btn btn-outline-secondary text-start">Gestión de usuarios</a>
+                                <a href="{{ route('historial.index') }}" class="btn btn-outline-secondary text-start">Historial de actividad</a>
                             @endif
 
                             <a href="{{ route('calendario.index') }}" class="btn btn-outline-secondary text-start">Calendario</a>

@@ -167,7 +167,9 @@ class cumplimientoController extends Controller
             ));
         }
 
-        DB::transaction(function () use ($datos, $tandeosValidos, $registros) {
+        $cambios = [];
+
+        DB::transaction(function () use ($datos, $tandeosValidos, $registros, &$cambios) {
             foreach ($datos['cumplimientos'] as $tandeoId => $fila) {
                 $tandeo = $tandeosValidos->get((int) $tandeoId);
                 if (!$tandeo) continue;
@@ -197,11 +199,22 @@ class cumplimientoController extends Controller
                     'fecha_captura' => now(),
                 ];
                 $registro = $registros->get((int) $tandeoId);
+                $antes = $registro?->only(['resultado', 'horas_atraso', 'observaciones']);
                 if ($registro) $registro->update($valores);
                 else CumplimientoTandeo::create(array_merge($valores, ['tandeo_id' => $tandeoId]));
+                $cambios[] = ['tandeo_id' => (int) $tandeoId, 'circuito' => $tandeo->circuito->nombre, 'antes' => $antes, 'despues' => $valores];
             }
         });
 
+        if ($cambios) {
+            app(\App\Services\HistorialActividadService::class)->registrar(
+                'cumplimiento',
+                'actualizacion',
+                'Se guardaron cambios en el cumplimiento de tandeos.',
+                ['registros' => $cambios]
+            );
+        }
+        
         return redirect()->route('cumplimiento.index')->with('success', 'Cambios de cumplimiento guardados correctamente.');
     }
 
@@ -233,6 +246,13 @@ class cumplimientoController extends Controller
             ]);
         }
 
+        
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'apagon_general',
+            'registrado',
+            'Se registró un apagón general desde Gestión de cumplimiento.',
+            ['horas_atraso' => (int) $request->horas_atraso, 'tandeos_afectados' => $tandeosHoy->pluck('id')->all()]
+        );
         return redirect()->route('cumplimiento.index')
             ->with('success', 'Apagón general registrado; se aplicó a los tandeos cuyo horario ya había iniciado.');
     }
@@ -264,6 +284,12 @@ class cumplimientoController extends Controller
             ]);
         }
 
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'fuga',
+            'registrada',
+            'Se registró una fuga desde Gestión de cumplimiento.',
+            ['zona_id' => (int) $request->zona_id, 'horas_atraso' => (int) $request->horas_atraso, 'tandeos_afectados' => $tandeosZona->pluck('id')->all()]
+        );
         return redirect()->route('cumplimiento.index')
             ->with('success', 'Fuga registrada; se aplicó a los tandeos de la colonia seleccionada cuyo horario ya había iniciado.');
     }

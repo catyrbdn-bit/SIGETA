@@ -35,7 +35,14 @@ class usuarioController extends Controller
 
         $datos['password'] = Hash::make($datos['password']);
         $datos['activo'] = true;
-        usuarioModel::create($datos);
+        $usuario = usuarioModel::create($datos);
+
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'usuarios',
+            'registro',
+            'Se registró un usuario.',
+            ['usuario_registrado' => $usuario->usuario, 'rol' => $usuario->rol]
+        );
 
         return redirect()->route('usuarios.index')->with('success', 'Usuario registrado correctamente.');
     }
@@ -68,7 +75,19 @@ class usuarioController extends Controller
             unset($datos['password']);
         }
 
+        $antes = $usuario->only(['nombre', 'apellido_paterno', 'apellido_materno', 'usuario', 'rol', 'activo']);
         $usuario->update($datos);
+
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'usuarios',
+            'edicion',
+            'Se actualizaron los datos de un usuario.',
+            [
+                'usuario_editado' => $usuario->usuario,
+                'antes' => $antes,
+                'despues' => $usuario->only(['nombre', 'apellido_paterno', 'apellido_materno', 'usuario', 'rol', 'activo']),
+            ]
+        );
 
         return redirect()->route('usuarios.index')->with('success', 'Datos del usuario actualizados.');
     }
@@ -76,7 +95,15 @@ class usuarioController extends Controller
     public function destroy($id)
     {
         $usuario = usuarioModel::findOrFail($id);
+        $datosUsuario = $usuario->only(['nombre', 'apellido_paterno', 'apellido_materno', 'usuario', 'rol']);
         $usuario->delete();
+
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'usuarios',
+            'eliminacion',
+            'Se eliminó un usuario.',
+            ['usuario_eliminado' => $datosUsuario]
+        );
 
         return redirect()->route('usuarios.index')->with('success', 'Usuario eliminado. Su historial se conservó.');
     }

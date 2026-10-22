@@ -33,7 +33,7 @@ class circuitosController extends Controller
             'activo' => 'required|boolean',
         ]);
 
-        circuitosModel::create([
+        $circuito = circuitosModel::create([
             'zona_id' => $request->zona_id,
             'nombre' => circuitosModel::generarCodigo((int) $request->zona_id),
             'descripcion' => $request->descripcion,
@@ -42,6 +42,12 @@ class circuitosController extends Controller
             'activo' => $request->activo,
         ]);
 
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'circuitos',
+            'registro',
+            'Se registró un circuito.',
+            ['circuito' => $circuito->nombre, 'zona_id' => $circuito->zona_id, 'calles' => $circuito->descripcion]
+        );
         return redirect()->route('circuitos.index')
             ->with('success', '¡Circuito registrado exitosamente!');
     }
@@ -72,6 +78,7 @@ class circuitosController extends Controller
             $nombre = circuitosModel::generarCodigo((int) $request->zona_id);
         }
 
+        $antes = $circuito->only(["zona_id", "nombre", "descripcion", "duracion", "punto_abastecimiento_id", "activo"]);
         $circuito->update([
             'zona_id' => $request->zona_id,
             'nombre' => $nombre,
@@ -81,6 +88,12 @@ class circuitosController extends Controller
             'activo' => $request->activo,
         ]);
 
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'circuitos',
+            'edicion',
+            'Se actualizaron los datos de un circuito.',
+            ['circuito' => $circuito->nombre, 'antes' => $antes, 'despues' => $circuito->only(["zona_id", "nombre", "descripcion", "duracion", "punto_abastecimiento_id", "activo"])]
+        );
         return redirect()->route('circuitos.index')
             ->with('success', '¡Circuito actualizado exitosamente!');
     }
@@ -104,7 +117,11 @@ class circuitosController extends Controller
         }
 
         // si no hay tandeos asociados: se puede eliminar de forma segura
+        $datosCircuito = $circuito->only(["zona_id", "nombre", "descripcion", "duracion"]);
         $circuito->delete();
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            "circuitos", "eliminacion", "Se eliminó un circuito.", ["circuito_eliminado" => $datosCircuito]
+        );
 
         return redirect()->route('circuitos.index')
             ->with('success', '¡Circuito eliminado exitosamente!');
@@ -114,6 +131,13 @@ class circuitosController extends Controller
     {
         $circuito = circuitosModel::findOrFail($id);
         $circuito->update(['activo' => false]);
+
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'circuitos',
+            'edicion',
+            'Se desactivó un circuito.',
+            ['circuito' => $circuito->nombre, 'activo' => false]
+        );
 
         return redirect()->route('circuitos.index')
             ->with('success', '¡Circuito desactivado exitosamente!');

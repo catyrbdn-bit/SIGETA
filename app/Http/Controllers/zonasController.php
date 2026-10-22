@@ -50,6 +50,12 @@ class zonasController extends Controller
             $zona->touch();
         }
 
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'colonias',
+            'registro',
+            'Se registró una colonia.',
+            ['colonia' => $zona->nombre, 'tandeadores_asignados' => $datos['tandeadores'] ?? []]
+        );
         return redirect()->route('zonas.index')
             ->with('success', '¡Colonia registrada exitosamente!');
     }
@@ -78,6 +84,7 @@ class zonasController extends Controller
         ]);
 
         $zona = zonasModel::findOrFail($id);
+        $antes = $zona->only(['nombre', 'activo']);
         $asignaciones = $zona->tandeadores()->sync($datos['tandeadores'] ?? []);
 
         $zona->fill([
@@ -92,6 +99,12 @@ class zonasController extends Controller
             $zona->touch();
         }
 
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'colonias',
+            'edicion',
+            'Se actualizaron los datos de una colonia.',
+            ['colonia' => $zona->nombre, 'antes' => $antes, 'despues' => $zona->only(["nombre", "activo"]), 'tandeadores_asignados' => $datos['tandeadores'] ?? []]
+        );
         return redirect()->route('zonas.index')
             ->with('success', 'Colonia actualizada exitosamente');
     }
@@ -101,7 +114,11 @@ class zonasController extends Controller
     public function destroy($id)
     {
         $zona = zonasModel::findOrFail($id);
+        $datosZona = $zona->only(["nombre", "activo"]);
         $zona->delete();
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            "colonias", "eliminacion", "Se eliminó una colonia.", ["colonia_eliminada" => $datosZona]
+        );
 
         return redirect()->route('zonas.index')
                         ->with('success', 'Colonia eliminada exitosamente');

@@ -70,18 +70,28 @@
         }
 
         .detalle-tandeo, .confirmar-movimiento {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            margin: 0;
             width: min(520px, calc(100% - 32px));
+            max-height: 88vh;
+            overflow-y: auto;
             border: 0;
             border-radius: 10px;
             padding: 0;
+            text-align: center;
             box-shadow: 0 12px 36px #0004;
         }
 
         .detalle-tandeo::backdrop, .confirmar-movimiento::backdrop { background: #0007; }
-        .dialogo-contenido { padding: 24px; }
+        .dialogo-contenido { padding: 24px; text-align: center; }
         .dialogo-contenido h2 { margin: 0 0 18px; }
         .dialogo-contenido p { margin: 8px 0; overflow-wrap: anywhere; }
-        .dialogo-acciones { display: flex; justify-content: space-between; gap: 10px; margin-top: 22px; }
+        .detalle-tandeo .dialogo-contenido p,
+        .confirmar-movimiento .dialogo-contenido p { text-align: left; }
+        .dialogo-acciones { display: flex; justify-content: center; gap: 10px; margin-top: 22px; }
         .dialogo-error { margin-top: 14px; }
     </style>
 
@@ -95,7 +105,7 @@
             <p><strong>Horario:</strong> <span id="detalle-horario"></span></p>
             <p><strong>Estado:</strong> <span id="detalle-estado"></span></p>
             <p><strong>Tandeador:</strong> <span id="detalle-tandeadores"></span></p>
-            <div class="dialogo-acciones justify-content-end">
+            <div class="dialogo-acciones">
                 <button type="button" id="cerrar-detalle-tandeo" class="btn btn-primary">Cerrar</button>
             </div>
         </div>

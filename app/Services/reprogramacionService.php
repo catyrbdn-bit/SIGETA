@@ -7,6 +7,7 @@ use App\Models\Reprogramacion;
 use App\Models\TandeoRepeticion;
 use App\Models\circuitosModel;
 use App\Models\tandeoProgramado;
+use App\Services\HistorialActividadService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -331,6 +332,24 @@ class reprogramacionService
 
         });
 
+        app(HistorialActividadService::class)->registrar(
+            'reprogramacion',
+            'manual',
+            'Se confirmó una reprogramación manual.',
+            [
+                'cadena' => $cadena,
+                'movimientos' => array_map(function ($movimiento) {
+                    return [
+                        'tandeo_id' => $movimiento['tandeo']->id,
+                        'circuito' => $movimiento['tandeo']->circuito->nombre,
+                        'horario_anterior' => $movimiento['inicio_anterior']->format('Y-m-d H:i') . ' a ' . $movimiento['fin_anterior']->format('Y-m-d H:i'),
+                        'horario_nuevo' => $movimiento['inicio_nuevo']->format('Y-m-d H:i') . ' a ' . $movimiento['fin_nuevo']->format('Y-m-d H:i'),
+                        'motivo' => $movimiento['motivo'],
+                    ];
+                }, $resultado['movimientos']),
+            ],
+            $usuarioId
+        );
         return $cadena;
     }
     public function aplicarApagon(Carbon $desde, int $usuarioId, array $ajustes = [], array $motivos = []): string
@@ -379,6 +398,24 @@ class reprogramacionService
             }
         });
 
+        app(HistorialActividadService::class)->registrar(
+            $tipoOrigen,
+            'aplicado',
+            'Se aplicó una incidencia y se guardaron los horarios afectados.',
+            [
+                'cadena' => $cadena,
+                'tandeos_movidos' => count($resultado['movimientos']),
+                'movimientos' => array_map(function ($movimiento) {
+                    return [
+                        'tandeo_id' => $movimiento['tandeo']->id,
+                        'circuito' => $movimiento['tandeo']->circuito->nombre,
+                        'horario_anterior' => $movimiento['inicio_anterior']->format('Y-m-d H:i') . ' a ' . $movimiento['fin_anterior']->format('Y-m-d H:i'),
+                        'horario_nuevo' => $movimiento['inicio_nuevo']->format('Y-m-d H:i') . ' a ' . $movimiento['fin_nuevo']->format('Y-m-d H:i'),
+                    ];
+                }, $resultado['movimientos']),
+            ],
+            $usuarioId
+        );
         return $cadena;
     }
 

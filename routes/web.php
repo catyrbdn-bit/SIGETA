@@ -10,6 +10,7 @@ use App\Http\Controllers\tandeosController;
 use App\Http\Controllers\cumplimientoController;
 use App\Http\Controllers\ReprogramacionController;
 use App\Http\Controllers\calendarioController;
+use App\Http\Controllers\HistorialActividadController;
 
 
 // ==================================================
@@ -140,6 +141,10 @@ Route::middleware('rol:administrador')->prefix('usuarios')
 });
 
 
+Route::middleware('rol:administrador')->prefix('historial')->name('historial.')->group(function () {
+    Route::get('/', [HistorialActividadController::class, 'index'])->name('index');
+    Route::post('/depurar', [HistorialActividadController::class, 'depurar'])->name('depurar');
+});
 // ==================================================
 // ZONAS
 // ==================================================

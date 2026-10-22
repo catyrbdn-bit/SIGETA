@@ -156,6 +156,19 @@ class tandeosController extends Controller
             }
         });
 
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'tandeos',
+            'registro',
+            'Se programó un tandeo' . ($serieId ? ' con repetición.' : '.'),
+            [
+                'circuito' => $circuito->nombre,
+                'calles' => $circuito->descripcion,
+                'fecha_inicial' => $horaInicio->format('Y-m-d'),
+                'hora_inicio' => $horaInicio->format('H:i'),
+                'repeticion_dias' => $serieId ? (int) $datos['cada_dias'] : null,
+                'tandeos_creados_en_esta_accion' => count($fechas),
+            ]
+        );
         $mensaje = $serieId
             ? '¡Se inició la repetición cada ' . (int) $datos['cada_dias'] . ' días! El sistema seguirá agregando los próximos tandeos.'
             : '¡Tandeo programado exitosamente!';
@@ -197,6 +210,19 @@ class tandeosController extends Controller
             $tandeos->each(fn ($ocurrencia) => $ocurrencia->delete());
         });
 
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'tandeos',
+            'eliminacion',
+            'Se eliminó un tandeo y sus registros relacionados.',
+            [
+                'tandeo_id' => $tandeo->id,
+                'circuito_id' => $tandeo->circuito_id,
+                'fecha' => $tandeo->fecha?->format('Y-m-d'),
+                'hora_inicio' => $tandeo->hora_inicio_programada,
+                'repeticion_completa' => (bool) $tandeo->repeticion_uuid,
+                'tandeos_eliminados' => $ids->count(),
+            ]
+        );
         $mensaje = $tandeo->repeticion_uuid
             ? 'Se eliminó la repetición completa y sus registros relacionados.'
             : '¡Tandeo eliminado exitosamente!';

@@ -33,8 +33,24 @@ class LoginController extends Controller
         ])) {
             $request->session()->regenerate();
 
+            app(\App\Services\HistorialActividadService::class)->registrar(
+                'inicio_sesion',
+                'exitoso',
+                'Inicio de sesión exitoso.',
+                ['usuario' => Auth::user()->usuario]
+            );
+
             return redirect()->intended(route('dashboard'));
         }
+
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'inicio_sesion',
+            'fallido',
+            'Intento de inicio de sesión fallido.',
+            ['usuario' => (string) $request->input('usuario', '')],
+            null,
+            (string) $request->input('usuario', '') ?: 'Usuario desconocido'
+        );
 
         return back()->withErrors([
             'usuario' => 'Alguna de las credenciales no son correctas',
@@ -46,6 +62,12 @@ class LoginController extends Controller
      */
     public function cerrarSesion(Request $request)
     {
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'sesion',
+            'cierre',
+            'El usuario cerró sesión.'
+        );
+
         Auth::logout();
 
         $request->session()->invalidate();

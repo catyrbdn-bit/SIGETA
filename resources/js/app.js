@@ -80,9 +80,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }).format(fecha);
     }
 
+    function fechaCorta(fecha) {
+        const dias = ['dom.', 'lun.', 'mar.', 'mié.', 'jue.', 'vie.', 'sáb.'];
+        const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        return dias[fecha.getDay()] + ' ' + fecha.getDate() + '/' + meses[fecha.getMonth()] + '/' + fecha.getFullYear();
+    }
+
     function rango(inicio, fin) {
-        return fechaHora(inicio) + ' – ' + fechaHora(fin)
-            + (inicio.toDateString() !== fin.toDateString() ? ' (termina al día siguiente)' : '');
+        return fechaCorta(inicio) + ' · ' + hora(inicio) + '–' + hora(fin)
+            + (inicio.toDateString() !== fin.toDateString() ? ' (+1 día)' : '');
     }
 
     function abrirConfirmacion(info) {
