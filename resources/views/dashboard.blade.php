@@ -17,8 +17,16 @@
         </select>
     </div>
 </div>
-<h1>Panel principal</h1>
-<br><br>
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+    <h1 class="mb-0">Panel principal</h1>
+    <div class="d-flex flex-wrap gap-2">
+        @if (Auth::user()->rol !== 'tandeador')
+            <a href="{{ route('createTandeo') }}" class="btn btn-primary">+ Nuevo tandeo</a>
+        @endif
+        <a href="{{ route('tandeos.index') }}" class="btn btn-outline-primary">Consultar tandeos</a>
+    </div>
+</div>
+<br>
 
 <h2 class="h5 mb-3">Tandeos de la semana</h2>
 <div class="table-responsive">
@@ -30,8 +38,8 @@
                 <th>Fecha</th>
                 <th>Horario</th>
                 <th>Estado</th>
-                <th>Punto de abastecimiento</th>
                 @if (Auth::user()->rol !== 'tandeador')
+                    <th>Punto de abastecimiento</th>
                     <th>Acción</th>
                 @endif
             </tr>
@@ -73,15 +81,15 @@
                     <td>{{ $tandeo->fecha->locale('es')->translatedFormat('l d/M/Y') }}</td>
                     <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                     <td><span class="estado-badge estado-{{ $estado }}">{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</span></td>
-                    <td>{{ $tandeo->circuito->puntoAbastecimiento->nombre ?? 'Sin punto fijo' }}</td>
                     @if (Auth::user()->rol !== 'tandeador')
+                        <td>{{ $tandeo->circuito->puntoAbastecimiento->nombre ?? 'Sin punto fijo' }}</td>
                         <td><a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id]) }}" class="btn btn-sm btn-outline-primary">Ir a cumplimiento</a></td>
                     @endif
                 </tr>
             @empty
-                <tr><td colspan="{{ Auth::user()->rol === 'tandeador' ? 6 : 7 }}" class="text-center text-muted">{{ Auth::user()->rol === 'tandeador' ? 'No tienes tandeos asignados esta semana.' : 'No hay tandeos programados esta semana.' }}</td></tr>
+                <tr><td colspan="{{ Auth::user()->rol === 'tandeador' ? 5 : 7 }}" class="text-center text-muted">{{ Auth::user()->rol === 'tandeador' ? 'No tienes tandeos asignados esta semana.' : 'No hay tandeos programados esta semana.' }}</td></tr>
             @endforelse
-            <tr id="sin-tandeos-filtrados" class="d-none"><td colspan="{{ Auth::user()->rol === 'tandeador' ? 6 : 7 }}" class="text-center text-muted">No hay tandeos con ese estado.</td></tr>
+            <tr id="sin-tandeos-filtrados" class="d-none"><td colspan="{{ Auth::user()->rol === 'tandeador' ? 5 : 7 }}" class="text-center text-muted">No hay tandeos con ese estado.</td></tr>
         </tbody>
     </table>
 </div>

@@ -65,8 +65,8 @@
                 <th>Fecha</th>
                 <th>Horario</th>
                 <th>Estado</th>
-                <th>Tandeador</th>
                 @if (Auth::user()->rol !== 'tandeador')
+                    <th>Tandeador</th>
                     <th>Acciones</th>
                 @endif
             </tr>
@@ -111,8 +111,8 @@
                     <td>{{ $tandeo->fecha->locale('es')->translatedFormat('l d/M/Y') }}</td>
                     <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                     <td><span class="estado-badge estado-{{ $estado }}">{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</span></td>
-                    <td>{{ $tandeo->tandeador->nombre ?? 'Sin asignar' }}</td>
                     @if (Auth::user()->rol !== 'tandeador')
+                        <td>{{ $tandeo->tandeador->nombre ?? 'Sin asignar' }}</td>
                     <td class="text-nowrap">
                         <a href="{{ route('editTandeo', $tandeo->id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
                         
@@ -125,9 +125,9 @@
                     @endif
                 </tr>
             @empty
-                <tr><td colspan="{{ Auth::user()->rol === 'tandeador' ? 7 : 8 }}" class="text-center text-muted">{{ Auth::user()->rol === 'tandeador' ? 'No tienes tandeos asignados.' : 'No hay tandeos registrados.' }}</td></tr>
+                <tr><td colspan="{{ Auth::user()->rol === 'tandeador' ? 6 : 8 }}" class="text-center text-muted">{{ Auth::user()->rol === 'tandeador' ? 'No tienes tandeos asignados.' : 'No hay tandeos registrados.' }}</td></tr>
             @endforelse
-            <tr id="sin-resultados" class="d-none"><td colspan="{{ Auth::user()->rol === 'tandeador' ? 7 : 8 }}" class="text-center text-muted">No se encontraron tandeos con esos filtros.</td></tr>
+            <tr id="sin-resultados" class="d-none"><td colspan="{{ Auth::user()->rol === 'tandeador' ? 6 : 8 }}" class="text-center text-muted">No se encontraron tandeos con esos filtros.</td></tr>
         </tbody>
     </table>
 </div>

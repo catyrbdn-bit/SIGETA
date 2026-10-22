@@ -105,8 +105,6 @@
                     >
                 </div>
 
-                <p><a href="{{ route('password.request') }}">¿Olvidaste tu contraseña?</a></p>
-
                 <div class="campo">
                     <label for="password">Contraseña:</label>
                     <input
@@ -117,6 +115,8 @@
                         required
                     >
                 </div>
+
+                <p><a href="{{ route('password.request') }}">¿Olvidaste tu contraseña?</a></p>
 
                 <div class="botones">
                     <button type="submit" class="boton">Iniciar sesión</button>
