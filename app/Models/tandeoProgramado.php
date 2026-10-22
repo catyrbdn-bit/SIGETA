@@ -43,6 +43,17 @@ class tandeoProgramado extends Model
         return $this->belongsTo(usuarioModel::class, 'tandeador_id');
     }
 
+    public function tandeadores()
+    {
+        return $this->belongsToMany(usuarioModel::class, 'tandeo_tandeador', 'tandeo_id', 'usuario_id');
+    }
+
+    public function actualizarVersionSync(): void
+    {
+        $this->sync_version = (int) $this->sync_version + 1;
+        $this->save();
+    }
+
     public function cumplimientos()
     {
         return $this->hasMany(CumplimientoTandeo::class, 'tandeo_id');

@@ -180,6 +180,13 @@ class syncController extends Controller
             return 'pendiente_dependencia';
         }
 
+        $tandeadoresIds = null;
+        if (in_array($cambio->entity_type, ['zonas', 'tandeos_programados'], true)
+            && array_key_exists('tandeadores_ids', $datos)) {
+            $tandeadoresIds = $datos['tandeadores_ids'];
+            unset($datos['tandeadores_ids']);
+        }
+
         if ($cambio->entity_type === 'cumplimiento_tandeos' && !empty($datos['resultado'])) {
             $tandeo = tandeoProgramado::find($datos['tandeo_id'] ?? null);
 
@@ -199,6 +206,13 @@ class syncController extends Controller
         $registro->sync_version = (int) (($cambio->payload['sync_version'] ?? 0) ?: $cambio->base_version + 1);
         $registro->save();
 
+        if ($registro instanceof zonasModel && $tandeadoresIds !== null) {
+            $registro->tandeadores()->sync($tandeadoresIds);
+        }
+        if ($registro instanceof tandeoProgramado && $tandeadoresIds !== null) {
+            $registro->tandeadores()->sync($tandeadoresIds);
+        }
+
         if ($registro instanceof TandeoRepeticion && ! $registro->activa) {
             $this->eliminarOcurrenciasDeLaRepeticion($registro->repeticion_uuid);
         }
@@ -209,6 +223,24 @@ class syncController extends Controller
 
     private function resolverReferencias(string $tipo, array $datos): ?array
     {
+        if ($tipo === 'zonas' && array_key_exists('tandeadores_usuarios', $datos)) {
+            if (!is_array($datos['tandeadores_usuarios'])) {
+                return null;
+            }
+
+            $nombres = array_values(array_unique($datos['tandeadores_usuarios']));
+            $usuarios = usuarioModel::whereIn('usuario', $nombres)
+                ->where('rol', 'tandeador')
+                ->get();
+
+            if ($usuarios->count() !== count($nombres)) {
+                return null;
+            }
+
+            $datos['tandeadores_ids'] = $usuarios->pluck('id')->all();
+            unset($datos['tandeadores_usuarios']);
+        }
+
         if ($tipo === 'circuitos') {
             $zona = zonasModel::where('sync_uuid', $datos['zona_sync_uuid'] ?? '')->first();
             $punto = $this->buscarPorUuid(PuntoAbastecimiento::class, $datos['punto_abastecimiento_sync_uuid'] ?? null);
@@ -224,6 +256,15 @@ class syncController extends Controller
             if (!$circuito || (($datos['tandeador_usuario'] ?? null) && !$tandeador)) return null;
             $datos['circuito_id'] = $circuito->id;
             $datos['tandeador_id'] = $tandeador?->id;
+
+            if (array_key_exists('tandeadores_usuarios', $datos)) {
+                $nombres = array_values(array_unique($datos['tandeadores_usuarios']));
+                $usuarios = usuarioModel::whereIn('usuario', $nombres)->where('rol', 'tandeador')->get();
+                if ($usuarios->count() !== count($nombres)) return null;
+                $datos['tandeadores_ids'] = $usuarios->pluck('id')->all();
+                unset($datos['tandeadores_usuarios']);
+            }
+
             unset($datos['circuito_sync_uuid'], $datos['tandeador_usuario']);
         }
 

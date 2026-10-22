@@ -89,8 +89,7 @@
 
 @section('content')
 <div class="contenido-vista">
-<h1>SIGETA</h1>
-    <h2>Editar colonia</h2>
+<h1>Editar colonia</h1>
     <p class="subtitulo">Actualiza los datos de la colonia seleccionada.</p>
 
     @if ($errors->any())
@@ -114,6 +113,25 @@
         </section>
 
         <section class="panel">
+            <label>Tandeadores asignados a esta colonia:</label>
+            <p class="ayuda">Puedes seleccionar uno o varios tandeadores.</p>
+            @php
+                $tandeadoresSeleccionados = array_map(
+                    'strval',
+                    old('tandeadores', $zona->tandeadores->pluck('id')->all())
+                );
+            @endphp
+            @forelse ($tandeadores as $tandeador)
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <input type="checkbox" id="tandeador-{{ $tandeador->id }}" name="tandeadores[]" value="{{ $tandeador->id }}" style="width:18px; min-height:18px;" @checked(in_array((string) $tandeador->id, $tandeadoresSeleccionados, true))>
+                    <label for="tandeador-{{ $tandeador->id }}" class="mb-0" style="display:inline;">{{ $tandeador->nombre }} {{ $tandeador->apellido_paterno }}</label>
+                </div>
+            @empty
+                <p class="ayuda mb-0">No hay tandeadores activos registrados.</p>
+            @endforelse
+        </section>
+
+        <section class="panel">
             <label for="activo">Estado:</label>
             <select id="activo" name="activo" required>
                 <option value="1" @selected(old('activo', (string) $zona->activo) == '1')>Activa</option>
@@ -128,3 +146,4 @@
     </form>
 </div>
 @endsection
+

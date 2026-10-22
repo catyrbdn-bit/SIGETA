@@ -3,8 +3,7 @@
 @section('titulo', 'Editar circuito - SIGETA')
 
 @section('content')
-    <h1 class="sigeta-titulo mb-2">SIGETA</h1>
-    <h2 class="h4 mb-4">Editar circuito</h2>
+    <h1 class="h4 mb-4">Editar circuito</h1>
 
     @if ($errors->any())
         <div class="alert alert-danger">
@@ -119,4 +118,5 @@
         </div>
     </form>
 @endsection
+
 

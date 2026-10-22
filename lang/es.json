@@ -1,0 +1,7 @@
+{
+    "Reset Password Notification": "Aviso para cambiar la contraseña",
+    "You are receiving this email because we received a password reset request for your account.": "Recibes este correo porque se solicitó cambiar la contraseña de tu cuenta.",
+    "Reset Password": "Cambiar contraseña",
+    "This password reset link will expire in :count minutes.": "Este enlace para cambiar la contraseña vencerá en :count minutos.",
+    "If you did not request a password reset, no further action is required.": "Si no solicitaste cambiar la contraseña, no tienes que hacer nada."
+}

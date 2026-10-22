@@ -139,8 +139,7 @@
 
 @section('content')
 <div class="contenido-vista">
-<h1>SIGETA</h1>
-    <h2>Programar nuevo tandeo</h2>
+<h1>Programar nuevo tandeo</h1>
     <p class="subtitulo">Selecciona primero la colonia y después el circuito o las calles</p>
 
     @if ($errors->any())
@@ -170,10 +169,10 @@
         </section>
 
         <section class="panel" id="seccion-circuitos" hidden>
-            <label>2. Selecciona el circuito por sus calles</label>
+            <label>2. Selecciona las calles que vas a programar</label>
             <p class="ayuda">
-                La tabla solo mostrará circuitos de la colonia seleccionada
-                El código se muestra como referencia
+                Aquí aparecen únicamente las calles de la colonia elegida. El código es una referencia interna.
+
             </p>
 
             <div class="tabla-circuitos">
@@ -181,9 +180,9 @@
                     <thead>
                         <tr>
                             <th>Elegir</th>
-                            <th>Código</th>
-                            <th>Calles o descripción</th>
-                            <th>Duración configurada</th>
+                            <th>Referencia</th>
+                            <th>Calles de la colonia</th>
+                            <th>Duración</th>
                         </tr>
                     </thead>
                     <tbody id="filas-circuitos">
@@ -198,7 +197,7 @@
                                         @checked(old('circuito_id') == $circuito->id)
                                     >
                                 </td>
-                                <td class="codigo">{{ $circuito->nombre }}</td>
+                                <td class="codigo text-muted small">{{ $circuito->nombre }}</td>
                                 <td class="descripcion">
                                     {{ $circuito->descripcion ?: 'Sin descripción registrada' }}
                                 </td>
@@ -221,7 +220,7 @@
                 <div>
                     <label for="fecha">Fecha</label>
                     <input
-                        type="date"
+                        type="date" lang="es-MX"
                         id="fecha"
                         name="fecha"
                         value="{{ old('fecha') }}"
@@ -234,7 +233,7 @@
                 <div>
                     <label for="hora_inicio_programada">Hora de inicio</label>
                     <input
-                        type="time"
+                        type="time" lang="es-MX"
                         id="hora_inicio_programada"
                         name="hora_inicio_programada"
                         value="{{ old('hora_inicio_programada') }}"
@@ -291,18 +290,6 @@
             </div>
         </section>
 
-        <section class="panel">
-            <label for="tandeador_id">Tandeador asignado</label>
-            <select id="tandeador_id" name="tandeador_id">
-                <option value="">Sin asignar</option>
-                @foreach ($tandeadores as $tandeador)
-                    <option value="{{ $tandeador->id }}" @selected(old('tandeador_id') == $tandeador->id)>
-                        {{ $tandeador->nombre }}
-                    </option>
-                @endforeach
-            </select>
-        </section>
-
         <div class="botones">
             <a href="{{ route('tandeos.index') }}" class="boton boton-secundario" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver</a>
             <button type="submit" class="boton">Registrar tandeo</button>
@@ -317,7 +304,6 @@
         );
         const mensajeSinCircuitos = document.getElementById('sin-circuitos');
         const duracionInput = document.getElementById('duracion');
-
         function mostrarCircuitos() {
             const zonaSeleccionada = zonaSelect.value;
             let cantidadVisibles = 0;
@@ -355,6 +341,7 @@
             if (!zonaSeleccionada) {
                 duracionInput.value = '';
             }
+
         }
 
         zonaSelect.addEventListener('change', function () {
@@ -446,3 +433,5 @@
     </script>
 </div>
 @endsection
+
+

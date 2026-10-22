@@ -116,8 +116,7 @@
 
 @section('content')
 <div class="contenido-vista">
-<h1>SIGETA</h1>
-    <h2>Colonias atendidas por SAPUA</h2>
+<h1>Colonias atendidas por SAPUA</h1>
     <p class="subtitulo">Lista de colonias registradas en el sistema.</p>
 
     @if (session('success'))
@@ -135,7 +134,7 @@
     <section class="panel">
         <div class="barra-acciones">
             <strong>Lista de colonias</strong>
-            <a href="{{ route('createZona') }}" class="boton">+ Nueva Colonia</a>
+            <a href="{{ route('createZona') }}" class="btn btn-primary">+ Nueva Colonia</a>
         </div>
 
         <div class="tabla-contenedor">
@@ -143,6 +142,7 @@
                 <thead>
                     <tr>
                         <th>Colonia</th>
+                        <th>Tandeadores asignados</th>
                         <th>Activo</th>
                         <th>Acciones</th>
                     </tr>
@@ -151,6 +151,7 @@
                     @forelse ($zonas as $zona)
                         <tr>
                             <td>{{ $zona->nombre }}</td>
+                            <td>{{ $zona->tandeadores->pluck('nombre')->implode(', ') ?: 'Sin tandeadores asignados' }}</td>
                             <td><span class="estado-badge estado-{{ $zona->activo ? 'activo' : 'inactivo' }}">{{ $zona->activo ? 'Activa' : 'Inactiva' }}</span></td>
                             <td>
                                 <div class="acciones">
@@ -167,7 +168,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3">No hay colonias registradas</td>
+                            <td colspan="4">No hay colonias registradas</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -182,3 +183,5 @@
     </div>
 </div>
 @endsection
+
+

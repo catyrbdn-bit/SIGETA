@@ -72,6 +72,13 @@ class syncService
         $datos = $model->getAttributes();
         unset($datos['id'], $datos['created_at'], $datos['updated_at']);
 
+        if ($model instanceof zonasModel) {
+            $datos['tandeadores_usuarios'] = $model->tandeadores()
+                ->orderBy('usuario')
+                ->pluck('usuario')
+                ->all();
+        }
+
         if ($model instanceof circuitosModel) {
             $datos['zona_sync_uuid'] = $this->uuidRelacionado(zonasModel::class, $model->zona_id);
             $datos['punto_abastecimiento_sync_uuid'] = $this->uuidRelacionado(
@@ -84,6 +91,7 @@ class syncService
         if ($model instanceof tandeoProgramado) {
             $datos['circuito_sync_uuid'] = $this->uuidRelacionado(circuitosModel::class, $model->circuito_id);
             $datos['tandeador_usuario'] = $this->nombreUsuario($model->tandeador_id);
+            $datos['tandeadores_usuarios'] = $model->tandeadores()->orderBy('usuario')->pluck('usuario')->all();
             unset($datos['circuito_id'], $datos['tandeador_id']);
         }
 

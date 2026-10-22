@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\tandeoProgramado;
+use App\Models\circuitosModel;
+use App\Models\usuarioModel;
 use App\Services\reprogramacionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -65,6 +67,23 @@ class reprogramacionController extends Controller
         [$ajustes, $motivos] = $this->leerAjustes($request);
         $circuitoId = (int) $request->circuito_id;
         $tandeadorId = $request->tandeador_id ? (int) $request->tandeador_id : null;
+
+        if ($tandeadorId) {
+            $circuito = circuitosModel::find($circuitoId);
+            $asignado = $circuito && usuarioModel::whereKey($tandeadorId)
+                ->where('rol', 'tandeador')
+                ->whereHas('zonas', function ($consulta) use ($circuito) {
+                    $consulta->where('zonas.id', $circuito->zona_id);
+                })
+                ->exists();
+
+            if (!$asignado) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'tandeador_id' => 'El tandeador seleccionado no está asignado a la colonia de este circuito.',
+                ]);
+            }
+        }
+
         $inicioTexto = $request->input("nuevo.$id") ?: $request->input('inicio_nuevo');
         if (! $inicioTexto && $request->filled('fecha_nueva') && $request->filled('hora_inicio_nueva')) {
             $inicioTexto = $request->fecha_nueva . ' ' . $request->hora_inicio_nueva;

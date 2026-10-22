@@ -41,4 +41,9 @@ class usuarioModel extends Authenticatable
     {
         return 'usuario';
     }
+
+    public function zonas()
+    {
+        return $this->belongsToMany(zonasModel::class, 'tandeador_zona', 'usuario_id', 'zona_id');
+    }
 }

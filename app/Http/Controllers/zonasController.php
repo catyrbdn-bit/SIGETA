@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\zonasModel;
+use App\Models\usuarioModel;
 
 class zonasController extends Controller
 {
     public function index()
     {
-        $zonas = zonasModel::all();
+        $zonas = zonasModel::with('tandeadores')->get();
         return view('zonas.index', compact('zonas'));
     }
 
@@ -17,51 +18,82 @@ class zonasController extends Controller
     //funcion create para mostrar el formulario de creacion de zona
     public function create()
     {
-        return view('zonas.create');
+        $tandeadores = usuarioModel::where('rol', 'tandeador')
+            ->where('activo', true)
+            ->orderBy('nombre')
+            ->get();
+
+        return view('zonas.create', compact('tandeadores'));
     }
 
 
     //funcion store para guardar la zona en la base de datos
-   public function store(Request $request)
-{
-    $request->validate([
-        'nombre' => 'required|string|max:100',
-        'descripcion' => 'nullable|string|max:255',
-        'activo' => 'required|boolean',
-    ]);
+    public function store(Request $request)
+    {
+        $datos = $request->validate([
+            'nombre' => 'required|string|max:100',
+            'descripcion' => 'nullable|string|max:255',
+            'activo' => 'required|boolean',
+            'tandeadores' => 'nullable|array',
+            'tandeadores.*' => 'integer|exists:usuarios,id,rol,tandeador,activo,1',
+        ]);
 
-    zonasModel::create([
-        'nombre' => $request->nombre,
-        'descripcion' => $request->descripcion,
-        'activo' => $request->activo,
-    ]);
+        $zona = zonasModel::create([
+            'nombre' => $datos['nombre'],
+            'descripcion' => $datos['descripcion'] ?? null,
+            'activo' => $datos['activo'],
+        ]);
 
-    return redirect()->route('zonas.index')
-        ->with('success', '¡Colonia registrada exitosamente!');
-}
+        $asignaciones = $zona->tandeadores()->sync($datos['tandeadores'] ?? []);
+
+        if (!empty($asignaciones['attached'])) {
+            $zona->touch();
+        }
+
+        return redirect()->route('zonas.index')
+            ->with('success', '¡Colonia registrada exitosamente!');
+    }
 
     //funcion edit para mostrar el formulario de edicion de zona
     public function edit($id)
     {
-        $zona = zonasModel::findOrFail($id);
-        return view('zonas.edit', compact('zona'));
+        $zona = zonasModel::with('tandeadores')->findOrFail($id);
+        $tandeadores = usuarioModel::where('rol', 'tandeador')
+            ->where('activo', true)
+            ->orderBy('nombre')
+            ->get();
+
+        return view('zonas.edit', compact('zona', 'tandeadores'));
     }
 
     //funcion update para actualizar la zona en la base de datos
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'nombre' => 'required|string|max:100', // Validación 
-            'descripcion' => 'nullable|string|max:255', //puede ser nulo que significa que no es obligatorio
+        $datos = $request->validate([
+            'nombre' => 'required|string|max:100',
+            'descripcion' => 'nullable|string|max:255',
             'activo' => 'required|boolean',
+            'tandeadores' => 'nullable|array',
+            'tandeadores.*' => 'integer|exists:usuarios,id,rol,tandeador,activo,1',
         ]);
 
-        //findOrFail busca la zona por id y si no la encuentra lanza una excepcion
         $zona = zonasModel::findOrFail($id);
-        $zona->update($request->all());
+        $asignaciones = $zona->tandeadores()->sync($datos['tandeadores'] ?? []);
+
+        $zona->fill([
+            'nombre' => $datos['nombre'],
+            'descripcion' => $datos['descripcion'] ?? $zona->descripcion,
+            'activo' => $datos['activo'],
+        ]);
+
+        if ($zona->isDirty()) {
+            $zona->save();
+        } elseif (!empty($asignaciones['attached']) || !empty($asignaciones['detached'])) {
+            $zona->touch();
+        }
 
         return redirect()->route('zonas.index')
-                         ->with('success', 'Colonia actualizada exitosamente');
+            ->with('success', 'Colonia actualizada exitosamente');
     }
 
 

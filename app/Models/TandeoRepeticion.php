@@ -28,4 +28,9 @@ class TandeoRepeticion extends Model
         'fecha_ancla' => 'date',
         'activa' => 'boolean',
     ];
+
+    public function circuito()
+    {
+        return $this->belongsTo(circuitosModel::class, 'circuito_id');
+    }
 }

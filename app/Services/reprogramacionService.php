@@ -291,10 +291,23 @@ class reprogramacionService
                 $m['tandeo']->aplicarHorario($m['inicio_nuevo'], $m['fin_nuevo']);
 
                 if ((int) $m['tandeo']->id === $tandeoId) {
+                    $circuitoNuevo = circuitosModel::with('zona')->find(
+                        $circuitoId ?? $m['tandeo']->circuito_id
+                    );
+                    $tandeadoresIds = $circuitoNuevo
+                        ? $circuitoNuevo->zona->tandeadores()
+                            ->where('usuarios.rol', 'tandeador')
+                            ->where('usuarios.activo', true)
+                            ->pluck('usuarios.id')
+                            ->all()
+                        : [];
+
                     $m['tandeo']->update([
-                        'circuito_id' => $circuitoId ?? $m['tandeo']->circuito_id,
-                        'tandeador_id' => $tandeadorId,
+                        'circuito_id' => $circuitoNuevo?->id ?? $m['tandeo']->circuito_id,
+                        'tandeador_id' => $tandeadoresIds[0] ?? null,
                     ]);
+                    $m['tandeo']->tandeadores()->sync($tandeadoresIds);
+                    $m['tandeo']->actualizarVersionSync();
                 }
 
                 if ((int) $m['tandeo']->id === $tandeoId) {

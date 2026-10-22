@@ -25,12 +25,18 @@ class tandeosController extends Controller
         $tandeos = TandeoProgramado::with([
             'circuito.zona',
             'tandeador',
+            'tandeadores',
             'cumplimientos' => function ($consulta) {
                 $consulta->orderByDesc('fecha_captura')->orderByDesc('id');
             },
         ])
             ->when(auth()->user()->rol === 'tandeador', function ($consulta) {
-                $consulta->where('tandeador_id', auth()->id());
+                $consulta->where(function ($filtro) {
+                    $filtro->where('tandeador_id', auth()->id())
+                        ->orWhereHas('tandeadores', function ($personas) {
+                            $personas->where('usuarios.id', auth()->id());
+                        });
+                });
             })
             ->orderBy('fecha')
             ->orderBy('hora_inicio_programada')
@@ -52,11 +58,7 @@ class tandeosController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        $tandeadores = usuarioModel::where('rol', 'tandeador')
-            ->orderBy('nombre')
-            ->get();
-
-        return view('tandeos.create', compact('zonas', 'circuitos', 'tandeadores'));
+        return view('tandeos.create', compact('zonas', 'circuitos'));
     }
 
     public function store(Request $request)
@@ -67,7 +69,6 @@ class tandeosController extends Controller
             'fecha' => ['required', 'date'],
             'hora_inicio_programada' => ['required', 'date_format:H:i'],
             'duracion' => ['required', 'numeric', 'min:0.25', 'max:24'],
-            'tandeador_id' => ['nullable', 'exists:usuarios,id'],
             'repetir' => ['nullable', 'boolean'],
             'cada_dias' => ['required_if:repetir,1', 'nullable', 'integer', 'min:1', 'max:365'],
         ]);
@@ -113,8 +114,14 @@ class tandeosController extends Controller
         }
 
         $duracionMinutos = (int) round((float) $datos['duracion'] * 60);
+        $tandeadoresIds = $circuito->zona->tandeadores()
+            ->where('usuarios.rol', 'tandeador')
+            ->where('usuarios.activo', true)
+            ->pluck('usuarios.id')
+            ->all();
+        $tandeadorPrincipal = $tandeadoresIds[0] ?? null;
 
-        DB::transaction(function () use ($fechas, $circuito, $horaInicio, $duracionMinutos, $datos, $serieId) {
+        DB::transaction(function () use ($fechas, $circuito, $horaInicio, $duracionMinutos, $datos, $serieId, $tandeadoresIds, $tandeadorPrincipal) {
             if ($serieId) {
                 TandeoRepeticion::create([
                     'repeticion_uuid' => $serieId,
@@ -122,7 +129,7 @@ class tandeosController extends Controller
                     'fecha_ancla' => $horaInicio->toDateString(),
                     'hora_inicio' => $horaInicio->format('H:i:s'),
                     'duracion_minutos' => $duracionMinutos,
-                    'tandeador_id' => $datos['tandeador_id'] ?? null,
+                    'tandeador_id' => $tandeadorPrincipal,
                     'cada_dias' => (int) $datos['cada_dias'],
                     'activa' => true,
                 ]);
@@ -133,17 +140,19 @@ class tandeosController extends Controller
                 $this->validarHorarioUnico($circuito->id, $inicio, $serieId);
                 $horaFin = $inicio->copy()->addMinutes($duracionMinutos);
 
-                TandeoProgramado::create([
+                $tandeo = TandeoProgramado::create([
                     'circuito_id' => $circuito->id,
                     'fecha' => $inicio->toDateString(),
                     'hora_inicio_programada' => $inicio->format('H:i'),
                     'hora_fin_programada' => $horaFin->format('H:i'),
                     'estado' => 'programado',
-                    'tandeador_id' => $datos['tandeador_id'] ?? null,
+                    'tandeador_id' => $tandeadorPrincipal,
                     'repeticion_uuid' => $serieId,
                     'repetir_cada_dias' => $serieId ? (int) $datos['cada_dias'] : null,
                     'fecha_repeticion' => $serieId ? $inicio->toDateString() : null,
                 ]);
+                $tandeo->tandeadores()->sync($tandeadoresIds);
+                if ($tandeadoresIds) $tandeo->actualizarVersionSync();
             }
         });
 
@@ -160,9 +169,7 @@ class tandeosController extends Controller
 
         $circuitos = circuitosModel::with('zona')->where('activo', true)->get();
 
-        $tandeadores = usuarioModel::where('rol', 'tandeador')->get();
-
-        return view('tandeos.edit', compact('tandeo', 'circuitos', 'tandeadores'));
+        return view('tandeos.edit', compact('tandeo', 'circuitos'));
     }
 
     public function destroy($id)

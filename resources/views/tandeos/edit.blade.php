@@ -93,8 +93,7 @@
 
 @section('content')
 <div class="contenido-vista">
-<h1>SIGETA</h1>
-    <h2>Editar tandeo</h2>
+<h1>Editar tandeo</h1>
     <p class="subtitulo">Modifica los datos del tandeo. Antes de guardar, revisa cómo se acomodarán los horarios afectados.</p>
     @if ($tandeo->repeticion_uuid)
         <div class="alert alert-info">
@@ -122,7 +121,7 @@
             <label for="circuito_id">Circuito:</label>
             <select id="circuito_id" name="circuito_id" required>
                 @foreach ($circuitos as $circuito)
-                    <option value="{{ $circuito->id }}" data-calles="{{ $circuito->descripcion ?: 'Sin calles registradas' }}" @selected(old('circuito_id', $tandeo->circuito_id) == $circuito->id)>
+                    <option value="{{ $circuito->id }}" data-zona-id="{{ $circuito->zona_id }}" data-calles="{{ $circuito->descripcion ?: 'Sin calles registradas' }}" @selected(old('circuito_id', $tandeo->circuito_id) == $circuito->id)>
                         {{ $circuito->nombre }} ({{ $circuito->zona->nombre }})
                     </option>
                 @endforeach
@@ -137,7 +136,7 @@
         <section class="panel">
             <label for="fecha_nueva">Fecha:</label>
             <input
-                type="date"
+                type="date" lang="es-MX"
                 id="fecha_nueva"
                 name="fecha_nueva"
                 value="{{ old('fecha_nueva', \Carbon\Carbon::parse($tandeo->fecha)->format('Y-m-d')) }}"
@@ -148,7 +147,7 @@
         <section class="panel">
             <label for="hora_inicio_nueva">Hora de inicio:</label>
             <input
-                type="time"
+                type="time" lang="es-MX"
                 id="hora_inicio_nueva"
                 name="hora_inicio_nueva"
                 value="{{ old('hora_inicio_nueva', substr($tandeo->hora_inicio_programada, 0, 5)) }}"
@@ -162,7 +161,7 @@
         <section class="panel">
             <label for="hora_fin_nueva">Hora de fin:</label>
             <input
-                type="time"
+                type="time" lang="es-MX"
                 id="hora_fin_nueva"
                 name="hora_fin_nueva"
                 value="{{ old('hora_fin_nueva', substr($tandeo->hora_fin_programada, 0, 5)) }}"
@@ -183,17 +182,6 @@
             >
         </section>
 
-        <section class="panel">
-            <label for="tandeador_id">Tandeador asignado:</label>
-            <select id="tandeador_id" name="tandeador_id">
-                <option value="">Sin asignar</option>
-                @foreach ($tandeadores as $tandeador)
-                    <option value="{{ $tandeador->id }}" @selected(old('tandeador_id', $tandeo->tandeador_id) == $tandeador->id)>
-                        {{ $tandeador->nombre }}
-                    </option>
-                @endforeach
-            </select>
-        </section>
 
         <div class="botones">
             <a href="{{ route('tandeos.index') }}" class="boton boton-secundario" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver</a>
@@ -212,3 +200,4 @@
 
 </script>
 @endsection
+

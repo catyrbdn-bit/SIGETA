@@ -35,11 +35,11 @@
     </div>
     <div class="col-md-2">
         <label for="fecha-desde" class="form-label">Desde</label>
-        <input type="date" id="fecha-desde" class="form-control">
+        <input type="date" lang="es-MX" id="fecha-desde" class="form-control">
     </div>
     <div class="col-md-2">
         <label for="fecha-hasta" class="form-label">Hasta</label>
-        <input type="date" id="fecha-hasta" class="form-control">
+        <input type="date" lang="es-MX" id="fecha-hasta" class="form-control">
     </div>
     <div class="col-md-3">
         <label for="filtro-estado" class="form-label">Estado</label>
@@ -112,9 +112,9 @@
                     <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                     <td><span class="estado-badge estado-{{ $estado }}">{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</span></td>
                     @if (Auth::user()->rol !== 'tandeador')
-                        <td>{{ $tandeo->tandeador->nombre ?? 'Sin asignar' }}</td>
+                        <td>{{ $tandeo->tandeadores->pluck('nombre')->implode(', ') ?: ($tandeo->tandeador->nombre ?? 'Sin asignar') }}</td>
                     <td class="text-nowrap">
-                        <a href="{{ route('editTandeo', $tandeo->id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        <a href="{{ route('editTandeo', $tandeo->id) }}" class="btn btn-sm btn-outline-primary">Reprogramar horario</a>
                         
                         <form action="{{ route('deleteTandeo', $tandeo->id) }}" method="POST" class="d-inline" onsubmit="return confirm(@js($tandeo->repeticion_uuid ? 'Se eliminarán todos los tandeos de esta repetición y su historial. Si solo quieres cambiar fechas, usa Editar. ¿Continuar?' : '¿Estás seguro de eliminar este tandeo? Esta acción no se puede deshacer.'))">
                             @csrf
@@ -164,6 +164,7 @@
     });
 </script>
 @endsection
+
 
 
 

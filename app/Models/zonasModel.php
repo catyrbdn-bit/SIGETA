@@ -26,5 +26,8 @@ class zonasModel extends Authenticatable
         // para campos ocultos, si los hubiera
     ];
 
-
+    public function tandeadores()
+    {
+        return $this->belongsToMany(usuarioModel::class, 'tandeador_zona', 'zona_id', 'usuario_id');
+    }
 }

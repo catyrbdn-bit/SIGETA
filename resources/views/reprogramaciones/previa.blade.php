@@ -144,8 +144,8 @@
 
                             <td class="hora">
                                 <input type="hidden" class="nuevo" name="nuevo[{{ $id }}]" value="{{ $propuesto }}">
-                                <input type="date" class="fecha-nueva-input" value="{{ $m['inicio_nuevo']->format('Y-m-d') }}">
-                                <input type="time" class="hora-nueva-input" value="{{ $m['inicio_nuevo']->format('H:i') }}">
+                                <input type="date" lang="es-MX" class="fecha-nueva-input" value="{{ $m['inicio_nuevo']->format('Y-m-d') }}">
+                                <input type="time" lang="es-MX" class="hora-nueva-input" value="{{ $m['inicio_nuevo']->format('H:i') }}">
                                 <div class="fin">
                                     Termina: {{ $m['fin_nuevo']->format('H:i') }}{{ $m['fin_nuevo']->isSameDay($m['inicio_nuevo']) ? '' : ' (+1 día)' }}
                                 </div>

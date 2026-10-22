@@ -6,7 +6,7 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
         <h1 class="h3 mb-0">Gestión de usuarios</h1>
-        <a href="{{ route('usuarios.create') }}" class="btn btn-primary">Registrar usuario</a>
+        <a href="{{ route('usuarios.create') }}" class="btn btn-primary">+ Nuevo Usuario</a>
     </div>
 
     @if (session('success'))
@@ -53,3 +53,4 @@
     <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary mt-4">Volver</a>
 </div>
 @endsection
+

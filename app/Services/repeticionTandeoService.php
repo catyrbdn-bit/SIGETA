@@ -65,6 +65,13 @@ class repeticionTandeoService
                                 'sync_uuid' => $syncUuid,
                             ]);
                             $tandeo->save();
+                            $tandeadoresIds = $serie->circuito->zona->tandeadores()
+                                ->where('usuarios.rol', 'tandeador')
+                                ->where('usuarios.activo', true)
+                                ->pluck('usuarios.id')
+                                ->all();
+                            $tandeo->tandeadores()->sync($tandeadoresIds);
+                            if ($tandeadoresIds) $tandeo->actualizarVersionSync();
                         }
                     }
 

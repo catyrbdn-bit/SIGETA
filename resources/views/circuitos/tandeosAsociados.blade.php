@@ -59,8 +59,7 @@
 
 @section('content')
 <div class="contenido-vista">
-<h1>SIGETA</h1>
-    <h2>No se puede eliminar este circuito</h2>
+<h1>No se puede eliminar este circuito</h1>
 
     <section class="panel">
         <p>El circuito <strong>{{ $circuito->nombre }}</strong> tiene tandeos asociados y no puede eliminarse de forma definitiva.</p>
@@ -129,3 +128,4 @@
     </section>
 </div>
 @endsection
+

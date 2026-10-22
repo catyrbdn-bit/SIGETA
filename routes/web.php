@@ -9,6 +9,7 @@ use App\Http\Controllers\circuitosController;
 use App\Http\Controllers\tandeosController;
 use App\Http\Controllers\cumplimientoController;
 use App\Http\Controllers\ReprogramacionController;
+use App\Http\Controllers\calendarioController;
 
 
 // ==================================================
@@ -49,14 +50,39 @@ Route::post('/logout', [LoginController::class, 'cerrarSesion'])
 Route::get('/dashboard', function () {
     app(\App\Services\repeticionTandeoService::class)->crearSiguientes();
 
-    $inicioSemana = now()->startOfWeek()->toDateString();
-    $finSemana = now()->endOfWeek()->toDateString();
+    $mesNumero = request('mes_num');
+    $anioSeleccionado = request('anio');
 
-    $tandeosSemana = \App\Models\TandeoProgramado::whereBetween('fecha', [$inicioSemana, $finSemana])
+    //su funcion de este if es validar que el año y el mes sean correctos, 
+    // si no lo son, se asigna el mes actual
+    if (preg_match('/^\d{4}$/', (string) $anioSeleccionado)
+        && preg_match('/^(0?[1-9]|1[0-2])$/', (string) $mesNumero)) {
+        $mesActual = sprintf('%04d-%02d', (int) $anioSeleccionado, (int) $mesNumero);
+    } else {
+        $mesActual = request('mes', now()->format('Y-m'));
+    }
+
+    if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mesActual)) {
+        $mesActual = now()->format('Y-m');
+    }
+
+    $mesNumero = (int) substr($mesActual, 5, 2);
+    $anioSeleccionado = (int) substr($mesActual, 0, 4);
+    $fechaMes = \Carbon\Carbon::createFromFormat('!Y-m', $mesActual);
+    $inicioMes = $fechaMes->copy()->startOfMonth()->toDateString();
+    $finMes = $fechaMes->copy()->endOfMonth()->toDateString();
+
+    $tandeosMes = \App\Models\TandeoProgramado::whereBetween('fecha', [$inicioMes, $finMes])
         ->when(auth()->user()->rol === 'tandeador', function ($consulta) {
-            $consulta->where('tandeador_id', auth()->id());
+            $consulta->where(function ($filtro) {
+                $filtro->where('tandeador_id', auth()->id())
+                    ->orWhereHas('tandeadores', function ($personas) {
+                        $personas->where('usuarios.id', auth()->id());
+                    });
+            });
         })
         ->with([
+            'tandeadores',
             'circuito.zona',
             'circuito.puntoAbastecimiento',
             'cumplimientos' => function ($consulta) {
@@ -67,9 +93,22 @@ Route::get('/dashboard', function () {
         ->orderBy('hora_inicio_programada')
         ->get();
 
-    return view('dashboard', compact('tandeosSemana'));
+    return view('dashboard', compact('tandeosMes', 'mesActual', 'mesNumero', 'anioSeleccionado', 'fechaMes'));
 })->name('dashboard');
 
+Route::get('/calendario', [calendarioController::class, 'index'])
+    ->middleware('rol:administrador,capturista,tandeador')
+    ->name('calendario.index');
+
+
+
+Route::get('/calendario/eventos', [calendarioController::class, 'eventos'])
+    ->middleware('rol:administrador,capturista,tandeador')
+    ->name('calendario.eventos');
+
+Route::post('/calendario/mover', [calendarioController::class, 'mover'])
+    ->middleware('rol:administrador,capturista')
+    ->name('calendario.mover');
 Route::middleware('rol:administrador')->prefix('usuarios')->name('usuarios.')->group(function () {
     Route::get('/', [usuarioController::class, 'index'])->name('index');
     Route::get('/crear', [usuarioController::class, 'create'])->name('create');
@@ -175,3 +214,4 @@ Route::post('/reprogramaciones/manual/guardar', [reprogramacionController::class
 
 });
 });
+

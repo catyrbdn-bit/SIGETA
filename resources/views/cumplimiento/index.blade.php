@@ -133,7 +133,7 @@
                     @empty
                         <tr><td colspan="8" class="text-center text-muted">No hay tandeos programados esta semana</td></tr>
                     @endforelse
-                    <tr id="sin-resultados" class="d-none"><td colspan="8" class="text-center text-muted">No se encontraron tandeos con esa busqueda</td></tr>
+                    <tr id="sin-resultados" class="d-none"><td colspan="8" class="text-center text-muted">No se encontraron tandeos con esa búsqueda</td></tr>
                 </tbody>
             </table>
         </div>

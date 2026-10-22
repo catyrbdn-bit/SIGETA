@@ -5,8 +5,7 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
         <div>
-            <h1 class="sigeta-titulo mb-2">SIGETA</h1>
-            <h2 class="h4 mb-0">Circuitos registrados</h2>
+            <h1 class="h4 mb-0">Circuitos registrados</h1>
         </div>
         <a href="{{ route('createCircuito') }}" class="btn btn-primary">+ Nuevo Circuito</a>
     </div>
@@ -90,5 +89,6 @@
         Volver
     </a>
 @endsection
+
 
 

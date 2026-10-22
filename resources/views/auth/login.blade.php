@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-MX">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -74,9 +74,9 @@
 <body>
 
     <main class="contenedor">
-        <h1>SIGETA DE SAPUA</h1>
+        
         <section class="panel">
-            <h2>Inicio de sesión</h2>
+            <h1>Inicio de sesión</h1>
 
             @if ($errors->any())
                 <div class="mensaje-error" role="alert">
@@ -127,3 +127,4 @@
 
 </body>
 </html>
+

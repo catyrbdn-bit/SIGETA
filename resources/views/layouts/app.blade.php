@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-MX">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -163,6 +163,7 @@
                         @if (Auth::user()->rol === 'tandeador')
                             <a href="{{ route('dashboard') }}" class="btn btn-outline-primary text-start">Panel principal</a>
                             <a href="{{ route('tandeos.index') }}" class="btn btn-outline-secondary text-start">Mis tandeos asignados</a>
+                            <a href="{{ route('calendario.index') }}" class="btn btn-outline-secondary text-start">Calendario</a>
                         @else
                             <a href="{{ route('dashboard') }}" class="btn btn-outline-primary text-start">Panel principal</a>
                             <a href="{{ route('cumplimiento.index') }}" class="btn btn-outline-secondary text-start">Registrar cumplimiento de un tandeo</a>
@@ -174,7 +175,7 @@
                                 <a href="{{ route('usuarios.index') }}" class="btn btn-outline-secondary text-start">Gestión de usuarios</a>
                             @endif
 
-                            <a href="{{ route('tandeos.index') }}" class="btn btn-outline-secondary text-start">Calendario</a>
+                            <a href="{{ route('calendario.index') }}" class="btn btn-outline-secondary text-start">Calendario</a>
                         @endif
                     </nav>
 
@@ -192,3 +193,4 @@
     </div>
 </body>
 </html>
+

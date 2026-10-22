@@ -3,8 +3,45 @@
 @section('titulo', 'Panel principal - SIGETA')
 
 @section('content')
-<div class="d-flex justify-content-end mb-4">
-    <div style="min-width: 220px;">
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <h1 class="mb-0">Panel principal</h1>
+    <div class="d-flex flex-wrap gap-2">
+        @if (Auth::user()->rol !== 'tandeador')
+            <a href="{{ route('createTandeo') }}" class="btn btn-primary">+ Nuevo Tandeo</a>
+        @endif
+        <a href="{{ route('tandeos.index') }}" class="btn btn-outline-primary">Consultar tandeos</a>
+    </div>
+</div>
+
+<div class="row g-3 align-items-end mb-4">
+    <form action="{{ route('dashboard') }}" method="GET" class="col-12 col-xl-5 d-flex flex-wrap align-items-end gap-2">
+        <div style="min-width: 155px; flex: 1;">
+            <label for="mes_num" class="form-label">Mes</label>
+            <select id="mes_num" name="mes_num" class="form-select">
+                @php
+                    $nombresMeses = [1 => 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                @endphp
+                @foreach ($nombresMeses as $numero => $nombreMes)
+                    <option value="{{ $numero }}" @selected($mesNumero === $numero)>{{ $nombreMes }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div style="min-width: 105px;">
+            <label for="anio" class="form-label">Año</label>
+            <select id="anio" name="anio" class="form-select">
+                @for ($anio = $anioSeleccionado - 5; $anio <= $anioSeleccionado + 5; $anio++)
+                    <option value="{{ $anio }}" @selected($anioSeleccionado === $anio)>{{ $anio }}</option>
+                @endfor
+            </select>
+        </div>
+        <button type="submit" class="btn btn-outline-primary">Consultar</button>
+    </form>
+
+    <div class="col-12 col-md-7 col-xl-4">
+        <label for="buscar-tandeo" class="form-label">Buscar circuito, colonia o calle</label>
+        <input type="search" id="buscar-tandeo" class="form-control" placeholder="Escribe para buscar...">
+    </div>
+    <div class="col-12 col-md-5 col-xl-3">
         <label for="filtro-estado" class="form-label">Filtrar por estado</label>
         <select id="filtro-estado" class="form-select">
             <option value="todos">Todos los estados</option>
@@ -17,18 +54,8 @@
         </select>
     </div>
 </div>
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-    <h1 class="mb-0">Panel principal</h1>
-    <div class="d-flex flex-wrap gap-2">
-        @if (Auth::user()->rol !== 'tandeador')
-            <a href="{{ route('createTandeo') }}" class="btn btn-primary">+ Nuevo tandeo</a>
-        @endif
-        <a href="{{ route('tandeos.index') }}" class="btn btn-outline-primary">Consultar tandeos</a>
-    </div>
-</div>
-<br>
 
-<h2 class="h5 mb-3">Tandeos de la semana</h2>
+<h2 class="h5 mb-3">Tandeos de {{ $fechaMes->locale('es')->translatedFormat('F Y') }}</h2>
 <div class="table-responsive">
     <table class="table table-bordered table-hover align-middle" id="tabla-tandeos">
         <thead class="table-light">
@@ -39,13 +66,13 @@
                 <th>Horario</th>
                 <th>Estado</th>
                 @if (Auth::user()->rol !== 'tandeador')
-                    <th>Punto de abastecimiento</th>
-                    <th>Acción</th>
+                    <th>Tandeador</th>
+                    <th>Acciones</th>
                 @endif
             </tr>
         </thead>
         <tbody>
-            @forelse ($tandeosSemana as $tandeo)
+            @forelse ($tandeosMes as $tandeo)
                 @php
                     $cumplimiento = $tandeo->cumplimientos->first();
                     if ($cumplimiento && $cumplimiento->fecha_captura && \Carbon\Carbon::parse($cumplimiento->fecha_captura)->lt($tandeo->inicio)) {
@@ -72,7 +99,9 @@
                         'no_cumplido' => 'No cumplido',
                     ];
                 @endphp
-                <tr class="fila-tandeo" data-estado="{{ $estado }}">
+                <tr class="fila-tandeo"
+                    data-estado="{{ $estado }}"
+                    data-busqueda="{{ strtolower($tandeo->circuito->nombre . ' ' . $tandeo->circuito->zona->nombre . ' ' . ($tandeo->circuito->descripcion ?? '')) }}">
                     <td>
                         <strong>{{ $tandeo->circuito->nombre }}</strong><br>
                         <span class="text-muted">{{ $tandeo->circuito->zona->nombre }}</span>
@@ -82,14 +111,17 @@
                     <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                     <td><span class="estado-badge estado-{{ $estado }}">{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</span></td>
                     @if (Auth::user()->rol !== 'tandeador')
-                        <td>{{ $tandeo->circuito->puntoAbastecimiento->nombre ?? 'Sin punto fijo' }}</td>
-                        <td><a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id]) }}" class="btn btn-sm btn-outline-primary">Ir a cumplimiento</a></td>
+                        <td>{{ $tandeo->tandeadores->pluck('nombre')->implode(', ') ?: 'Sin asignar' }}</td>
+                        <td><div class="d-flex flex-wrap gap-2">
+                            <a href="{{ route('editTandeo', $tandeo->id) }}" class="btn btn-sm btn-outline-primary">Reprogramar horario</a>
+                            <a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id]) }}" class="btn btn-sm btn-outline-secondary">Registrar cumplimiento</a></div>
+                        </td>
                     @endif
                 </tr>
             @empty
-                <tr><td colspan="{{ Auth::user()->rol === 'tandeador' ? 5 : 7 }}" class="text-center text-muted">{{ Auth::user()->rol === 'tandeador' ? 'No tienes tandeos asignados esta semana.' : 'No hay tandeos programados esta semana.' }}</td></tr>
+                <tr><td colspan="{{ Auth::user()->rol === 'tandeador' ? 5 : 7 }}" class="text-center text-muted">{{ Auth::user()->rol === 'tandeador' ? 'No tienes tandeos asignados este mes.' : 'No hay tandeos programados este mes.' }}</td></tr>
             @endforelse
-            <tr id="sin-tandeos-filtrados" class="d-none"><td colspan="{{ Auth::user()->rol === 'tandeador' ? 5 : 7 }}" class="text-center text-muted">No hay tandeos con ese estado.</td></tr>
+            <tr id="sin-tandeos-filtrados" class="d-none"><td colspan="{{ Auth::user()->rol === 'tandeador' ? 5 : 7 }}" class="text-center text-muted">No hay tandeos con esos filtros.</td></tr>
         </tbody>
     </table>
 </div>
@@ -98,20 +130,41 @@
 
 
 <script>
-    document.getElementById('filtro-estado').addEventListener('change', function () {
-        const estadoElegido = this.value;
+    const filtroEstado = document.getElementById('filtro-estado');
+    const buscarTandeo = document.getElementById('buscar-tandeo');
+    const filasTandeos = document.querySelectorAll('.fila-tandeo');
+    const avisoSinResultados = document.getElementById('sin-tandeos-filtrados');
+
+    function normalizarTexto(texto) {
+        return texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function filtrarTandeos() {
+        const estadoElegido = filtroEstado.value;
+        const textoBuscado = normalizarTexto(buscarTandeo.value.trim());
         let cantidadVisible = 0;
 
-        document.querySelectorAll('.fila-tandeo').forEach(function (fila) {
-            const mostrar = estadoElegido === 'todos' || fila.dataset.estado === estadoElegido;
+        filasTandeos.forEach(function (fila) {
+            const coincideEstado = estadoElegido === 'todos' || fila.dataset.estado === estadoElegido;
+            const coincideTexto = normalizarTexto(fila.dataset.busqueda).includes(textoBuscado);
+            const mostrar = coincideEstado && coincideTexto;
+
             fila.classList.toggle('d-none', !mostrar);
             if (mostrar) cantidadVisible++;
         });
 
-        document.getElementById('sin-tandeos-filtrados').classList.toggle('d-none', cantidadVisible > 0);
-    });
+        avisoSinResultados.classList.toggle('d-none', cantidadVisible > 0);
+    }
+
+    filtroEstado.addEventListener('change', filtrarTandeos);
+    buscarTandeo.addEventListener('input', filtrarTandeos);
 </script>
 @endsection
+
+
+
+
+
 
 
 
