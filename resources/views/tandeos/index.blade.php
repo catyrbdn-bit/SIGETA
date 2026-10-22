@@ -53,6 +53,9 @@
             <option value="no_cumplido">No cumplido</option>
         </select>
     </div>
+    <div class="col-12">
+        <button type="button" id="limpiar-filtros-tandeos" class="btn btn-outline-secondary">Quitar filtros</button>
+    </div>
 </div>
 
 <div class="table-responsive">
@@ -161,6 +164,15 @@
     document.querySelectorAll('#buscar-tandeo, #filtro-zona, #filtro-estado, #fecha-desde, #fecha-hasta').forEach(function (filtro) {
         filtro.addEventListener('input', filtrarTandeos);
         filtro.addEventListener('change', filtrarTandeos);
+    });
+
+    document.getElementById('limpiar-filtros-tandeos').addEventListener('click', function () {
+        document.getElementById('buscar-tandeo').value = '';
+        document.getElementById('filtro-zona').value = 'todas';
+        document.getElementById('filtro-estado').value = 'todos';
+        document.getElementById('fecha-desde').value = '';
+        document.getElementById('fecha-hasta').value = '';
+        filtrarTandeos();
     });
 </script>
 @endsection

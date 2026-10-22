@@ -41,6 +41,9 @@ class calendarioController extends Controller
             'circuito.zona',
             'tandeadores',
             'tandeador',
+            'cumplimientos' => function ($consulta) {
+                $consulta->orderByDesc('fecha_captura')->orderByDesc('id');
+            },
         ])
             ->whereDate('fecha', '>=', $fechaInicio)
             ->whereDate('fecha', '<', $fechaFin)
@@ -51,9 +54,9 @@ class calendarioController extends Controller
             })
             ->when(auth()->user()->rol === 'tandeador', function ($consulta) {
                 $consulta->where(function ($filtro) {
-                    $filtro->where('tandeador_id', auth()->id())
+                    $filtro->where('tandeador_id', auth()->user()->getKey())
                         ->orWhereHas('tandeadores', function ($personas) {
-                            $personas->where('usuarios.id', auth()->id());
+                            $personas->where('usuarios.id', auth()->user()->getKey());
                         });
                 });
             })
@@ -70,9 +73,49 @@ class calendarioController extends Controller
                 $tandeadores = $tandeo->tandeador->nombre ?? 'Sin asignar';
             }
 
+            $cumplimiento = $tandeo->cumplimientos->first();
+            if ($cumplimiento && $cumplimiento->fecha_captura
+                && Carbon::parse($cumplimiento->fecha_captura)->lt($tandeo->inicio)) {
+                $cumplimiento = null;
+            }
+
+            if (now()->lt($tandeo->inicio)) {
+                $estado = 'programado';
+            } elseif ($tandeo->estado !== 'programado') {
+                $estado = str_replace(' ', '_', $tandeo->estado);
+            } elseif ($cumplimiento) {
+                $estado = str_replace(' ', '_', $cumplimiento->resultado);
+            } elseif (now()->betweenIncluded($tandeo->inicio, $tandeo->fin)) {
+                $estado = 'en_curso';
+            } else {
+                $estado = 'pendiente';
+            }
+
+            $nombresEstados = [
+                'programado' => 'Programado',
+                'en_curso' => 'En curso',
+                'pendiente' => 'Pendiente de registrar',
+                'cumplido' => 'Cumplido',
+                'atraso' => 'Con atraso',
+                'no_cumplido' => 'No cumplido',
+            ];
+
+            $coloresEstados = [
+                'programado' => ['fondo' => '#dbeafe', 'texto' => '#174ea6'],
+                'en_curso' => ['fondo' => '#fff3cd', 'texto' => '#735c00'],
+                'pendiente' => ['fondo' => '#e5e7eb', 'texto' => '#374151'],
+                'cumplido' => ['fondo' => '#d1e7dd', 'texto' => '#146c43'],
+                'atraso' => ['fondo' => '#ffe2c6', 'texto' => '#8a3d00'],
+                'no_cumplido' => ['fondo' => '#f8d7da', 'texto' => '#842029'],
+            ];
+
+            $colores = $coloresEstados[$estado] ?? $coloresEstados['programado'];
+
             return [
                 'id' => $tandeo->id,
-                'title' => $colonia . ' · ' . $calles,
+                'title' => $tandeo->circuito->nombre . ' · ' . $colonia,
+                'color' => $colores['fondo'],
+                'contrastColor' => $colores['texto'],
                 'start' => $tandeo->inicio->toIso8601String(),
                 'end' => $tandeo->fin->toIso8601String(),
                 'extendedProps' => [
@@ -81,7 +124,8 @@ class calendarioController extends Controller
                     'colonia' => $colonia,
                     'calles' => $calles,
                     'tandeadores' => $tandeadores,
-                    'tandeadorId' => $tandeo->tandeador_id,
+                    'estado' => $estado,
+                    'estadoTexto' => $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)),
                 ],
             ];
         });
@@ -101,18 +145,36 @@ class calendarioController extends Controller
             'inicio_nuevo.date' => 'La nueva fecha y hora no son válidas.',
         ]);
 
+        $tandeoId = (int) $datos['tandeo_id'];
+        $tandeo = TandeoProgramado::findOrFail($tandeoId);
         $inicioNuevo = Carbon::parse($datos['inicio_nuevo']);
-        $resultado = $reprogramaciones->simularManual((int) $datos['tandeo_id'], $inicioNuevo);
+        $duracion = (int) $tandeo->inicio->diffInMinutes($tandeo->fin);
+        $finNuevo = $inicioNuevo->copy()->addMinutes($duracion);
 
-        if (count($resultado['movimientos']) > 1) {
+        $otrosTandeos = TandeoProgramado::where('id', '!=', $tandeoId)
+            ->whereDate('fecha', '>=', $inicioNuevo->copy()->subDay()->toDateString())
+            ->whereDate('fecha', '<=', $finNuevo->toDateString())
+            ->get();
+
+        foreach ($otrosTandeos as $otro) {
+            if ($inicioNuevo < $otro->fin && $otro->inicio < $finNuevo) {
+                return response()->json([
+                    'empalme' => true,
+                    'message' => 'No se puede guardar: el horario se empalma con otro tandeo. Elige otra fecha u hora.',
+                ], 422);
+            }
+        }
+
+        $simulacion = $reprogramaciones->simularManual($tandeoId, $inicioNuevo);
+        if (count($simulacion['movimientos']) > 1) {
             return response()->json([
-                'requiere_previa' => true,
-                'mensaje' => 'Este cambio afecta otros tandeos. Revisa la vista previa antes de guardar.',
-            ]);
+                'empalme' => true,
+                'message' => 'No se puede guardar porque el cambio recorrería otros tandeos. Elige otro horario.',
+            ], 422);
         }
 
         $reprogramaciones->aplicarManual(
-            (int) $datos['tandeo_id'],
+            $tandeoId,
             $inicioNuevo,
             (int) auth()->user()->getKey(),
             [],

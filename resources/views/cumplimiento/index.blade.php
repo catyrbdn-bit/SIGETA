@@ -20,6 +20,7 @@
 
     <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
                 <input type="search" id="buscar-tandeo" class="form-control" style="max-width: 340px" placeholder="Buscar por circuito, colonia o calle..." aria-label="Buscar por circuito, colonia o calle">
+                <button type="button" id="limpiar-busqueda-cumplimiento" class="btn btn-outline-secondary">Quitar filtro</button>
                 <form action="{{ route('reprogramaciones.apagon.previa') }}" method="POST">
             @csrf
             <button type="submit" class="btn btn-outline-warning">Apagon general</button>
@@ -199,6 +200,11 @@
             if (coincide) visibles++;
         });
         document.getElementById('sin-resultados').classList.toggle('d-none', visibles > 0 || texto === '');
+    });
+
+    document.getElementById('limpiar-busqueda-cumplimiento').addEventListener('click', function () {
+        buscador.value = '';
+        buscador.dispatchEvent(new Event('input'));
     });
 </script>
 @endsection

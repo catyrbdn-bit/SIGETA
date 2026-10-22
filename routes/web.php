@@ -72,7 +72,21 @@ Route::get('/dashboard', function () {
     $inicioMes = $fechaMes->copy()->startOfMonth()->toDateString();
     $finMes = $fechaMes->copy()->endOfMonth()->toDateString();
 
-    $tandeosMes = \App\Models\TandeoProgramado::whereBetween('fecha', [$inicioMes, $finMes])
+    $busqueda = trim((string) request('buscar', ''));
+
+    $tandeosMes = \App\Models\TandeoProgramado::query()
+        ->when($busqueda !== '', function ($consulta) use ($busqueda) {
+            $consulta->whereHas('circuito', function ($circuito) use ($busqueda) {
+                $circuito->where('nombre', 'like', '%' . $busqueda . '%')
+                    ->orWhere('descripcion', 'like', '%' . $busqueda . '%')
+                    ->orWhereHas('zona', function ($zona) use ($busqueda) {
+                        $zona->where('nombre', 'like', '%' . $busqueda . '%');
+                    });
+            });
+        })
+        ->when($busqueda === '', function ($consulta) use ($inicioMes, $finMes) {
+            $consulta->whereBetween('fecha', [$inicioMes, $finMes]);
+        })
         ->when(auth()->user()->rol === 'tandeador', function ($consulta) {
             $consulta->where(function ($filtro) {
                 $filtro->where('tandeador_id', auth()->id())
@@ -93,7 +107,7 @@ Route::get('/dashboard', function () {
         ->orderBy('hora_inicio_programada')
         ->get();
 
-    return view('dashboard', compact('tandeosMes', 'mesActual', 'mesNumero', 'anioSeleccionado', 'fechaMes'));
+    return view('dashboard', compact('tandeosMes', 'mesActual', 'mesNumero', 'anioSeleccionado', 'fechaMes', 'busqueda'));
 })->name('dashboard');
 
 Route::get('/calendario', [calendarioController::class, 'index'])
@@ -109,13 +123,20 @@ Route::get('/calendario/eventos', [calendarioController::class, 'eventos'])
 Route::post('/calendario/mover', [calendarioController::class, 'mover'])
     ->middleware('rol:administrador,capturista')
     ->name('calendario.mover');
-Route::middleware('rol:administrador')->prefix('usuarios')->name('usuarios.')->group(function () {
-    Route::get('/', [usuarioController::class, 'index'])->name('index');
-    Route::get('/crear', [usuarioController::class, 'create'])->name('create');
-    Route::post('/', [usuarioController::class, 'store'])->name('store');
-    Route::get('/{id}/editar', [usuarioController::class, 'edit'])->name('edit');
-    Route::put('/{id}', [usuarioController::class, 'update'])->name('update');
-    Route::delete('/{id}', [usuarioController::class, 'destroy'])->name('destroy');
+Route::middleware('rol:administrador')->prefix('usuarios')
+->name('usuarios.')->group(function () {
+    Route::get('/', [usuarioController::class, 'index'])
+    ->name('index');
+    Route::get('/crear', [usuarioController::class, 'create'])
+    ->name('create');
+    Route::post('/', [usuarioController::class, 'store'])
+    ->name('store');
+    Route::get('/{id}/editar', [usuarioController::class, 'edit'])
+    ->name('edit');
+    Route::put('/{id}', [usuarioController::class, 'update'])
+    ->name('update');
+    Route::delete('/{id}', [usuarioController::class, 'destroy'])
+    ->name('destroy');
 });
 
 
@@ -124,11 +145,16 @@ Route::middleware('rol:administrador')->prefix('usuarios')->name('usuarios.')->g
 // ==================================================
 
 Route::middleware('rol:administrador,capturista')->group(function () {
-    Route::get('/zonas', [zonasController::class, 'index'])->name('zonas.index');
-    Route::get('/zonas/crear', [zonasController::class, 'create'])->name('createZona');
-    Route::post('/zonas/guardar', [zonasController::class, 'store'])->name('storeZona');
-    Route::put('/zonas/{zona}', [zonasController::class, 'update'])->name('updateZona');
-    Route::get('/zonas/{id}/editar', [zonasController::class, 'edit'])->name('editZona');
+    Route::get('/zonas', [zonasController::class, 'index'])
+    ->name('zonas.index');
+    Route::get('/zonas/crear', [zonasController::class, 'create'])
+    ->name('createZona');
+    Route::post('/zonas/guardar', [zonasController::class, 'store'])
+    ->name('storeZona');
+    Route::put('/zonas/{zona}', [zonasController::class, 'update'])
+    ->name('updateZona');
+    Route::get('/zonas/{id}/editar', [zonasController::class, 'edit'])
+    ->name('editZona');
     Route::delete('/zonas/{id}', [zonasController::class, 'destroy'])->name('deleteZona');
 });
 
@@ -169,9 +195,12 @@ Route::get('/tandeos', [tandeosController::class, 'index'])
     ->name('tandeos.index');
 
 Route::middleware('rol:administrador,capturista')->group(function () {
-    Route::get('/tandeos/crear', [tandeosController::class, 'create'])->name('createTandeo');
-    Route::post('/tandeos/guardar', [tandeosController::class, 'store'])->name('storeTandeo');
-    Route::get('/tandeos/{id}/editar', [tandeosController::class, 'edit'])->name('editTandeo');
+    Route::get('/tandeos/crear', [tandeosController::class, 'create'])
+    ->name('createTandeo');
+    Route::post('/tandeos/guardar', [tandeosController::class, 'store'])
+    ->name('storeTandeo');
+    Route::get('/tandeos/{id}/editar', [tandeosController::class, 'edit'])
+    ->name('editTandeo');
     Route::delete('/tandeos/{id}', [tandeosController::class, 'destroy'])->name('deleteTandeo');
 });
     
@@ -181,10 +210,14 @@ Route::middleware('rol:administrador,capturista')->group(function () {
 // ==================================================
 
 Route::middleware('rol:administrador,capturista')->group(function () {
-    Route::get('/cumplimiento', [cumplimientoController::class, 'index'])->name('cumplimiento.index');
-    Route::post('/cumplimiento/guardar', [cumplimientoController::class, 'store'])->name('storeCumplimiento');
-    Route::post('/cumplimiento/apagon-general', [cumplimientoController::class, 'apagonGeneral'])->name('apagonGeneral');
-    Route::post('/cumplimiento/fuga', [cumplimientoController::class, 'fuga'])->name('registrarFuga');
+    Route::get('/cumplimiento', [cumplimientoController::class, 'index'])
+    ->name('cumplimiento.index');
+    Route::post('/cumplimiento/guardar', [cumplimientoController::class, 'store'])
+    ->name('storeCumplimiento');
+    Route::post('/cumplimiento/apagon-general', [cumplimientoController::class, 'apagonGeneral'])
+    ->name('apagonGeneral');
+    Route::post('/cumplimiento/fuga', [cumplimientoController::class, 'fuga'])
+    ->name('registrarFuga');
 });
 
     
@@ -204,7 +237,6 @@ Route::post('/reprogramaciones/fuga/previa', [reprogramacionController::class, '
 
 Route::post('/reprogramaciones/fuga', [reprogramacionController::class, 'storeFuga'])
     ->name('reprogramaciones.fuga.store');
-
 
 Route::post('/reprogramaciones/manual/previa', [reprogramacionController::class, 'previaManual'])
     ->name('reprogramaciones.manual.previa');

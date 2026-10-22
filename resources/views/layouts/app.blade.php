@@ -28,7 +28,38 @@
             height: 100vh;
             max-height: 100vh;
             overflow-y: auto;
-            background: #f5f7fa;
+            background: #5b9bd5;
+            color: #ffffff;
+        }
+
+        .menu-lateral .texto-menu-secundario { color: #eaf4ff; }
+        .menu-lateral .btn-outline-primary,
+        .menu-lateral .btn-outline-secondary {
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.7);
+        }
+        .menu-lateral .btn-outline-primary:hover,
+        .menu-lateral .btn-outline-secondary:hover {
+            color: #24527a;
+            background: #ffffff;
+            border-color: #ffffff;
+        }
+                .menu-lateral .boton-cerrar-sesion {
+            display: block;
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ffffff;
+            border-radius: 8px;
+            color: #24527a;
+            background: #ffffff;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .menu-lateral .boton-cerrar-sesion:hover {
+            color: #173b5c;
+            background: #eaf4ff;
         }
 
         .menu-navegacion {
@@ -43,15 +74,9 @@
             max-width: 100%;
         }
 
-        .contenido-principal > * {
-            max-width: 100%;
-        }
-
-        .contenido-principal .container {
-            width: 100%;
-            max-width: 100%;
-        }
-
+        .contenido-principal > * { max-width: 100%; }
+        .contenido-principal table thead th { text-align: center; vertical-align: middle; }
+        .contenido-principal .container { width: 100%; max-width: 100%; }
         .contenido-principal img,
         .contenido-principal video,
         .contenido-principal canvas {
@@ -102,50 +127,25 @@
                 overflow: visible;
             }
 
-            .menu-navegacion {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .contenido-principal {
-                padding: 16px !important;
-            }
-
-            .contenido-principal .contenido-vista {
-                margin: 0 !important;
-            }
-
-            .contenido-principal #buscar {
-                width: 100%;
-                max-width: 100%;
-            }
-
+            .menu-navegacion { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .contenido-principal { padding: 16px !important; }
+            .contenido-principal .contenido-vista { margin: 0 !important; }
+            .contenido-principal #buscar { width: 100%; max-width: 100%; }
             .contenido-principal table {
                 display: block;
                 width: 100%;
                 max-width: 100%;
                 overflow-x: auto;
             }
-
-            .contenido-principal .d-flex {
-                flex-wrap: wrap;
-            }
-
-            .contenido-principal .d-flex > * {
-                min-width: 0;
-                max-width: 100%;
-            }
+            .contenido-principal .d-flex { flex-wrap: wrap; }
+            .contenido-principal .d-flex > * { min-width: 0; max-width: 100%; }
         }
 
         @media (max-width: 420px) {
-            .menu-navegacion {
-                grid-template-columns: 1fr;
-            }
-
-            .contenido-principal {
-                padding: 12px !important;
-            }
+            .menu-navegacion { grid-template-columns: 1fr; }
+            .contenido-principal { padding: 12px !important; }
         }
-    </style>
+</style>
 </head>
 <body>
     <div class="container-fluid">
@@ -155,8 +155,8 @@
                     <div class="mb-4">
                         <h1 class="h4 mb-3">SIGETA</h1>
                         <p class="mb-1"><strong>{{ Auth::user()->nombre }}</strong></p>
-                        <p class="small text-muted mb-1">Usuario: {{ Auth::user()->usuario }}</p>
-                        <p class="small text-muted mb-0">Rol: {{ Auth::user()->rol }}</p>
+                        <p class="small mb-1 texto-menu-secundario">Usuario: {{ Auth::user()->usuario }}</p>
+                        <p class="small mb-0 texto-menu-secundario">Rol: {{ Auth::user()->rol }}</p>
                     </div>
 
                     <nav class="menu-navegacion">
@@ -181,7 +181,7 @@
 
                     <form action="{{ route('cerrarSesion') }}" method="POST" class="mt-auto pt-4">
                         @csrf
-                        <button type="submit" class="btn btn-link px-0">Cerrar sesión</button>
+                        <button type="submit" class="btn boton-cerrar-sesion">Cerrar sesión</button>
                     </form>
                 </aside>
             @endauth

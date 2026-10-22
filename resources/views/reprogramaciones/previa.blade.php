@@ -73,6 +73,7 @@
     @if ($filas->count())
 
         <input type="text" id="buscar" placeholder="Buscar circuito, colonia o calle…">
+        <button type="button" id="limpiar-busqueda-previa" class="secundario">Quitar filtro</button>
 
         <form action="{{ $modo === 'manual' ? route('reprogramaciones.manual.store') : ($modo === 'fuga' ? route('reprogramaciones.fuga.store') : route('reprogramaciones.apagon.store')) }}" method="POST">
             @csrf
@@ -252,6 +253,12 @@
                 document.querySelectorAll('tbody tr.dato').forEach(function (fila) {
                     fila.style.display = fila.textContent.toLowerCase().includes(texto) ? '' : 'none';
                 });
+            });
+
+            document.getElementById('limpiar-busqueda-previa').addEventListener('click', function () {
+                const buscador = document.getElementById('buscar');
+                buscador.value = '';
+                buscador.dispatchEvent(new Event('input'));
             });
         </script>
     @else

@@ -37,10 +37,15 @@
         <button type="submit" class="btn btn-outline-primary">Consultar</button>
     </form>
 
-    <div class="col-12 col-md-7 col-xl-4">
+    <form action="{{ route('dashboard') }}" method="GET" class="col-12 col-md-7 col-xl-4">
         <label for="buscar-tandeo" class="form-label">Buscar circuito, colonia o calle</label>
-        <input type="search" id="buscar-tandeo" class="form-control" placeholder="Escribe para buscar...">
-    </div>
+        <div class="input-group">
+            <input type="search" id="buscar-tandeo" name="buscar" class="form-control"
+                   value="{{ $busqueda }}" placeholder="Escribe para buscar...">
+            <button type="submit" class="btn btn-outline-primary">Buscar</button>
+        </div>
+     
+    </form>
     <div class="col-12 col-md-5 col-xl-3">
         <label for="filtro-estado" class="form-label">Filtrar por estado</label>
         <select id="filtro-estado" class="form-select">
@@ -53,9 +58,18 @@
             <option value="no_cumplido">No cumplido</option>
         </select>
     </div>
+    <div class="col-12">
+        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">Quitar filtros</a>
+    </div>
 </div>
 
-<h2 class="h5 mb-3">Tandeos de {{ $fechaMes->locale('es')->translatedFormat('F Y') }}</h2>
+<h2 class="h5 mb-3">
+    @if ($busqueda !== '')
+        Resultados para "{{ $busqueda }}" 
+    @else
+        Tandeos de {{ $fechaMes->locale('es')->translatedFormat('F Y') }}
+    @endif
+</h2>
 <div class="table-responsive">
     <table class="table table-bordered table-hover align-middle" id="tabla-tandeos">
         <thead class="table-light">
@@ -119,7 +133,7 @@
                     @endif
                 </tr>
             @empty
-                <tr><td colspan="{{ Auth::user()->rol === 'tandeador' ? 5 : 7 }}" class="text-center text-muted">{{ Auth::user()->rol === 'tandeador' ? 'No tienes tandeos asignados este mes.' : 'No hay tandeos programados este mes.' }}</td></tr>
+                <tr><td colspan="{{ Auth::user()->rol === 'tandeador' ? 5 : 7 }}" class="text-center text-muted">{{ $busqueda !== '' ? 'No se encontraron tandeos para esta busqueda.' : (Auth::user()->rol === 'tandeador' ? 'No tienes tandeos asignados este mes.' : 'No hay tandeos programados este mes.') }}</td></tr>
             @endforelse
             <tr id="sin-tandeos-filtrados" class="d-none"><td colspan="{{ Auth::user()->rol === 'tandeador' ? 5 : 7 }}" class="text-center text-muted">No hay tandeos con esos filtros.</td></tr>
         </tbody>
