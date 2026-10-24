@@ -119,6 +119,11 @@
             <p><strong>Calles:</strong> <span id="cambio-calles"></span></p>
             <p><strong>Horario actual:</strong> <span id="cambio-actual"></span></p>
             <p><strong>Horario propuesto:</strong> <span id="cambio-propuesto"></span></p>
+            <div class="mb-3 text-start">
+                <label for="cambio-hora" class="form-label"><strong>Ajustar hora de inicio</strong></label>
+                <input type="time" id="cambio-hora" class="form-control" required>
+                <small class="text-muted">Se conserva la fecha elegida y la duración del tandeo.</small>
+            </div>
             <div id="error-empalme" class="alert alert-danger dialogo-error" role="alert" hidden></div>
             <div class="dialogo-acciones">
                 <button type="button" id="cancelar-movimiento" class="btn btn-outline-secondary">Cancelar</button>

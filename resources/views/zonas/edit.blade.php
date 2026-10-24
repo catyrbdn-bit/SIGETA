@@ -130,6 +130,15 @@
                 <p class="ayuda mb-0">No hay tandeadores activos registrados.</p>
             @endforelse
         </section>
+        <section class="panel">
+            <div class="d-flex align-items-start gap-2">
+                <input type="checkbox" id="actualizar_tandeos_futuros" name="actualizar_tandeos_futuros" value="1" style="width:18px; min-height:18px;" @checked(old('actualizar_tandeos_futuros'))>
+                <div>
+                    <label for="actualizar_tandeos_futuros" class="mb-1">Actualizar también los tandeos futuros ya programados</label>
+                    <p class="ayuda">Se cambiarán los tandeos de esta colonia que todavía no empiezan, incluidas las repeticiones ya creadas.</p>
+                </div>
+            </div>
+        </section>
 
         <section class="panel">
             <label for="activo">Estado:</label>

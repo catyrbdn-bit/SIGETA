@@ -81,36 +81,86 @@ class zonasController extends Controller
             'activo' => 'required|boolean',
             'tandeadores' => 'nullable|array',
             'tandeadores.*' => 'integer|exists:usuarios,id,rol,tandeador,activo,1',
+            'actualizar_tandeos_futuros' => 'nullable|boolean',
         ]);
 
         $zona = zonasModel::findOrFail($id);
         $antes = $zona->only(['nombre', 'activo']);
-        $asignaciones = $zona->tandeadores()->sync($datos['tandeadores'] ?? []);
+        $nuevosTandeadores = array_map('intval', $datos['tandeadores'] ?? []);
+        $cantidadTandeosActualizados = 0;
 
-        $zona->fill([
-            'nombre' => $datos['nombre'],
-            'descripcion' => $datos['descripcion'] ?? $zona->descripcion,
-            'activo' => $datos['activo'],
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($zona, $datos, $nuevosTandeadores, &$cantidadTandeosActualizados) {
+            $asignaciones = $zona->tandeadores()->sync($nuevosTandeadores);
 
-        if ($zona->isDirty()) {
-            $zona->save();
-        } elseif (!empty($asignaciones['attached']) || !empty($asignaciones['detached'])) {
-            $zona->touch();
-        }
+            $zona->fill([
+                'nombre' => $datos['nombre'],
+                'descripcion' => $datos['descripcion'] ?? $zona->descripcion,
+                'activo' => $datos['activo'],
+            ]);
+
+            if ($zona->isDirty()) {
+                $zona->save();
+            } elseif (!empty($asignaciones['attached']) || !empty($asignaciones['detached'])) {
+                $zona->touch();
+            }
+
+            if (empty($datos['actualizar_tandeos_futuros'])) {
+                return;
+            }
+
+            $tandeosFuturos = \App\Models\tandeoProgramado::whereHas('circuito', function ($consulta) use ($zona) {
+                $consulta->where('zona_id', $zona->id);
+            })->with('circuito')->get()
+                ->filter(fn ($tandeo) => $tandeo->inicio->greaterThan(now()));
+
+            $tandeadorPrincipal = count($nuevosTandeadores) === 1 ? $nuevosTandeadores[0] : null;
+
+            foreach ($tandeosFuturos as $tandeo) {
+                $cambios = $tandeo->tandeadores()->sync($nuevosTandeadores);
+
+                if ($tandeo->tandeador_id != $tandeadorPrincipal) {
+                    $tandeo->tandeador_id = $tandeadorPrincipal;
+                    $tandeo->save();
+                } elseif (!empty($cambios['attached']) || !empty($cambios['detached'])) {
+                    $tandeo->actualizarVersionSync();
+                }
+
+                $cantidadTandeosActualizados++;
+            }
+
+            $series = \App\Models\TandeoRepeticion::where('activa', true)
+                ->whereHas('circuito', function ($consulta) use ($zona) {
+                    $consulta->where('zona_id', $zona->id);
+                })->get();
+
+            foreach ($series as $serie) {
+                if ($serie->tandeador_id != $tandeadorPrincipal) {
+                    $serie->tandeador_id = $tandeadorPrincipal;
+                    $serie->save();
+                }
+            }
+        });
 
         app(\App\Services\HistorialActividadService::class)->registrar(
             'colonias',
             'edicion',
             'Se actualizaron los datos de una colonia.',
-            ['colonia' => $zona->nombre, 'antes' => $antes, 'despues' => $zona->only(["nombre", "activo"]), 'tandeadores_asignados' => $datos['tandeadores'] ?? []]
+            [
+                'colonia' => $zona->nombre,
+                'antes' => $antes,
+                'despues' => $zona->only(['nombre', 'activo']),
+                'tandeadores_asignados' => $nuevosTandeadores,
+                'se_actualizaron_tandeos_futuros' => !empty($datos['actualizar_tandeos_futuros']),
+                'tandeos_futuros_actualizados' => $cantidadTandeosActualizados,
+            ]
         );
-        return redirect()->route('zonas.index')
-            ->with('success', 'Colonia actualizada exitosamente');
+
+        $mensaje = !empty($datos['actualizar_tandeos_futuros'])
+            ? "Colonia actualizada. Se actualizaron {$cantidadTandeosActualizados} tandeos futuros; las próximas repeticiones usarán los tandeadores seleccionados."
+            : 'Colonia actualizada exitosamente.';
+
+        return redirect()->route('zonas.index')->with('success', $mensaje);
     }
-
-
-    //funcion destroy para eliminar la zona de la base de datos
     public function destroy($id)
     {
         $zona = zonasModel::findOrFail($id);

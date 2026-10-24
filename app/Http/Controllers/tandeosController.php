@@ -32,9 +32,9 @@ class tandeosController extends Controller
         ])
             ->when(auth()->user()->rol === 'tandeador', function ($consulta) {
                 $consulta->where(function ($filtro) {
-                    $filtro->where('tandeador_id', auth()->id())
+                    $filtro->where('tandeador_id', auth()->user()->getKey())
                         ->orWhereHas('tandeadores', function ($personas) {
-                            $personas->where('usuarios.id', auth()->id());
+                            $personas->where('usuarios.id', auth()->user()->getKey());
                         });
                 });
             })

@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const dialogoMovimiento = document.getElementById('confirmar-movimiento');
     const botonConfirmar = document.getElementById('confirmar-movimiento-boton');
     const avisoEmpalme = document.getElementById('error-empalme');
+    const campoHoraCambio = document.getElementById('cambio-hora');
     let cambioPendiente = null;
 
     function formatoLocal(fecha) {
@@ -91,6 +92,20 @@ document.addEventListener('DOMContentLoaded', function () {
             + (inicio.toDateString() !== fin.toDateString() ? ' (+1 día)' : '');
     }
 
+    function actualizarHoraPropuesta() {
+        if (!cambioPendiente || !campoHoraCambio.value) return;
+
+        const [horas, minutos] = campoHoraCambio.value.split(':').map(Number);
+        const [anio, mes, dia] = cambioPendiente.inicio.slice(0, 10).split('-').map(Number);
+        const inicio = new Date(anio, mes - 1, dia, horas, minutos);
+        const fin = new Date(inicio.getTime() + cambioPendiente.duracionMinutos * 60000);
+
+        cambioPendiente.inicio = formatoLocal(inicio);
+        document.getElementById('cambio-propuesto').textContent = rango(inicio, fin);
+        avisoEmpalme.hidden = true;
+        avisoEmpalme.textContent = '';
+    }
+
     function abrirConfirmacion(info) {
         const nuevoInicio = info.event.start;
         const nuevoFin = info.event.end;
@@ -100,7 +115,13 @@ document.addEventListener('DOMContentLoaded', function () {
         cambioPendiente = {
             id: info.event.id,
             inicio: formatoLocal(nuevoInicio),
+            duracionMinutos: Math.round((nuevoFin - nuevoInicio) / 60000),
         };
+        if (campoHoraCambio._flatpickr) {
+            campoHoraCambio._flatpickr.setDate(hora(nuevoInicio), false, 'H:i');
+        } else {
+            campoHoraCambio.value = hora(nuevoInicio);
+        }
 
         info.revert();
 
@@ -163,6 +184,7 @@ document.addEventListener('DOMContentLoaded', function () {
         plugins: [themePlugin, dayGridPlugin, timeGridPlugin, interactionPlugin],
         locale: esLocale,
         initialView: 'dayGridMonth',
+        nextDayThreshold: '23:59:59',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
@@ -229,6 +251,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     botonConfirmar.addEventListener('click', guardarMovimiento);
+    campoHoraCambio.addEventListener('input', actualizarHoraPropuesta);
+    campoHoraCambio.addEventListener('change', actualizarHoraPropuesta);
 
     dialogoMovimiento.addEventListener('close', function () {
         cambioPendiente = null;
