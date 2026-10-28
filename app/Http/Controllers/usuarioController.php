@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
-class usuarioController extends Controller
+class usuarioController extends controller
 {
     public function index()
     {

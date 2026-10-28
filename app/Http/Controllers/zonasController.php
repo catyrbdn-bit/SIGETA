@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\zonasModel;
 use App\Models\usuarioModel;
 
-class zonasController extends Controller
+class zonasController extends controller
 {
     public function index()
     {
@@ -122,7 +122,6 @@ class zonasController extends Controller
                     $tandeo->tandeador_id = $tandeadorPrincipal;
                     $tandeo->save();
                 } elseif (!empty($cambios['attached']) || !empty($cambios['detached'])) {
-                    $tandeo->actualizarVersionSync();
                 }
 
                 $cantidadTandeosActualizados++;

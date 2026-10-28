@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
-class HistorialActividadController extends Controller
+class historialActividadController extends controller
 {
     public function index(Request $request)
     {

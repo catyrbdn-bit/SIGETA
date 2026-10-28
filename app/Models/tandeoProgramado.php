@@ -2,17 +2,13 @@
 
 namespace App\Models;
 
-use App\Traits\TracksSyncChanges;
 
-use App\Traits\HasSyncUuid;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class tandeoProgramado extends Model
 {
-    use TracksSyncChanges;
-    use HasSyncUuid;
     protected $table = 'tandeos_programados';
 
     protected $fillable = [
@@ -48,11 +44,6 @@ class tandeoProgramado extends Model
         return $this->belongsToMany(usuarioModel::class, 'tandeo_tandeador', 'tandeo_id', 'usuario_id');
     }
 
-    public function actualizarVersionSync(): void
-    {
-        $this->sync_version = (int) $this->sync_version + 1;
-        $this->save();
-    }
 
     public function cumplimientos()
     {

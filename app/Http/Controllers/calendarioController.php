@@ -9,7 +9,7 @@ use App\Services\repeticionTandeoService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
-class calendarioController extends Controller
+class calendarioController extends controller
 {
     public function index()
     {

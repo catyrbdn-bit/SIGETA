@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-class tandeosController extends Controller
+class tandeosController extends controller
 {
     public function index(repeticionTandeoService $repeticiones)
     {
@@ -152,7 +152,6 @@ class tandeosController extends Controller
                     'fecha_repeticion' => $serieId ? $inicio->toDateString() : null,
                 ]);
                 $tandeo->tandeadores()->sync($tandeadoresIds);
-                if ($tandeadoresIds) $tandeo->actualizarVersionSync();
             }
         });
 

@@ -13,7 +13,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'sync.token' => App\Http\Middleware\validarTokenSync::class,
             'rol' => App\Http\Middleware\VerificarRol::class,
         ]);
     })

@@ -8,7 +8,7 @@ use App\Models\circuitosModel;
 use App\Models\zonasModel;
 use App\Models\PuntoAbastecimiento;
 
-class circuitosController extends Controller
+class circuitosController extends controller
 {
     public function index()
     {

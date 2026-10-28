@@ -308,7 +308,6 @@ class reprogramacionService
                         'tandeador_id' => $tandeadoresIds[0] ?? null,
                     ]);
                     $m['tandeo']->tandeadores()->sync($tandeadoresIds);
-                    $m['tandeo']->actualizarVersionSync();
                 }
 
                 if ((int) $m['tandeo']->id === $tandeoId) {

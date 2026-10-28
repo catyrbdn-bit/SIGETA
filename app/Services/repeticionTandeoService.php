@@ -6,7 +6,6 @@ use App\Models\TandeoRepeticion;
 use App\Models\tandeoProgramado;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Ramsey\Uuid\Uuid;
 
 class repeticionTandeoService
 {
@@ -46,11 +45,6 @@ class repeticionTandeoService
                         if (! $mismoHorario) {
                             $fin = $proximaFecha->copy()->addMinutes((int) $serie->duracion_minutos);
                             $fecha = $proximaFecha->toDateString();
-                            $syncUuid = (string) Uuid::uuid5(
-                                Uuid::NAMESPACE_URL,
-                                'SIGETA:tandeo:' . $serie->repeticion_uuid . ':' . $fecha
-                            );
-
                             $tandeo = new tandeoProgramado();
                             $tandeo->forceFill([
                                 'circuito_id' => $serie->circuito_id,
@@ -62,7 +56,6 @@ class repeticionTandeoService
                                 'repeticion_uuid' => $serie->repeticion_uuid,
                                 'repetir_cada_dias' => $serie->cada_dias,
                                 'fecha_repeticion' => $fecha,
-                                'sync_uuid' => $syncUuid,
                             ]);
                             $tandeo->save();
                             $tandeadoresIds = $serie->circuito->zona->tandeadores()
@@ -71,7 +64,6 @@ class repeticionTandeoService
                                 ->pluck('usuarios.id')
                                 ->all();
                             $tandeo->tandeadores()->sync($tandeadoresIds);
-                            if ($tandeadoresIds) $tandeo->actualizarVersionSync();
                         }
                     }
 

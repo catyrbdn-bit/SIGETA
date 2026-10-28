@@ -2,14 +2,10 @@
 
 namespace App\Models;
 
-use App\Traits\HasSyncUuid;
-use App\Traits\TracksSyncChanges;
 use Illuminate\Database\Eloquent\Model;
 
 class TandeoRepeticion extends Model
 {
-    use TracksSyncChanges;
-    use HasSyncUuid;
 
     protected $table = 'tandeo_repeticiones';
 

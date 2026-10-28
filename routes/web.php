@@ -1,16 +1,17 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Auth\loginController;
+use App\Http\Controllers\Auth\passwordResetController;
 use App\Http\Controllers\usuarioController;
 use App\Http\Controllers\zonasController;
 use App\Http\Controllers\circuitosController;
 use App\Http\Controllers\tandeosController;
 use App\Http\Controllers\cumplimientoController;
-use App\Http\Controllers\ReprogramacionController;
+use App\Http\Controllers\reprogramacionController;
 use App\Http\Controllers\calendarioController;
-use App\Http\Controllers\HistorialActividadController;
+use App\Http\Controllers\historialActividadController;
+use App\Http\Controllers\reportesController;
 
 
 // ==================================================
@@ -22,28 +23,28 @@ Route::get('/', function () {
 });
 
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [LoginController::class, 'mostrarInicioSesion'])
+    Route::get('/login', [loginController::class, 'mostrarInicioSesion'])
         ->name('login');
 
-    Route::post('/login', [LoginController::class, 'iniciarSesion'])
+    Route::post('/login', [loginController::class, 'iniciarSesion'])
         ->name('iniciarSesion');
 
-    Route::get('/forgot-password', [PasswordResetController::class, 'solicitar'])
+    Route::get('/forgot-password', [passwordResetController::class, 'solicitar'])
         ->name('password.request');
 
-    Route::post('/forgot-password', [PasswordResetController::class, 'enviarEnlace'])
+    Route::post('/forgot-password', [passwordResetController::class, 'enviarEnlace'])
         ->name('password.email');
 
-    Route::get('/reset-password/{token}', [PasswordResetController::class, 'cambiar'])
+    Route::get('/reset-password/{token}', [passwordResetController::class, 'cambiar'])
         ->name('password.reset');
 
-    Route::post('/reset-password', [PasswordResetController::class, 'guardarNueva'])
+    Route::post('/reset-password', [passwordResetController::class, 'guardarNueva'])
         ->name('password.update');
 });
 
 Route::middleware('auth')->group(function () {
 
-Route::post('/logout', [LoginController::class, 'cerrarSesion'])
+Route::post('/logout', [loginController::class, 'cerrarSesion'])
     ->name('cerrarSesion');
 
 // Panel principal
@@ -142,10 +143,18 @@ Route::middleware('rol:administrador')->prefix('usuarios')
 
 
 Route::middleware('rol:administrador')->prefix('historial')->name('historial.')->group(function () {
-    Route::get('/', [HistorialActividadController::class, 'index'])->name('index');
-    Route::post('/depurar', [HistorialActividadController::class, 'depurar'])->name('depurar');
+    Route::get('/', [historialActividadController::class, 'index'])->name('index');
+    Route::post('/depurar', [historialActividadController::class, 'depurar'])->name('depurar');
 });
 // ==================================================
+
+// REPORTES
+Route::middleware('rol:administrador,capturista')->prefix('reportes')->name('reportes.')->group(function () {
+    Route::get('/', [reportesController::class, 'index'])->name('index');
+    Route::get('/cumplimiento-circuito/excel', [reportesController::class, 'cumplimientoCircuitoExcel'])->name('cumplimiento.circuito.excel');
+    Route::get('/{tipo}/pdf', [reportesController::class, 'generarPdf'])->name('pdf');
+});
+
 // ZONAS
 // ==================================================
 

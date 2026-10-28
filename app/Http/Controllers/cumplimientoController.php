@@ -12,7 +12,7 @@ use App\Services\reprogramacionService;
 use App\Services\repeticionTandeoService;
 use Carbon\Carbon;
 
-class cumplimientoController extends Controller
+class cumplimientoController extends controller
 {
     public function index(repeticionTandeoService $repeticiones)
     {

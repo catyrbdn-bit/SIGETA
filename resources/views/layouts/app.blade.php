@@ -177,6 +177,7 @@
                             @endif
 
                             <a href="{{ route('calendario.index') }}" class="btn btn-outline-secondary text-start">Calendario</a>
+                            <a href="{{ route('reportes.index') }}" class="btn btn-outline-secondary text-start">Reportes</a>
                         @endif
                     </nav>
 

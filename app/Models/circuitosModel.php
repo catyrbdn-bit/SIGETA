@@ -2,17 +2,13 @@
 
 namespace App\Models;
 
-use App\Traits\TracksSyncChanges;
 
-use App\Traits\HasSyncUuid;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class circuitosModel extends Model
 {
-    use TracksSyncChanges;
-    use HasSyncUuid;
     protected $table = 'circuitos';
 
     protected $fillable = [

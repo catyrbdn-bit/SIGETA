@@ -9,7 +9,7 @@ use App\Services\reprogramacionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
-class reprogramacionController extends Controller
+class reprogramacionController extends controller
 {
     public function __construct(private reprogramacionService $servicio)
     {
