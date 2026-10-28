@@ -142,17 +142,24 @@ Route::middleware('rol:administrador')->prefix('usuarios')
 });
 
 
-Route::middleware('rol:administrador')->prefix('historial')->name('historial.')->group(function () {
-    Route::get('/', [historialActividadController::class, 'index'])->name('index');
-    Route::post('/depurar', [historialActividadController::class, 'depurar'])->name('depurar');
+Route::middleware('rol:administrador')->prefix('historial')
+->name('historial.')->group(function () {
+    Route::get('/', [historialActividadController::class, 'index'])
+    ->name('index');
+    Route::post('/depurar', [historialActividadController::class, 'depurar'])
+    ->name('depurar');
 });
 // ==================================================
 
 // REPORTES
-Route::middleware('rol:administrador,capturista')->prefix('reportes')->name('reportes.')->group(function () {
-    Route::get('/', [reportesController::class, 'index'])->name('index');
-    Route::get('/cumplimiento-circuito/excel', [reportesController::class, 'cumplimientoCircuitoExcel'])->name('cumplimiento.circuito.excel');
-    Route::get('/{tipo}/pdf', [reportesController::class, 'generarPdf'])->name('pdf');
+Route::middleware('rol:administrador,capturista')->prefix('reportes')
+->name('reportes.')->group(function () {
+    Route::get('/', [reportesController::class, 'index'])
+    ->name('index');
+    Route::get('/cumplimiento-circuito/excel', [reportesController::class, 'cumplimientoCircuitoExcel'])
+    ->name('cumplimiento.circuito.excel');
+    Route::get('/{tipo}/pdf', [reportesController::class, 'generarPdf'])
+    ->name('pdf');
 });
 
 // ZONAS
