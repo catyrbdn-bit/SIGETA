@@ -60,6 +60,7 @@ class passwordResetController extends controller
             return redirect()->route('login')->with('success', 'Contraseña cambiada. Ya puedes iniciar sesión.');
         }
 
-        return back()->withErrors(['email' => 'El enlace ya no es válido o venció. Solicita uno nuevo.'])->withInput($request->only('email'));
+        return back()->withErrors(['email' => 'El enlace ya no es válido o venció. Solicita uno nuevo'])
+        ->withInput($request->only('email'));
     }
 }

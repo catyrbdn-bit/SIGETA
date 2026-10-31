@@ -30,10 +30,13 @@ class reprogramacionController extends controller
 
     public function storeManual(Request $request)
     {
-        [$id, $inicio, $ajustes, $motivos, $motivo, $circuitoId, $tandeadorId, $duracionManual, $horasAtraso] = $this->datosManual($request);
+        [$id, $inicio, $ajustes, $motivos, $motivo, $circuitoId, $tandeadorId, $duracionManual, $horasAtraso] = 
+        $this->datosManual($request);
+        
         $origenCumplimiento = $request->boolean('origen_cumplimiento');
         $horasCumplimiento = $origenCumplimiento ? $horasAtraso : null;
         $cumplimientoId = $origenCumplimiento && $request->filled('cumplimiento_id') ? (int) $request->cumplimiento_id : null;
+        
         $observacionesCumplimiento = $origenCumplimiento ? $request->input('cumplimiento_observaciones') : null;
         $this->servicio->aplicarManual($id, $inicio, (int) auth()->user()->id, $ajustes, $motivos, $motivo, $circuitoId, $tandeadorId, $duracionManual, $horasCumplimiento, $cumplimientoId, $observacionesCumplimiento);
         $mensaje = $origenCumplimiento

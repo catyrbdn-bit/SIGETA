@@ -200,9 +200,12 @@ class cumplimientoController extends controller
                 ];
                 $registro = $registros->get((int) $tandeoId);
                 $antes = $registro?->only(['resultado', 'horas_atraso', 'observaciones']);
+                
                 if ($registro) $registro->update($valores);
+                
                 else CumplimientoTandeo::create(array_merge($valores, ['tandeo_id' => $tandeoId]));
-                $cambios[] = ['tandeo_id' => (int) $tandeoId, 'circuito' => $tandeo->circuito->nombre, 'antes' => $antes, 'despues' => $valores];
+                $cambios[] = ['tandeo_id' => (int) $tandeoId, 'circuito' => $tandeo->circuito->nombre, 
+                'antes' => $antes, 'despues' => $valores];
             }
         });
 
