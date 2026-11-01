@@ -1,10 +1,10 @@
 <?php
 
 namespace App\Services;
+// archivo del sistema: archivo con procesos que utiliza el sistema
 
 use App\Models\CumplimientoTandeo;
 use App\Models\Reprogramacion;
-use App\Models\TandeoRepeticion;
 use App\Models\circuitosModel;
 use App\Models\tandeoProgramado;
 use App\Services\HistorialActividadService;
@@ -20,6 +20,7 @@ class reprogramacionService
      * $ajustes: [tandeo_id => Carbon] horarios nuevos escritos a mano
      * $motivos: [tandeo_id => string] motivos escritos a mano
      */
+    // calcula los tandeos afectados sin guardar cambios
     public function simularApagon(
         Carbon $desde,
         array $ajustes = [],
@@ -162,8 +163,12 @@ class reprogramacionService
         ];
     }
 
-    /** Calcula una reprogramación manual y los empalmes nuevos que provoca. */
-    public function simularManual(int $tandeoId, Carbon $nuevoInicio, array $ajustes = [], array $motivos = [], ?string $motivoInicial = null, ?int $circuitoId = null, ?int $duracionManual = null): array
+    /** Calcula una reprogramación manual y los empalmes nuevos que provoca */
+    // descripcion: calcula el nuevo horario y revisa si el cambio empalma otros tandeos
+    // entradas: identificador del tandeo, fecha y hora nuevas, ajustes y motivos opcionales
+    // salida: arreglo con los movimientos y advertencias o un error de validacion
+    public function simularManual(int $tandeoId, Carbon $nuevoInicio, array $ajustes = [], array $motivos = [], ?string $motivoInicial = null, 
+                                    ?int $circuitoId = null, ?int $duracionManual = null): array
     {
         $seleccionado = tandeoProgramado::with('circuito.puntoAbastecimiento', 'circuito.zona')->findOrFail($tandeoId);
         $circuitoNuevo = null;
@@ -175,7 +180,8 @@ class reprogramacionService
                 $duracionNueva = (int) round((float) $circuitoNuevo->duracion * 60);
             }
         }
-        // Elegimos la fecha menor para revisar los tandeos cercanos.
+
+        // Elegimos la fecha menor para revisar los tandeos cercanos
         $inicioOriginal = $seleccionado->inicio;
         if ($nuevoInicio->lessThan($inicioOriginal)) {
             $inicioVentana = $nuevoInicio->copy();
@@ -225,9 +231,10 @@ class reprogramacionService
         $cola = [$movimiento];
         $advertencias = [];
 
-        // Si un horario choca, recorremos ese tandeo y revisamos de nuevo.
+        // Si un horario choca, recorremos ese tandeo y revisamos de nuevo
         while ($actual = array_shift($cola)) {
             foreach ($tandeos as $otro) {
+                //este if evita que se mueva un tandeo que ya se movio en la cadena
                 if (isset($movimientos[$otro->id])) {
                     continue;
                 }
@@ -237,7 +244,7 @@ class reprogramacionService
                 if ($this->seEmpalman($actual['inicio_anterior'], $actual['fin_anterior'], $otro->inicio, $otro->fin)) {
                     continue;
                 }
-
+                //esta parte es para que si el tandeo ya se movio manualmente, no se mueva otra vez por la cadena
                 $ajuste = $ajustes[$otro->id] ?? null;
 
                 $mov = $this->mover(
@@ -265,6 +272,7 @@ class reprogramacionService
     }
 
     /** Guarda una reprogramación manual y sus recorridos en una sola transacción. */
+    // guarda los horarios y el historial del cambio
     public function aplicarManual(int $tandeoId, Carbon $nuevoInicio, int $usuarioId, array $ajustes = [], array $motivos = [], ?string $motivoInicial = null, ?int $circuitoId = null, ?int $tandeadorId = null, ?int $duracionManual = null, ?int $horasAtraso = null, ?int $cumplimientoId = null, ?string $observacionesCumplimiento = null): string
     {
         $resultado = $this->simularManual($tandeoId, $nuevoInicio, $ajustes, $motivos, $motivoInicial, $circuitoId, $duracionManual);
@@ -351,25 +359,33 @@ class reprogramacionService
         );
         return $cadena;
     }
+    // guarda los horarios afectados por el apagon
     public function aplicarApagon(Carbon $desde, int $usuarioId, array $ajustes = [], array $motivos = []): string
     {
         return $this->guardarIncidencia($this->simularApagon($desde, $ajustes, $motivos), $usuarioId, 'apagon_general');
     }
 
+    // Aplica una fuga en un punto de abastecimiento y guarda los cambios en la base de datos
+    // descripcion: calcula y guarda la reprogramacion de los tandeos afectados por una fuga
+    // entradas: fecha, usuario, tipo de punto, horas de atraso, ajustes y motivos opcionales
+    // salida: identificador de la cadena de reprogramacion
     public function aplicarFuga(
+        //los parametros siguientes son para poder aplicar la fuga en un punto especifico, ya sea laguna o pozo
         Carbon $desde,
         int $usuarioId,
         string $tipoPunto,
         int $horasAtraso,
+        //array porque se pueden aplicar ajustes y motivos a tandeos especificos, no a todos
         array $ajustes = [],
         array $motivos = []
     ): string {
         $etiqueta = $tipoPunto === 'laguna' ? 'Fuga en laguna' : 'Fuga en pozo';
         $resultado = $this->simularApagon($desde, $ajustes, $motivos, $tipoPunto, $horasAtraso, $etiqueta);
-
+        // Guardamos la incidencia y los cambios en la base de datos
         return $this->guardarIncidencia($resultado, $usuarioId, 'fuga_' . $tipoPunto);
     }
 
+    // guarda los movimientos y el historial de una incidencia
     private function guardarIncidencia(array $resultado, int $usuarioId, string $tipoOrigen): string
     {
         $cadena = (string) Str::uuid();
@@ -418,6 +434,7 @@ class reprogramacionService
         return $cadena;
     }
 
+    // valida el nuevo horario antes de guardarlo
     private function mover(tandeoProgramado $t, Carbon $nuevoInicio, bool $esCadena, ?int $puntoId, bool $manual, ?string $motivo, ?int $duracionNueva = null): array
     {
         $duracion = $t->inicio->diffInMinutes($t->fin);
@@ -436,11 +453,13 @@ class reprogramacionService
         ];
     }
 
+    // compara dos horarios para saber si se cruzan
     private function seEmpalman(Carbon $inicioA, Carbon $finA, Carbon $inicioB, Carbon $finB): bool
     {
         return $inicioA < $finB && $inicioB < $finA;
     }
 
+    // evita guardar horarios de inicio repetidos
     private function validarHorariosUnicos(array $movimientos): void
     {
         $cambios = [];

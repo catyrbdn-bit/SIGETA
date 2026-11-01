@@ -1,8 +1,11 @@
+{{-- vista de index en el modulo zonas --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Colonias atendidas por SAPUA - SIGETA')
 
 @section('estilos')
+{{-- estilos visuales de la pantalla --}}
 <style>
 
         * {
@@ -121,6 +124,7 @@
 
     @if (session('success'))
         <p id="mensaje-exito" class="mensaje-exito">{{ session('success') }}</p>
+        {{-- interacciones de la pantalla --}}
         <script>
             setTimeout(function () {
                 const mensaje = document.getElementById('mensaje-exito');

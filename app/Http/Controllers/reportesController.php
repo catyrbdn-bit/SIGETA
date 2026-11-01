@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+// archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Exports\CumplimientoCircuitoExport;
 use App\Models\circuitosModel;
@@ -13,6 +14,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class reportesController extends controller
 {
+    // consulta y muestra los registros de la pantalla
     public function index(Request $request)
     {
         $zonas = zonasModel::where('activo', true)->orderBy('nombre')->get();
@@ -34,6 +36,7 @@ class reportesController extends controller
         ]);
     }
 
+    // genera el reporte en pdf con los filtros seleccionados
     public function generarPdf(Request $request, string $tipo)
     {
         $tiposPermitidos = ['cumplimiento-zona', 'reprogramaciones-motivo', 'pendientes'];
@@ -145,6 +148,7 @@ class reportesController extends controller
             ->download('reporte-' . $tipo . '-' . now()->format('Ymd-His') . '.pdf');
     }
 
+    // prepara y descarga el reporte de cumplimiento por circuito
     public function cumplimientoCircuitoExcel(Request $request)
     {
         $filtros = $this->validarFiltros($request);
@@ -176,6 +180,7 @@ class reportesController extends controller
         );
     }
 
+    // revisa los filtros recibidos para generar el reporte
     private function validarFiltros(Request $request): array
     {
         return $request->validate([
@@ -186,6 +191,7 @@ class reportesController extends controller
         ]);
     }
 
+    // consulta los tandeos que cumplen con los filtros
     private function tandeosFiltrados(array $filtros)
     {
         return tandeoProgramado::with([
@@ -204,6 +210,7 @@ class reportesController extends controller
             ->orderBy('hora_inicio_programada');
     }
 
+    // muestra el nombre entendible del motivo registrado
     private function nombreMotivo(string $motivo): string
     {
         return match ($motivo) {

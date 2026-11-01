@@ -1,4 +1,5 @@
 <?php
+// archivo del sistema: archivo que recibe las solicitudes de la aplicacion
 
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;

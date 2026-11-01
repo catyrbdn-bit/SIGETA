@@ -1,4 +1,5 @@
 <?php
+// archivo del sistema: archivo que prepara la aplicacion para iniciar
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;

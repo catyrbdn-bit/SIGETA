@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+// archivo del sistema: archivo con procesos que utiliza el sistema
 
 use App\Models\TandeoRepeticion;
 use App\Models\tandeoProgramado;

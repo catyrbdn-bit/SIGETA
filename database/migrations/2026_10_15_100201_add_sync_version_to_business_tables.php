@@ -1,4 +1,5 @@
 <?php
+// archivo del sistema: archivo que aplica cambios a la estructura de la base de datos
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -15,6 +16,7 @@ return new class extends Migration
         'reprogramaciones',
     ];
 
+    // crea o actualiza la estructura de la base de datos
     public function up(): void
     {
         foreach ($this->tables as $tableName) {
@@ -24,6 +26,7 @@ return new class extends Migration
         }
     }
 
+    // revierte los cambios de la migracion
     public function down(): void
     {
         foreach (array_reverse($this->tables) as $tableName) {

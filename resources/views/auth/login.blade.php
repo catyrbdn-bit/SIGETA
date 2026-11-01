@@ -1,3 +1,5 @@
+{{-- vista de login en el modulo auth --}}
+// archivo del sistema: archivo de codigo del sistema
 <!DOCTYPE html>
 <html lang="es-MX">
 <head>
@@ -5,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inicio de sesión - SIGETA</title>
 
+    {{-- estilos visuales de la pantalla --}}
     <style>
         * { box-sizing: border-box; }
 

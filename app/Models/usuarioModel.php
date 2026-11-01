@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+// archivo del sistema: archivo que representa datos y relaciones de la base de datos
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -39,6 +40,7 @@ class usuarioModel extends Authenticatable
         return 'usuario';
     }
 
+    // realiza el proceso de apoyo llamado zonas
     public function zonas()
     {
         return $this->belongsToMany(zonasModel::class, 'tandeador_zona', 'usuario_id', 'zona_id');

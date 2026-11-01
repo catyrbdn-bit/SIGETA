@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+// archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Models\tandeoProgramado;
 use App\Models\circuitosModel;
@@ -11,10 +12,12 @@ use Illuminate\Http\Request;
 
 class reprogramacionController extends controller
 {
+    // recibe los datos y servicios que necesita la clase
     public function __construct(private reprogramacionService $servicio)
     {
     }
 
+    // prepara la vista previa de una reprogramacion manual
     public function previaManual(Request $request)
     {
         [$id, $inicio, $ajustes, $motivos, $motivo, $circuitoId, $tandeadorId, $duracionManual, $horasAtraso] = $this->datosManual($request);
@@ -28,6 +31,7 @@ class reprogramacionController extends controller
         return view('reprogramaciones.previa', compact('desde', 'resultado', 'modo', 'tandeoId', 'circuitoId', 'tandeadorId', 'duracionManual', 'horasAtraso', 'origenCumplimiento', 'cumplimientoId', 'cumplimientoObservaciones'));
     }
 
+    // valida y guarda la reprogramacion manual
     public function storeManual(Request $request)
     {
         [$id, $inicio, $ajustes, $motivos, $motivo, $circuitoId, $tandeadorId, $duracionManual, $horasAtraso] = 
@@ -46,6 +50,7 @@ class reprogramacionController extends controller
         return redirect()->route('cumplimiento.index')->with('success', $mensaje);
     }
 
+    // organiza los datos enviados para la reprogramacion manual
     private function datosManual(Request $request): array
     {
         $request->validate([
@@ -160,6 +165,7 @@ class reprogramacionController extends controller
             ->with('success', 'Apagón general registrado y tandeos reprogramados.');
     }
 
+    // prepara la vista previa de la fuga
     public function previaFuga(Request $request)
     {
         $datos = $request->validate([
@@ -191,6 +197,7 @@ class reprogramacionController extends controller
         return view('reprogramaciones.previa', compact('desde', 'resultado', 'modo', 'tandeoId', 'tipoFuga', 'horasAtraso'));
     }
 
+    // valida y guarda la reprogramacion por fuga
     public function storeFuga(Request $request)
     {
         $datos = $request->validate([

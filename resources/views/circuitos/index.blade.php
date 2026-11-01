@@ -1,3 +1,5 @@
+{{-- vista de index en el modulo circuitos --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Circuitos registrados - SIGETA')
@@ -15,6 +17,7 @@
             {{ session('success') }}
         </div>
         <!-- js -->
+        {{-- interacciones de la pantalla --}}
         <script>
             setTimeout(function () {
                 const mensaje = document.getElementById('mensaje-exito');

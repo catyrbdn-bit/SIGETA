@@ -1,6 +1,7 @@
 <?php
 
 namespace Database\Seeders;
+// archivo del sistema: archivo que carga datos iniciales de ejemplo
 
 use App\Models\usuarioModel;
 use Illuminate\Database\Seeder;
@@ -8,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 
 class UsuarioSeeder extends Seeder
 {
+    // carga los datos iniciales necesarios para el sistema
     public function run(): void
     {
         usuarioModel::create([

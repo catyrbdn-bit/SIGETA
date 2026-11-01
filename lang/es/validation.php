@@ -1,4 +1,5 @@
 <?php
+// archivo del sistema: archivo con textos del sistema en espanol
 
 return [
     'accepted' => 'El campo :attribute debe aceptarse.',

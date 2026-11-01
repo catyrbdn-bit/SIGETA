@@ -1,3 +1,5 @@
+{{-- vista de edit en el modulo usuarios --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Editar usuario - SIGETA')

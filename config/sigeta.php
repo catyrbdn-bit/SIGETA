@@ -1,4 +1,5 @@
 <?php
+// archivo del sistema: archivo con opciones de configuracion de laravel
 
 return [
     // Días que el apagón revisa para atrasar tandeos y evitar empalmes

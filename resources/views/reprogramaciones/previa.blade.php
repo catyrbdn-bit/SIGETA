@@ -1,8 +1,11 @@
+{{-- vista de previa en el modulo reprogramaciones --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Vista previa - SIGETA')
 
 @section('estilos')
+{{-- estilos visuales de la pantalla --}}
 <style>
 .contenido-vista { font-family: Arial, sans-serif; color: #222; margin: 24px; }
         h2 { margin: 0; }
@@ -178,6 +181,7 @@
             </div>
         </form>
 
+        {{-- interacciones de la pantalla --}}
         <script>
             const pad = n => String(n).padStart(2, '0');
             const aLocal = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())

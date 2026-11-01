@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Middleware;
+// archivo del sistema: archivo que revisa el acceso a las funciones del sistema
 
 use Closure;
 use Illuminate\Http\Request;

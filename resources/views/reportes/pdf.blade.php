@@ -1,7 +1,10 @@
+{{-- vista de pdf en el modulo reportes --}}
+// archivo del sistema: archivo de codigo del sistema
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    {{-- estilos visuales de la pantalla --}}
     <style>
         body { font-family: DejaVu Sans, sans-serif; color: #243447; font-size: 11px; }
         h1 { text-align: center; font-size: 20px; margin-bottom: 6px; }

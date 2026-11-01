@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+// archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Models\HistorialActividad;
 use App\Models\usuarioModel;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 
 class historialActividadController extends controller
 {
+    // consulta y muestra los registros de la pantalla
     public function index(Request $request)
     {
         $filtros = $request->validate([
@@ -37,6 +39,7 @@ class historialActividadController extends controller
         return view('historial.index', compact('registros', 'usuarios', 'tipos', 'filtros'));
     }
 
+    // elimina los registros antiguos despues de validar la contrasena
     public function depurar(Request $request, HistorialActividadService $historial)
     {
         $datos = $request->validate([

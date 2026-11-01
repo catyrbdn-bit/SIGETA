@@ -1,3 +1,5 @@
+{{-- vista de index en el modulo tandeos --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Tandeos programados - SIGETA')
@@ -137,6 +139,7 @@
 
 <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver</a>
 
+{{-- interacciones de la pantalla --}}
 <script>
     function filtrarTandeos() {
         const texto = document.getElementById('buscar-tandeo').value.trim().toLocaleLowerCase('es');

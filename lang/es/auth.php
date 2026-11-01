@@ -1,4 +1,5 @@
 <?php
+// archivo del sistema: archivo con textos del sistema en espanol
 
 return [
     'failed' => 'El usuario o la contraseña no coinciden con nuestros registros.',

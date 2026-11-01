@@ -1,3 +1,5 @@
+{{-- vista de index en el modulo calendario --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Calendario de tandeos - SIGETA')
@@ -35,6 +37,7 @@
          data-puede-mover="{{ in_array(auth()->user()->rol, ['administrador', 'capturista']) ? '1' : '0' }}">
     </div>
 
+    {{-- estilos visuales de la pantalla --}}
     <style>
         #calendario .cal-evento {
             display: flex;

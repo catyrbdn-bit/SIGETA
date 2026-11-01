@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+// archivo del sistema: archivo que representa datos y relaciones de la base de datos
 
 
 
@@ -29,22 +30,26 @@ class tandeoProgramado extends Model
         'fecha' => 'date',
     ];
 
+    // realiza el proceso de apoyo llamado circuito
     public function circuito()
     {
         return $this->belongsTo(circuitosModel::class, 'circuito_id');
     }
 
+    // relaciona el tandeo con su tandeador principal
     public function tandeador()
     {
         return $this->belongsTo(usuarioModel::class, 'tandeador_id');
     }
 
+    // relaciona el registro con sus tandeadores asignados
     public function tandeadores()
     {
         return $this->belongsToMany(usuarioModel::class, 'tandeo_tandeador', 'tandeo_id', 'usuario_id');
     }
 
 
+    // relaciona el tandeo con sus registros de cumplimiento
     public function cumplimientos()
     {
         return $this->hasMany(CumplimientoTandeo::class, 'tandeo_id');

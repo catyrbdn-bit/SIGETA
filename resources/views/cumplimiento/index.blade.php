@@ -1,3 +1,5 @@
+{{-- vista de index en el modulo cumplimiento --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Cumplimiento de tandeos - SIGETA')
@@ -146,6 +148,7 @@
 
 
 
+{{-- interacciones de la pantalla --}}
 <script>
     document.querySelectorAll('.estado-select').forEach(function (select) {
         const estadosConColor = ['programado', 'en_curso', 'pendiente', 'cumplido', 'atraso', 'no_cumplido'];

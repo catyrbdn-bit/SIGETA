@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+// archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use Illuminate\Http\Request;
 use App\Models\zonasModel;
@@ -8,6 +9,7 @@ use App\Models\usuarioModel;
 
 class zonasController extends controller
 {
+    // consulta y muestra los registros de la pantalla
     public function index()
     {
         $zonas = zonasModel::with('tandeadores')->get();
@@ -160,6 +162,7 @@ class zonasController extends controller
 
         return redirect()->route('zonas.index')->with('success', $mensaje);
     }
+    // elimina la colonia seleccionada y sus datos asociados
     public function destroy($id)
     {
         $zona = zonasModel::findOrFail($id);

@@ -1,8 +1,11 @@
+{{-- vista de tandeosasociados en el modulo circuitos --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Circuito con tandeos - SIGETA')
 
 @section('estilos')
+{{-- estilos visuales de la pantalla --}}
 <style>
 
         * { box-sizing: border-box; }

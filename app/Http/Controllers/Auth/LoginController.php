@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
+// archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Http\Controllers\controller;
 use Illuminate\Http\Request;
@@ -22,6 +23,9 @@ class loginController extends controller
     // y se valida si son correctos, si no se regresa al 
     // formulario con un mensaje de error
 
+    // descripcion: valida las credenciales y registra el resultado del inicio de sesion
+    // entradas: solicitud con el nombre de usuario y la contrasena
+    // salida: redirige al panel si los datos son correctos o vuelve al formulario con un error
     public function iniciarSesion(Request $request)
     {
         // Validar los datos del formulario

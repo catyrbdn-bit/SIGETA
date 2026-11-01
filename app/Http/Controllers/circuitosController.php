@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+// archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -10,12 +11,14 @@ use App\Models\PuntoAbastecimiento;
 
 class circuitosController extends controller
 {
+    // consulta y muestra los registros de la pantalla
     public function index()
     {
         $circuitos = circuitosModel::with('zona', 'puntoAbastecimiento')->get();
         return view('circuitos.index', compact('circuitos'));
     }
 
+    // prepara los datos para mostrar el formulario de registro
     public function create()
     {
         $zonas = zonasModel::all();
@@ -23,6 +26,7 @@ class circuitosController extends controller
         return view('circuitos.create', compact('zonas', 'puntos'));
     }
 
+    // valida y guarda la informacion recibida
     public function store(Request $request)
     {
         $request->validate([
@@ -52,6 +56,7 @@ class circuitosController extends controller
             ->with('success', '¡Circuito registrado exitosamente!');
     }
 
+    // busca el registro y prepara el formulario de edicion
     public function edit($id)
     {
         $circuito = circuitosModel::findOrFail($id);
@@ -60,6 +65,7 @@ class circuitosController extends controller
         return view('circuitos.edit', compact('circuito', 'zonas', 'puntos'));
     }
 
+    // valida y guarda los cambios del registro
     public function update(Request $request, $id)
     {
         $circuito = circuitosModel::findOrFail($id);
@@ -98,6 +104,7 @@ class circuitosController extends controller
             ->with('success', '¡Circuito actualizado exitosamente!');
     }
 
+    // elimina el registro seleccionado
     public function destroy($id)
     {
         $circuito = circuitosModel::findOrFail($id);
@@ -127,6 +134,7 @@ class circuitosController extends controller
             ->with('success', '¡Circuito eliminado exitosamente!');
     }
 
+    // desactiva el circuito seleccionado
     public function desactivar($id)
     {
         $circuito = circuitosModel::findOrFail($id);
@@ -143,6 +151,7 @@ class circuitosController extends controller
             ->with('success', '¡Circuito desactivado exitosamente!');
     }
 
+    // muestra la confirmacion para eliminar la colonia
     public function confirmDelete($id)
     {
         $circuito = circuitosModel::findOrFail($id);

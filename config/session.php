@@ -1,4 +1,5 @@
 <?php
+// archivo del sistema: archivo con opciones de configuracion de laravel
 
 use Illuminate\Support\Str;
 

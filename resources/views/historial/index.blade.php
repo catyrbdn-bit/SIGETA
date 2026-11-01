@@ -1,3 +1,5 @@
+{{-- vista de index en el modulo historial --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Historial de actividad - SIGETA')
@@ -131,6 +133,7 @@
 
     {{ $registros->links() }}
 
+    {{-- estilos visuales de la pantalla --}}
     <style>
         .historial-vista { text-align: center; }
         .historial-filtros .form-label { display: block; text-align: center; }
@@ -207,6 +210,7 @@
     </dialog>
 
     @if ($errors->has('password'))
+        {{-- interacciones de la pantalla --}}
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('modalDepurar').showModal();

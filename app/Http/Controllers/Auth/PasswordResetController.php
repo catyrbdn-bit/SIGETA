@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
+// archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Http\Controllers\controller;
 use Illuminate\Auth\Events\PasswordReset;
@@ -10,11 +11,13 @@ use Illuminate\Support\Facades\Password;
 
 class passwordResetController extends controller
 {
+    // muestra el formulario para recuperar la contrasena
     public function solicitar()
     {
         return view('auth.forgot-password');
     }
 
+    // valida el correo y solicita el enlace para cambiar la contrasena
     public function enviarEnlace(Request $request)
     {
         $request->validate(['email' => ['required', 'email']]);
@@ -32,6 +35,7 @@ class passwordResetController extends controller
         return back()->withErrors(['email' => 'No se pudo enviar el enlace. Revisa el correo e inténtalo de nuevo.']);
     }
 
+    // muestra el formulario para crear una contrasena nueva
     public function cambiar($token)
     {
         return view('auth.reset-password', [
@@ -40,6 +44,7 @@ class passwordResetController extends controller
         ]);
     }
 
+    // valida el enlace y guarda la contrasena nueva
     public function guardarNueva(Request $request)
     {
         $datos = $request->validate([

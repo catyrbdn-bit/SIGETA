@@ -1,3 +1,5 @@
+{{-- vista de create en el modulo usuarios --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Registrar usuario - SIGETA')

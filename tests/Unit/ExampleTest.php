@@ -1,6 +1,7 @@
 <?php
 
 namespace Tests\Unit;
+// archivo del sistema: archivo de prueba del proyecto
 
 use PHPUnit\Framework\TestCase;
 

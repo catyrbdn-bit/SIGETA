@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+// archivo del sistema: archivo que representa datos y relaciones de la base de datos
 
 
 
@@ -8,9 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Reprogramacion extends Model
 {
-
-
-
+    //Estas variables estan definidas como protegidas para que solo puedan ser accedidas desde la clase misma o sus subclases, 
+    // evitando modificaciones externas no deseadas
     protected $table = 'reprogramaciones';
 
     protected $fillable = [
@@ -29,6 +29,7 @@ class Reprogramacion extends Model
         'es_efecto_cadena' => 'boolean',
     ];
 
+    // relaciona el registro con su tandeo programado
     public function tandeo()
     {
         return $this->belongsTo(tandeoProgramado::class, 'tandeo_id');

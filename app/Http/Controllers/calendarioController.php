@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+// archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Models\TandeoProgramado;
 use App\Models\zonasModel;
@@ -11,6 +12,7 @@ use Illuminate\Http\Request;
 
 class calendarioController extends controller
 {
+    // consulta y muestra los registros de la pantalla
     public function index()
     {
         $colonias = zonasModel::where('activo', true)->orderBy('nombre')->get();
@@ -18,6 +20,7 @@ class calendarioController extends controller
         return view('calendario.index', compact('colonias'));
     }
 
+    // prepara los tandeos para mostrarlos en el calendario
     public function eventos(Request $request, repeticionTandeoService $repeticiones)
     {
         $datos = $request->validate([
@@ -132,9 +135,16 @@ class calendarioController extends controller
 
         return response()->json($eventos);
     }
-
+    
+    //La función mover permite cambiar la fecha y hora de un tandeo programado, 
+    // verificando que no se empalme con otros tandeos y aplicando los cambios si es posible
+    // descripcion: valida y guarda el cambio de horario solicitado desde el calendario
+    // entradas: solicitud con identificador del tandeo y nueva fecha y hora
+    // salida: respuesta con confirmacion o aviso si el horario se empalma
     public function mover(Request $request, reprogramacionService $reprogramaciones)
     {
+        //primero se validan los datos recibidos en la solicitud, 
+        // asegurando que se reciba un tandeo válido y una nueva fecha y hora
         $datos = $request->validate([
             'tandeo_id' => 'required|exists:tandeos_programados,id',
             'inicio_nuevo' => 'required|date',
@@ -145,17 +155,21 @@ class calendarioController extends controller
             'inicio_nuevo.date' => 'La nueva fecha y hora no son válidas.',
         ]);
 
+        //despues de validar los datos, se obtiene el tandeo a mover y se calcula la nueva fecha 
+        // y hora de inicio y fin
         $tandeoId = (int) $datos['tandeo_id'];
         $tandeo = TandeoProgramado::findOrFail($tandeoId);
         $inicioNuevo = Carbon::parse($datos['inicio_nuevo']);
         $duracion = (int) $tandeo->inicio->diffInMinutes($tandeo->fin);
         $finNuevo = $inicioNuevo->copy()->addMinutes($duracion);
 
+        //se obtienen los otros tandeos que se empalman con el nuevo horario,
+        // y si se encuentra alguno, se devuelve un mensaje de error indicando que no se puede guardar el cambio
         $otrosTandeos = TandeoProgramado::where('id', '!=', $tandeoId)
             ->whereDate('fecha', '>=', $inicioNuevo->copy()->subDay()->toDateString())
             ->whereDate('fecha', '<=', $finNuevo->toDateString())
             ->get();
-
+        //se recorre la lista de otros tandeos y se verifica si hay empalmes con el nuevo horario
         foreach ($otrosTandeos as $otro) {
             if ($inicioNuevo < $otro->fin && $otro->inicio < $finNuevo) {
                 return response()->json([
@@ -164,7 +178,8 @@ class calendarioController extends controller
                 ], 422);
             }
         }
-
+        //si no hay empalmes, se simula el cambio y se verifica si hay movimientos 
+        // adicionales que impidan guardar el cambio
         $simulacion = $reprogramaciones->simularManual($tandeoId, $inicioNuevo);
         if (count($simulacion['movimientos']) > 1) {
             return response()->json([
@@ -172,16 +187,17 @@ class calendarioController extends controller
                 'message' => 'No se puede guardar porque el cambio recorrería otros tandeos. Elige otro horario.',
             ], 422);
         }
-
+        //si no hay empalmes ni movimientos adicionales, se aplica el cambio y se guarda en la base de datos
         $reprogramaciones->aplicarManual(
             $tandeoId,
             $inicioNuevo,
             (int) auth()->user()->getKey(),
+            // se pasan arreglos vacíos para los parámetros opcionales, ya que no se necesitan en este caso
             [],
             [],
             'Reprogramación desde el calendario'
         );
-
+        // finalmente, se devuelve una respuesta indicando que el cambio se guardo correctamente
         return response()->json([
             'guardado' => true,
             'mensaje' => 'El horario del tandeo se actualizó correctamente.',

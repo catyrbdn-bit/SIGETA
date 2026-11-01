@@ -1,4 +1,5 @@
 <?php
+// archivo del sistema: archivo que aplica cambios a la estructura de la base de datos
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -7,6 +8,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    // crea o actualiza la estructura de la base de datos
     public function up(): void
     {
         Schema::create('tandeo_tandeador', function (Blueprint $table) {
@@ -35,6 +37,7 @@ return new class extends Migration
         }
     }
 
+    // revierte los cambios de la migracion
     public function down(): void
     {
         Schema::dropIfExists('tandeo_tandeador');

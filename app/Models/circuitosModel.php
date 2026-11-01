@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+// archivo del sistema: archivo que representa datos y relaciones de la base de datos
 
 
 
@@ -24,11 +25,13 @@ class circuitosModel extends Model
         // para campos ocultos, si los hubiera
     ];
 
+    // relaciona el registro con su colonia
     public function zona()
     {
         return $this->belongsTo(zonasModel::class);
     }
 
+    // relaciona el circuito con sus tandeos programados
     public function tandeos()
     {
         // hasMany define una relación de uno a muchos:
@@ -36,6 +39,7 @@ class circuitosModel extends Model
         return $this->hasMany(tandeoProgramado::class, 'circuito_id');
     }
 
+    // relaciona el circuito con su punto de abastecimiento
     public function puntoAbastecimiento()
     {
         return $this->belongsTo(PuntoAbastecimiento::class, 'punto_abastecimiento_id');

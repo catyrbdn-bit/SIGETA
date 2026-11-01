@@ -1,4 +1,5 @@
 <?php
+// archivo del sistema: archivo con textos del sistema en espanol
 
 return [
     'reset' => 'Tu contraseña se cambió correctamente.',

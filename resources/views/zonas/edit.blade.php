@@ -1,8 +1,11 @@
+{{-- vista de edit en el modulo zonas --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Editar colonia - SIGETA')
 
 @section('estilos')
+{{-- estilos visuales de la pantalla --}}
 <style>
 
         * { box-sizing: border-box; }

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+// archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Models\usuarioModel;
 use Illuminate\Http\Request;
@@ -9,6 +10,7 @@ use Illuminate\Validation\Rule;
 
 class usuarioController extends controller
 {
+    // consulta y muestra los registros de la pantalla
     public function index()
     {
         $usuarios = usuarioModel::orderBy('nombre')->orderBy('apellido_paterno')->get();
@@ -16,11 +18,13 @@ class usuarioController extends controller
         return view('usuarios.index', compact('usuarios'));
     }
 
+    // prepara los datos para mostrar el formulario de registro
     public function create()
     {
         return view('usuarios.create');
     }
 
+    // valida y guarda la informacion recibida
     public function store(Request $request)
     {
         $datos = $request->validate([
@@ -47,6 +51,7 @@ class usuarioController extends controller
         return redirect()->route('usuarios.index')->with('success', 'Usuario registrado correctamente.');
     }
 
+    // busca el registro y prepara el formulario de edicion
     public function edit($id)
     {
         $usuario = usuarioModel::findOrFail($id);
@@ -54,6 +59,7 @@ class usuarioController extends controller
         return view('usuarios.edit', compact('usuario'));
     }
 
+    // valida y guarda los cambios del registro
     public function update(Request $request, $id)
     {
         $usuario = usuarioModel::findOrFail($id);
@@ -92,6 +98,7 @@ class usuarioController extends controller
         return redirect()->route('usuarios.index')->with('success', 'Datos del usuario actualizados.');
     }
 
+    // elimina el registro seleccionado
     public function destroy($id)
     {
         $usuario = usuarioModel::findOrFail($id);

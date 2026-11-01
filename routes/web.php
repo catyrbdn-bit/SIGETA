@@ -1,4 +1,5 @@
 <?php
+// archivo del sistema: archivo que define las rutas de acceso del sistema
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\loginController;

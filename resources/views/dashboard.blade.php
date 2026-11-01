@@ -1,3 +1,5 @@
+{{-- vista de dashboard en el modulo . --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Panel principal - SIGETA')
@@ -143,6 +145,7 @@
 
 
 
+{{-- interacciones de la pantalla --}}
 <script>
     const filtroEstado = document.getElementById('filtro-estado');
     const buscarTandeo = document.getElementById('buscar-tandeo');

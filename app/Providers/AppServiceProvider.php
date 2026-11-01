@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Providers;
+// archivo del sistema: archivo que configura servicios de la aplicacion
 
 use Illuminate\Support\ServiceProvider;
 

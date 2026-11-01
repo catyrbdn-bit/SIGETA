@@ -1,8 +1,11 @@
+{{-- vista de edit en el modulo tandeos --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Editar tandeo - SIGETA')
 
 @section('estilos')
+{{-- estilos visuales de la pantalla --}}
 <style>
 
         * {
@@ -190,6 +193,7 @@
     </form>
 </div>
 
+{{-- interacciones de la pantalla --}}
 <script>
     const circuitoSelect = document.getElementById('circuito_id');
     const callesCircuito = document.getElementById('calles_circuito');

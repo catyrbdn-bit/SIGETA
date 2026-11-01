@@ -1,8 +1,11 @@
+{{-- vista de forgot-password en el modulo auth --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Recuperar contraseña - SIGETA')
 
 @section('estilos')
+{{-- estilos visuales de la pantalla --}}
 <style>
     body {
         background: linear-gradient(135deg, #cfe5fa 0%, #edf6ff 52%, #d8ebfc 100%);

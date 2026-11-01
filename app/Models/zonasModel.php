@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+// archivo del sistema: archivo que representa datos y relaciones de la base de datos
 
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -22,6 +23,7 @@ class zonasModel extends Authenticatable
         // para campos ocultos, si los hubiera
     ];
 
+    // relaciona el registro con sus tandeadores asignados
     public function tandeadores()
     {
         return $this->belongsToMany(usuarioModel::class, 'tandeador_zona', 'zona_id', 'usuario_id');

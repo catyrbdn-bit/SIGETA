@@ -1,6 +1,7 @@
 <?php
 
 namespace Tests\Feature;
+// archivo del sistema: archivo de prueba del proyecto
 
 // use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

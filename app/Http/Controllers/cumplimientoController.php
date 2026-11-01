@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+// archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,7 @@ use Carbon\Carbon;
 
 class cumplimientoController extends controller
 {
+    // consulta y muestra los registros de la pantalla
     public function index(repeticionTandeoService $repeticiones)
     {
         $repeticiones->crearSiguientes();
@@ -41,6 +43,9 @@ class cumplimientoController extends controller
     }
 
     // Guarda los cambios de la tabla. Si un atraso nuevo provoca empalmes, primero muestra la vista previa.
+    // descripcion: guarda los resultados, atrasos y observaciones de los tandeos
+    // entradas: solicitud con los datos de cumplimiento y servicio para revisar reprogramaciones
+    // salida: muestra una vista previa si hay empalmes o regresa a cumplimiento con un mensaje
     public function store(Request $request, reprogramacionService $servicio)
     {
         $datos = $request->validate([
@@ -221,6 +226,7 @@ class cumplimientoController extends controller
         return redirect()->route('cumplimiento.index')->with('success', 'Cambios de cumplimiento guardados correctamente.');
     }
 
+    // revisa si el tandeo ya tiene un atraso registrado
     private function tieneAtrasoGuardado($registro): bool
     {
         return $registro

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+// archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use Illuminate\Http\Request;
 use App\Models\TandeoProgramado;
@@ -18,6 +19,7 @@ use Illuminate\Validation\ValidationException;
 
 class tandeosController extends controller
 {
+    // consulta y muestra los registros de la pantalla
     public function index(repeticionTandeoService $repeticiones)
     {
         $repeticiones->crearSiguientes();
@@ -47,6 +49,7 @@ class tandeosController extends controller
         return view('tandeos.index', compact('tandeos', 'zonas'));
     }
 
+    // prepara los datos para mostrar el formulario de registro
     public function create()
     {
         $zonas = zonasModel::where('activo', true)
@@ -66,6 +69,9 @@ class tandeosController extends controller
     // y luego crea el tandeo programado. Si se especifica que el tandeo debe repetirse, 
     // también se crean las repeticiones correspondientes. 
     // Además, registra la acción en el historial de actividad del sistema.
+    // descripcion: registra un tandeo y calcula su horario de fin
+    // entradas: zona, circuito, fecha, hora de inicio, duracion y datos de repeticion opcionales
+    // salida: redirige a la lista de tandeos con un mensaje de confirmacion
     public function store(Request $request)
     {
         // Aqui se validan los datos de entrada
@@ -192,6 +198,7 @@ class tandeosController extends controller
         return redirect()->route('tandeos.index')->with('success', $mensaje);
     }
 
+    // busca el registro y prepara el formulario de edicion
     public function edit($id)
     {
         $tandeo = TandeoProgramado::with('circuito')->findOrFail($id);
@@ -201,6 +208,7 @@ class tandeosController extends controller
         return view('tandeos.edit', compact('tandeo', 'circuitos'));
     }
 
+    // elimina el registro seleccionado
     public function destroy($id)
     {
         $tandeo = TandeoProgramado::findOrFail($id);
@@ -247,6 +255,7 @@ class tandeosController extends controller
             ->with('success', $mensaje);
     }
 
+    // evita repetir el mismo horario para un circuito
     private function validarHorarioUnico(int $circuitoId, Carbon $nuevoInicio, ?string $ignorarSerieId = null): void
     {
         $tandeos = TandeoProgramado::where('circuito_id', $circuitoId)

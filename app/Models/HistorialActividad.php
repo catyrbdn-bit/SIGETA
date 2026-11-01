@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+// archivo del sistema: archivo que representa datos y relaciones de la base de datos
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,6 +23,7 @@ class HistorialActividad extends Model
         'detalles' => 'array',
     ];
 
+    // relaciona el historial con el usuario que realizo la accion
     public function usuario()
     {
         return $this->belongsTo(usuarioModel::class, 'usuario_id');

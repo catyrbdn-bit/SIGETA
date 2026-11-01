@@ -1,6 +1,7 @@
 <?php
 
 namespace Database\Seeders;
+// archivo del sistema: archivo que carga datos iniciales de ejemplo
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 class puntosAbastecimientoSeeder extends Seeder
 {
     
+    // carga los datos iniciales necesarios para el sistema
     public function run(): void
     {
         DB::table('puntos_abastecimiento')->insert([

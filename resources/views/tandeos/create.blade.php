@@ -1,8 +1,11 @@
+{{-- vista de create en el modulo tandeos --}}
+// archivo del sistema: archivo de codigo del sistema
 @extends('layouts.app')
 
 @section('titulo', 'Programar tandeo - SIGETA')
 
 @section('estilos')
+{{-- estilos visuales de la pantalla --}}
 <style>
 
         * {
@@ -296,6 +299,7 @@
         </div>
     </form>
 
+    {{-- interacciones de la pantalla --}}
     <script>
         const zonaSelect = document.getElementById('zona_id');
         const seccionCircuitos = document.getElementById('seccion-circuitos');

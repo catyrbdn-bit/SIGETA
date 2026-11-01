@@ -1,3 +1,4 @@
+// archivo con interacciones de las pantallas del sistema
 import './bootstrap';
 import flatpickr from 'flatpickr';
 import { Spanish } from 'flatpickr/dist/l10n/es.js';
@@ -59,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const campoHoraCambio = document.getElementById('cambio-hora');
     let cambioPendiente = null;
 
+    // prepara los datos para formatolocal
     function formatoLocal(fecha) {
         const dosDigitos = numero => String(numero).padStart(2, '0');
         return fecha.getFullYear() + '-'
@@ -68,12 +70,14 @@ document.addEventListener('DOMContentLoaded', function () {
             + dosDigitos(fecha.getMinutes());
     }
 
+    // prepara los datos para hora
     function hora(fecha) {
         return new Intl.DateTimeFormat('es-MX', {
             hour: '2-digit', minute: '2-digit', hour12: false,
         }).format(fecha);
     }
 
+    // prepara los datos para fechahora
     function fechaHora(fecha) {
         return new Intl.DateTimeFormat('es-MX', {
             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -81,17 +85,20 @@ document.addEventListener('DOMContentLoaded', function () {
         }).format(fecha);
     }
 
+    // prepara los datos para fechacorta
     function fechaCorta(fecha) {
         const dias = ['dom.', 'lun.', 'mar.', 'mié.', 'jue.', 'vie.', 'sáb.'];
         const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
         return dias[fecha.getDay()] + ' ' + fecha.getDate() + '/' + meses[fecha.getMonth()] + '/' + fecha.getFullYear();
     }
 
+    // prepara los datos para rango
     function rango(inicio, fin) {
         return fechaCorta(inicio) + ' · ' + hora(inicio) + '–' + hora(fin)
             + (inicio.toDateString() !== fin.toDateString() ? ' (+1 día)' : '');
     }
 
+    // prepara los datos para actualizarhorapropuesta
     function actualizarHoraPropuesta() {
         if (!cambioPendiente || !campoHoraCambio.value) return;
 
@@ -106,6 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
         avisoEmpalme.textContent = '';
     }
 
+    // prepara los datos para abrirconfirmacion
     function abrirConfirmacion(info) {
         const nuevoInicio = info.event.start;
         const nuevoFin = info.event.end;
@@ -135,11 +143,13 @@ document.addEventListener('DOMContentLoaded', function () {
         dialogoMovimiento.showModal();
     }
 
+    // prepara los datos para mostrarerror
     function mostrarError(mensaje) {
         avisoEmpalme.textContent = mensaje;
         avisoEmpalme.hidden = false;
     }
 
+    // prepara los datos para guardarmovimiento
     async function guardarMovimiento() {
         if (!cambioPendiente) return;
 

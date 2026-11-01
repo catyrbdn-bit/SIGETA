@@ -1,3 +1,5 @@
+{{-- vista de 419 en el modulo errors --}}
+// archivo del sistema: archivo de codigo del sistema
 <!DOCTYPE html>
 <html lang="es-MX">
 <head>
