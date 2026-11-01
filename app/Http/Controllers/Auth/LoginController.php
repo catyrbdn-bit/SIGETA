@@ -12,6 +12,10 @@ class loginController extends controller
     /**
      * Mostrar el formulario de inicio de sesión.
      */
+    // Muestra el formulario de inicio de sesión.
+    // descripcion: muestra el formulario de inicio de sesión.
+    // entradas: no requiere datos externos
+    // salida: muestra la pantalla para ingresar al sistema
     public function mostrarInicioSesion()
     {
         return view('auth.login');
@@ -26,6 +30,10 @@ class loginController extends controller
     // descripcion: valida las credenciales y registra el resultado del inicio de sesion
     // entradas: solicitud con el nombre de usuario y la contrasena
     // salida: redirige al panel si los datos son correctos o vuelve al formulario con un error
+    // Valida las credenciales y permite el acceso al usuario correcto.
+    // descripcion: valida las credenciales y permite el acceso al usuario correcto.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: abre el panel si los datos son válidos o muestra un aviso si no lo son
     public function iniciarSesion(Request $request)
     {
         // Validar los datos del formulario
@@ -66,6 +74,10 @@ class loginController extends controller
     }
 
      //funcion para cerrar sesion
+    // Cierra la sesión activa y regresa a la pantalla de inicio.
+    // descripcion: cierra la sesión activa y regresa a la pantalla de inicio.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: cierra la sesión y muestra la pantalla de acceso
     public function cerrarSesion(Request $request)
     {
         app(\App\Services\HistorialActividadService::class)->registrar(

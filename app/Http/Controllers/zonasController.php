@@ -10,6 +10,10 @@ use App\Models\usuarioModel;
 class zonasController extends controller
 {
     // consulta y muestra los registros de la pantalla
+    // Consulta los registros y prepara la pantalla de listado.
+    // descripcion: consulta los registros y prepara la pantalla de listado.
+    // entradas: no requiere datos externos
+    // salida: muestra la pantalla con los datos consultados
     public function index()
     {
         $zonas = zonasModel::with('tandeadores')->get();
@@ -18,6 +22,10 @@ class zonasController extends controller
 
 
     //funcion create para mostrar el formulario de creacion de zona
+    // Prepara el formulario para registrar un nuevo dato.
+    // descripcion: prepara el formulario para registrar un nuevo dato.
+    // entradas: no requiere datos externos
+    // salida: muestra el formulario de registro
     public function create()
     {
         $tandeadores = usuarioModel::where('rol', 'tandeador')
@@ -30,6 +38,10 @@ class zonasController extends controller
 
 
     //funcion store para guardar la zona en la base de datos
+    // Valida y guarda la información recibida desde el formulario.
+    // descripcion: valida y guarda la información recibida desde el formulario.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: guarda el registro y muestra un mensaje o los errores encontrados
     public function store(Request $request)
     {
         $datos = $request->validate([
@@ -63,6 +75,10 @@ class zonasController extends controller
     }
 
     //funcion edit para mostrar el formulario de edicion de zona
+    // Busca el registro y prepara el formulario para modificarlo.
+    // descripcion: busca el registro y prepara el formulario para modificarlo.
+    // entradas: identificador del registro relacionado
+    // salida: muestra el formulario con los datos actuales
     public function edit($id)
     {
         $zona = zonasModel::with('tandeadores')->findOrFail($id);
@@ -75,6 +91,10 @@ class zonasController extends controller
     }
 
     //funcion update para actualizar la zona en la base de datos
+    // Valida y guarda los cambios del registro.
+    // descripcion: valida y guarda los cambios del registro.
+    // entradas: solicitud con los datos enviados por el usuario; identificador del registro relacionado
+    // salida: actualiza el registro y muestra un mensaje o los errores encontrados
     public function update(Request $request, $id)
     {
         $datos = $request->validate([
@@ -91,6 +111,10 @@ class zonasController extends controller
         $nuevosTandeadores = array_map('intval', $datos['tandeadores'] ?? []);
         $cantidadTandeosActualizados = 0;
 
+        // Agrupa los cambios para guardarlos como una sola operación.
+        // descripcion: agrupa los cambios para guardarlos como una sola operación.
+        // entradas: registros que se actualizan durante la operación
+        // salida: confirma los cambios o los revierte si ocurre un error
         \Illuminate\Support\Facades\DB::transaction(function () use ($zona, $datos, $nuevosTandeadores, &$cantidadTandeosActualizados) {
             $asignaciones = $zona->tandeadores()->sync($nuevosTandeadores);
 
@@ -110,9 +134,17 @@ class zonasController extends controller
                 return;
             }
 
+            // Filtra los registros según la relación que deben cumplir.
+            // descripcion: filtra los registros según la relación que deben cumplir.
+            // entradas: consulta y registros relacionados
+            // salida: añade la condición correspondiente a la consulta
             $tandeosFuturos = \App\Models\tandeoProgramado::whereHas('circuito', function ($consulta) use ($zona) {
                 $consulta->where('zona_id', $zona->id);
             })->with('circuito')->get()
+                // Conserva solo los registros que cumplen la condición indicada.
+                // descripcion: conserva solo los registros que cumplen la condición indicada.
+                // entradas: registro que se está revisando
+                // salida: indica si el registro se conserva o se descarta
                 ->filter(fn ($tandeo) => $tandeo->inicio->greaterThan(now()));
 
             $tandeadorPrincipal = count($nuevosTandeadores) === 1 ? $nuevosTandeadores[0] : null;
@@ -130,6 +162,10 @@ class zonasController extends controller
             }
 
             $series = \App\Models\TandeoRepeticion::where('activa', true)
+                // Filtra los registros según la relación que deben cumplir.
+                // descripcion: filtra los registros según la relación que deben cumplir.
+                // entradas: consulta y registros relacionados
+                // salida: añade la condición correspondiente a la consulta
                 ->whereHas('circuito', function ($consulta) use ($zona) {
                     $consulta->where('zona_id', $zona->id);
                 })->get();
@@ -163,6 +199,10 @@ class zonasController extends controller
         return redirect()->route('zonas.index')->with('success', $mensaje);
     }
     // elimina la colonia seleccionada y sus datos asociados
+    // Elimina el registro seleccionado y atiende sus datos relacionados.
+    // descripcion: elimina el registro seleccionado y atiende sus datos relacionados.
+    // entradas: identificador del registro relacionado
+    // salida: elimina el registro y regresa al listado con un mensaje
     public function destroy($id)
     {
         $zona = zonasModel::findOrFail($id);
@@ -178,6 +218,10 @@ class zonasController extends controller
     }
 
     //alertas para confirmar la eliminacion de la zona
+    // Prepara la confirmación para eliminar la colonia y sus datos asociados.
+    // descripcion: prepara la confirmación para eliminar la colonia y sus datos asociados.
+    // entradas: identificador del registro relacionado
+    // salida: muestra la pantalla de confirmación
     public function confirmDelete($id)
     {
         $zona = zonasModel::findOrFail($id);

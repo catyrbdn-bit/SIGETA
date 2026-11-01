@@ -24,6 +24,10 @@ class HistorialActividad extends Model
     ];
 
     // relaciona el historial con el usuario que realizo la accion
+    // Relaciona el historial con el usuario que realizó la acción.
+    // descripcion: relaciona el historial con el usuario que realizó la acción.
+    // entradas: registro actual del modelo
+    // salida: permite consultar los datos del usuario relacionado
     public function usuario()
     {
         return $this->belongsTo(usuarioModel::class, 'usuario_id');

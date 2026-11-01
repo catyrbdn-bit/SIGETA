@@ -1,5 +1,5 @@
 {{-- vista de edit en el modulo zonas --}}
-// archivo del sistema: archivo de codigo del sistema
+{{-- archivo del sistema: archivo de codigo del sistema --}}
 @extends('layouts.app')
 
 @section('titulo', 'Editar colonia - SIGETA')

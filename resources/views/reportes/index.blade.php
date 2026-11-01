@@ -1,5 +1,5 @@
 {{-- vista de index en el modulo reportes --}}
-// archivo del sistema: archivo de codigo del sistema
+{{-- archivo del sistema: archivo de codigo del sistema --}}
 @extends('layouts.app')
 
 @section('titulo', 'Reportes')

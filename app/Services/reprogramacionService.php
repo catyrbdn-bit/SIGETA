@@ -21,6 +21,10 @@ class reprogramacionService
      * $motivos: [tandeo_id => string] motivos escritos a mano
      */
     // calcula los tandeos afectados sin guardar cambios
+    // Calcula los tandeos afectados por un apagón sin guardar cambios.
+    // descripcion: calcula los tandeos afectados por un apagón sin guardar cambios.
+    // entradas: fecha u horario que se debe revisar o cambiar; lista de datos que se deben procesar; dato necesario para realizar el proceso
+    // salida: devuelve los movimientos propuestos para mostrarlos antes de guardar
     public function simularApagon(
         Carbon $desde,
         array $ajustes = [],
@@ -36,10 +40,18 @@ class reprogramacionService
         $tandeos = tandeoProgramado::with([
             'circuito.puntoAbastecimiento',
             'circuito.zona',
+            // Ordena los cumplimientos para consultar primero el registro más reciente.
+            // descripcion: ordena los cumplimientos para consultar primero el registro más reciente.
+            // entradas: cumplimientos relacionados con el tandeo
+            // salida: devuelve los cumplimientos ordenados por fecha de captura
             'cumplimientos' => function ($consulta) {
                 $consulta->orderByDesc('fecha_captura')->orderByDesc('id');
             },
         ])
+            // Agrega una condición para filtrar los registros consultados.
+            // descripcion: agrega una condición para filtrar los registros consultados.
+            // entradas: consulta que se está filtrando
+            // salida: deja la condición agregada a la consulta
             ->where(function ($consulta) {
                 $consulta->whereNull('estado')
                     ->orWhereNotIn('estado', ['cumplido', 'atraso', 'no_cumplido', 'con atraso', 'no cumplido']);
@@ -47,6 +59,10 @@ class reprogramacionService
             ->whereDate('fecha', '>=', $desde->toDateString())
             ->whereDate('fecha', '<=', $hasta->toDateString())
             ->get()
+            // Conserva solo los registros que cumplen la condición indicada.
+            // descripcion: conserva solo los registros que cumplen la condición indicada.
+            // entradas: registro que se está revisando
+            // salida: indica si el registro se conserva o se descarta
             ->filter(function ($tandeo) use ($desde, $hasta) {
                 if ($tandeo->inicio < $desde || $tandeo->inicio > $hasta) {
                     return false;
@@ -167,6 +183,10 @@ class reprogramacionService
     // descripcion: calcula el nuevo horario y revisa si el cambio empalma otros tandeos
     // entradas: identificador del tandeo, fecha y hora nuevas, ajustes y motivos opcionales
     // salida: arreglo con los movimientos y advertencias o un error de validacion
+    // Calcula una reprogramación manual y sus posibles empalmes sin guardar.
+    // descripcion: calcula una reprogramación manual y sus posibles empalmes sin guardar.
+    // entradas: identificador del registro relacionado; fecha u horario que se debe revisar o cambiar; lista de datos que se deben procesar; dato necesario para realizar el proceso
+    // salida: devuelve los movimientos propuestos para mostrarlos antes de guardar
     public function simularManual(int $tandeoId, Carbon $nuevoInicio, array $ajustes = [], array $motivos = [], ?string $motivoInicial = null, 
                                     ?int $circuitoId = null, ?int $duracionManual = null): array
     {
@@ -201,12 +221,20 @@ class reprogramacionService
         $inicioOriginal = $seleccionado->inicio;
 
         $tandeos = tandeoProgramado::with('circuito.puntoAbastecimiento', 'circuito.zona')
+            // Agrega una condición para filtrar los registros consultados.
+            // descripcion: agrega una condición para filtrar los registros consultados.
+            // entradas: consulta que se está filtrando
+            // salida: deja la condición agregada a la consulta
             ->where(function ($q) {
                 $q->whereNull('estado')
                   ->orWhereNotIn('estado', ['cumplido', 'atraso', 'no_cumplido', 'con atraso', 'no cumplido']);
             })
             ->whereBetween('fecha', [$inicioVentana->toDateString(), $finVentana->toDateString()])
             ->get()
+            // Conserva solo los registros que cumplen la condición indicada.
+            // descripcion: conserva solo los registros que cumplen la condición indicada.
+            // entradas: registro que se está revisando
+            // salida: indica si el registro se conserva o se descarta
             ->filter(fn ($t) => $t->inicio >= $inicioVentana && $t->inicio <= $finVentana)
             ->sortBy('inicio')
             ->values();
@@ -273,12 +301,20 @@ class reprogramacionService
 
     /** Guarda una reprogramación manual y sus recorridos en una sola transacción. */
     // guarda los horarios y el historial del cambio
+    // Guarda una reprogramación manual y los movimientos que provoca.
+    // descripcion: guarda una reprogramación manual y los movimientos que provoca.
+    // entradas: identificador del registro relacionado; fecha u horario que se debe revisar o cambiar; lista de datos que se deben procesar; dato necesario para realizar el proceso
+    // salida: actualiza los horarios y registra los cambios realizados
     public function aplicarManual(int $tandeoId, Carbon $nuevoInicio, int $usuarioId, array $ajustes = [], array $motivos = [], ?string $motivoInicial = null, ?int $circuitoId = null, ?int $tandeadorId = null, ?int $duracionManual = null, ?int $horasAtraso = null, ?int $cumplimientoId = null, ?string $observacionesCumplimiento = null): string
     {
         $resultado = $this->simularManual($tandeoId, $nuevoInicio, $ajustes, $motivos, $motivoInicial, $circuitoId, $duracionManual);
         $cadena = (string) Str::uuid();
 
         // Guardamos el historial y los horarios juntos para evitar registros incompletos.
+        // Agrupa los cambios para guardarlos como una sola operación.
+        // descripcion: agrupa los cambios para guardarlos como una sola operación.
+        // entradas: registros que se actualizan durante la operación
+        // salida: confirma los cambios o los revierte si ocurre un error
         DB::transaction(function () use ($resultado, $cadena, $usuarioId, $tandeoId, $circuitoId, $tandeadorId, $horasAtraso, $cumplimientoId, $observacionesCumplimiento) {
             foreach ($resultado['movimientos'] as $m) {
                 Reprogramacion::create([
@@ -345,6 +381,10 @@ class reprogramacionService
             'Se confirmó una reprogramación manual.',
             [
                 'cadena' => $cadena,
+                // Prepara cada registro para guardarlo o mostrarlo.
+                // descripcion: prepara cada registro para guardarlo o mostrarlo.
+                // entradas: registro que se está transformando
+                // salida: devuelve el registro con sus datos preparados
                 'movimientos' => array_map(function ($movimiento) {
                     return [
                         'tandeo_id' => $movimiento['tandeo']->id,
@@ -360,15 +400,19 @@ class reprogramacionService
         return $cadena;
     }
     // guarda los horarios afectados por el apagon
+    // Guarda el atraso por apagón y los movimientos en cadena necesarios.
+    // descripcion: guarda el atraso por apagón y los movimientos en cadena necesarios.
+    // entradas: fecha u horario que se debe revisar o cambiar; identificador del registro relacionado; lista de datos que se deben procesar
+    // salida: actualiza los horarios y registra los cambios realizados
     public function aplicarApagon(Carbon $desde, int $usuarioId, array $ajustes = [], array $motivos = []): string
     {
         return $this->guardarIncidencia($this->simularApagon($desde, $ajustes, $motivos), $usuarioId, 'apagon_general');
     }
 
-    // Aplica una fuga en un punto de abastecimiento y guarda los cambios en la base de datos
-    // descripcion: calcula y guarda la reprogramacion de los tandeos afectados por una fuga
-    // entradas: fecha, usuario, tipo de punto, horas de atraso, ajustes y motivos opcionales
-    // salida: identificador de la cadena de reprogramacion
+    // Guarda el atraso por fuga y los movimientos en cadena necesarios.
+    // descripcion: guarda el atraso por fuga y los movimientos en cadena necesarios.
+    // entradas: fecha u horario que se debe revisar o cambiar; identificador del registro relacionado; dato necesario para realizar el proceso; lista de datos que se deben procesar
+    // salida: actualiza los horarios y registra los cambios realizados
     public function aplicarFuga(
         //los parametros siguientes son para poder aplicar la fuga en un punto especifico, ya sea laguna o pozo
         Carbon $desde,
@@ -386,11 +430,19 @@ class reprogramacionService
     }
 
     // guarda los movimientos y el historial de una incidencia
+    // Guarda la incidencia y los cambios realizados en los tandeos.
+    // descripcion: guarda la incidencia y los cambios realizados en los tandeos.
+    // entradas: lista de datos que se deben procesar; identificador del registro relacionado; dato necesario para realizar el proceso
+    // salida: registra la incidencia y devuelve el identificador de la cadena
     private function guardarIncidencia(array $resultado, int $usuarioId, string $tipoOrigen): string
     {
         $cadena = (string) Str::uuid();
 
         // Guardamos el historial y los horarios juntos para evitar registros incompletos.
+        // Agrupa los cambios para guardarlos como una sola operación.
+        // descripcion: agrupa los cambios para guardarlos como una sola operación.
+        // entradas: registros que se actualizan durante la operación
+        // salida: confirma los cambios o los revierte si ocurre un error
         DB::transaction(function () use ($resultado, $cadena, $usuarioId, $tipoOrigen) {
             foreach ($resultado['movimientos'] as $m) {
                 Reprogramacion::create([
@@ -420,6 +472,10 @@ class reprogramacionService
             [
                 'cadena' => $cadena,
                 'tandeos_movidos' => count($resultado['movimientos']),
+                // Prepara cada registro para guardarlo o mostrarlo.
+                // descripcion: prepara cada registro para guardarlo o mostrarlo.
+                // entradas: registro que se está transformando
+                // salida: devuelve el registro con sus datos preparados
                 'movimientos' => array_map(function ($movimiento) {
                     return [
                         'tandeo_id' => $movimiento['tandeo']->id,
@@ -435,6 +491,10 @@ class reprogramacionService
     }
 
     // valida el nuevo horario antes de guardarlo
+    // Revisa y guarda el nuevo horario propuesto para el tandeo.
+    // descripcion: revisa y guarda el nuevo horario propuesto para el tandeo.
+    // entradas: dato necesario para realizar el proceso; fecha u horario que se debe revisar o cambiar; identificador del registro relacionado
+    // salida: devuelve el resultado del cambio o los avisos de empalme
     private function mover(tandeoProgramado $t, Carbon $nuevoInicio, bool $esCadena, ?int $puntoId, bool $manual, ?string $motivo, ?int $duracionNueva = null): array
     {
         $duracion = $t->inicio->diffInMinutes($t->fin);
@@ -454,12 +514,20 @@ class reprogramacionService
     }
 
     // compara dos horarios para saber si se cruzan
+    // Comprueba si dos horarios de tandeo se cruzan.
+    // descripcion: comprueba si dos horarios de tandeo se cruzan.
+    // entradas: fecha u horario que se debe revisar o cambiar
+    // salida: indica si los dos horarios se empalman
     private function seEmpalman(Carbon $inicioA, Carbon $finA, Carbon $inicioB, Carbon $finB): bool
     {
         return $inicioA < $finB && $inicioB < $finA;
     }
 
     // evita guardar horarios de inicio repetidos
+    // Comprueba que los horarios resultantes no se repitan.
+    // descripcion: comprueba que los horarios resultantes no se repitan.
+    // entradas: lista de datos que se deben procesar
+    // salida: continúa si los horarios son válidos o informa del conflicto
     private function validarHorariosUnicos(array $movimientos): void
     {
         $cambios = [];

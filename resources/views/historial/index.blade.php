@@ -1,5 +1,5 @@
 {{-- vista de index en el modulo historial --}}
-// archivo del sistema: archivo de codigo del sistema
+{{-- archivo del sistema: archivo de codigo del sistema --}}
 @extends('layouts.app')
 
 @section('titulo', 'Historial de actividad - SIGETA')

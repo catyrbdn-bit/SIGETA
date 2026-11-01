@@ -1,5 +1,5 @@
 {{-- vista de reset-password en el modulo auth --}}
-// archivo del sistema: archivo de codigo del sistema
+{{-- archivo del sistema: archivo de codigo del sistema --}}
 @extends('layouts.app')
 
 @section('titulo', 'Cambiar contraseña - SIGETA')

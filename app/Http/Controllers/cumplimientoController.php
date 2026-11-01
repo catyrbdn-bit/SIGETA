@@ -16,6 +16,10 @@ use Carbon\Carbon;
 class cumplimientoController extends controller
 {
     // consulta y muestra los registros de la pantalla
+    // Consulta los registros y prepara la pantalla de listado.
+    // descripcion: consulta los registros y prepara la pantalla de listado.
+    // entradas: dato necesario para realizar el proceso
+    // salida: muestra la pantalla con los datos consultados
     public function index(repeticionTandeoService $repeticiones)
     {
         $repeticiones->crearSiguientes();
@@ -42,10 +46,10 @@ class cumplimientoController extends controller
         return view('cumplimiento.index', compact('tandeos', 'zonas', 'cumplimientos'));
     }
 
-    // Guarda los cambios de la tabla. Si un atraso nuevo provoca empalmes, primero muestra la vista previa.
-    // descripcion: guarda los resultados, atrasos y observaciones de los tandeos
-    // entradas: solicitud con los datos de cumplimiento y servicio para revisar reprogramaciones
-    // salida: muestra una vista previa si hay empalmes o regresa a cumplimiento con un mensaje
+    // Valida y guarda la información recibida desde el formulario.
+    // descripcion: valida y guarda la información recibida desde el formulario.
+    // entradas: solicitud con los datos enviados por el usuario; dato necesario para realizar el proceso
+    // salida: guarda el registro y muestra un mensaje o los errores encontrados
     public function store(Request $request, reprogramacionService $servicio)
     {
         $datos = $request->validate([
@@ -174,6 +178,10 @@ class cumplimientoController extends controller
 
         $cambios = [];
 
+        // Agrupa los cambios para guardarlos como una sola operación.
+        // descripcion: agrupa los cambios para guardarlos como una sola operación.
+        // entradas: registros que se actualizan durante la operación
+        // salida: confirma los cambios o los revierte si ocurre un error
         DB::transaction(function () use ($datos, $tandeosValidos, $registros, &$cambios) {
             foreach ($datos['cumplimientos'] as $tandeoId => $fila) {
                 $tandeo = $tandeosValidos->get((int) $tandeoId);
@@ -227,6 +235,10 @@ class cumplimientoController extends controller
     }
 
     // revisa si el tandeo ya tiene un atraso registrado
+    // Comprueba si el cumplimiento del tandeo ya tiene un atraso registrado.
+    // descripcion: comprueba si el cumplimiento del tandeo ya tiene un atraso registrado.
+    // entradas: registro que se va a procesar
+    // salida: indica si existe un atraso guardado
     private function tieneAtrasoGuardado($registro): bool
     {
         return $registro
@@ -235,6 +247,10 @@ class cumplimientoController extends controller
     }
 
     // Botón "Apagón general": el registro/reprogramación se atiende en FN.8.
+    // Prepara la solicitud para reprogramar tandeos por apagón general.
+    // descripcion: prepara la solicitud para reprogramar tandeos por apagón general.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: envía al usuario a la vista previa o muestra un aviso
     public function apagonGeneral(Request $request)
     {
         $request->validate(['horas_atraso' => 'required|integer|min:1']);
@@ -242,6 +258,10 @@ class cumplimientoController extends controller
         $tandeosHoy = tandeoProgramado::whereDate('fecha', now())
             ->where('estado', 'programado')
             ->get()
+            // Conserva solo los registros que cumplen la condición indicada.
+            // descripcion: conserva solo los registros que cumplen la condición indicada.
+            // entradas: registro que se está revisando
+            // salida: indica si el registro se conserva o se descarta
             ->filter(fn ($tandeo) => now()->greaterThanOrEqualTo($tandeo->inicio));
 
         foreach ($tandeosHoy as $tandeo) {
@@ -267,6 +287,10 @@ class cumplimientoController extends controller
     }
 
     // Botón "Fuga": afecta los tandeos de hoy solo en la zona indicada.
+    // Prepara la solicitud para reprogramar tandeos afectados por una fuga.
+    // descripcion: prepara la solicitud para reprogramar tandeos afectados por una fuga.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: envía al usuario a la vista previa o muestra un aviso
     public function fuga(Request $request)
     {
         $request->validate([
@@ -276,10 +300,18 @@ class cumplimientoController extends controller
 
         $tandeosZona = tandeoProgramado::whereDate('fecha', now())
             ->where('estado', 'programado')
+            // Filtra los registros según la relación que deben cumplir.
+            // descripcion: filtra los registros según la relación que deben cumplir.
+            // entradas: consulta y registros relacionados
+            // salida: añade la condición correspondiente a la consulta
             ->whereHas('circuito', function ($query) use ($request) {
                 $query->where('zona_id', $request->zona_id);
             })
             ->get()
+            // Conserva solo los registros que cumplen la condición indicada.
+            // descripcion: conserva solo los registros que cumplen la condición indicada.
+            // entradas: registro que se está revisando
+            // salida: indica si el registro se conserva o se descarta
             ->filter(fn ($tandeo) => now()->greaterThanOrEqualTo($tandeo->inicio));
 
         foreach ($tandeosZona as $tandeo) {

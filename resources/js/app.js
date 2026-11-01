@@ -15,7 +15,15 @@ import 'fullcalendar/skeleton.css';
 import 'fullcalendar/themes/monarch/theme.css';
 import 'fullcalendar/themes/monarch/palettes/blue.css';
 
+// Inicia las funciones de la pantalla cuando termina de cargar.
+// descripcion: inicia las funciones de la pantalla cuando termina de cargar.
+// entradas: aviso del navegador de que la página terminó de cargar
+// salida: deja listos los controles de la pantalla
 document.addEventListener('DOMContentLoaded', function () {
+    // Configura cada campo de fecha u hora de la pantalla.
+    // descripcion: configura cada campo de fecha u hora de la pantalla.
+    // entradas: campo de fecha u hora que se configura
+    // salida: deja el campo listo para la captura
     document.querySelectorAll('input[type="date"]').forEach(function (campo) {
         flatpickr(campo, {
             locale: Spanish,
@@ -27,6 +35,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // Configura cada campo de fecha u hora de la pantalla.
+    // descripcion: configura cada campo de fecha u hora de la pantalla.
+    // entradas: campo de fecha u hora que se configura
+    // salida: deja el campo listo para la captura
     document.querySelectorAll('input[type="time"]').forEach(function (campo) {
         flatpickr(campo, {
             locale: Spanish,
@@ -46,6 +58,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
+// Inicia las funciones de la pantalla cuando termina de cargar.
+// descripcion: inicia las funciones de la pantalla cuando termina de cargar.
+// entradas: aviso del navegador de que la página terminó de cargar
+// salida: deja listos los controles de la pantalla
 document.addEventListener('DOMContentLoaded', function () {
     const espacioCalendario = document.getElementById('calendario');
 
@@ -61,7 +77,15 @@ document.addEventListener('DOMContentLoaded', function () {
     let cambioPendiente = null;
 
     // prepara los datos para formatolocal
+    // Convierte la fecha al formato que necesita el calendario.
+    // descripcion: convierte la fecha al formato que necesita el calendario.
+    // entradas: no requiere datos externos
+    // salida: devuelve la fecha como año, mes y día
     function formatoLocal(fecha) {
+        // Ajusta el número a dos dígitos para mostrarlo en la fecha u hora.
+        // descripcion: ajusta el número para mostrarlo con dos dígitos.
+        // entradas: número que se debe completar
+        // salida: devuelve el número con dos dígitos
         const dosDigitos = numero => String(numero).padStart(2, '0');
         return fecha.getFullYear() + '-'
             + dosDigitos(fecha.getMonth() + 1) + '-'
@@ -71,6 +95,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // prepara los datos para hora
+    // Obtiene la hora en formato de 24 horas.
+    // descripcion: obtiene la hora en formato de 24 horas.
+    // entradas: no requiere datos externos
+    // salida: devuelve la hora y los minutos como texto
     function hora(fecha) {
         return new Intl.DateTimeFormat('es-MX', {
             hour: '2-digit', minute: '2-digit', hour12: false,
@@ -78,6 +106,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // prepara los datos para fechahora
+    // Acomoda la fecha y la hora para mostrarlas juntas.
+    // descripcion: acomoda la fecha y la hora para mostrarlas juntas.
+    // entradas: no requiere datos externos
+    // salida: devuelve la fecha y hora como texto
     function fechaHora(fecha) {
         return new Intl.DateTimeFormat('es-MX', {
             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -86,6 +118,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // prepara los datos para fechacorta
+    // Acomoda la fecha en un formato breve para el calendario.
+    // descripcion: acomoda la fecha en un formato breve para el calendario.
+    // entradas: no requiere datos externos
+    // salida: devuelve la fecha corta como texto
     function fechaCorta(fecha) {
         const dias = ['dom.', 'lun.', 'mar.', 'mié.', 'jue.', 'vie.', 'sáb.'];
         const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -93,12 +129,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // prepara los datos para rango
+    // Acomoda la hora inicial y final en un solo texto.
+    // descripcion: acomoda la hora inicial y final en un solo texto.
+    // entradas: no requiere datos externos
+    // salida: devuelve el rango de horario como texto
     function rango(inicio, fin) {
         return fechaCorta(inicio) + ' · ' + hora(inicio) + '–' + hora(fin)
             + (inicio.toDateString() !== fin.toDateString() ? ' (+1 día)' : '');
     }
 
     // prepara los datos para actualizarhorapropuesta
+    // Actualiza la hora final al cambiar el horario propuesto.
+    // descripcion: actualiza la hora final al cambiar el horario propuesto.
+    // entradas: no requiere datos externos
+    // salida: muestra el horario final calculado
     function actualizarHoraPropuesta() {
         if (!cambioPendiente || !campoHoraCambio.value) return;
 
@@ -114,6 +158,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // prepara los datos para abrirconfirmacion
+    // Muestra los datos del tandeo y el horario que se propone guardar.
+    // descripcion: muestra los datos del tandeo y el horario que se propone guardar.
+    // entradas: no requiere datos externos
+    // salida: abre la ventana de confirmación del cambio
     function abrirConfirmacion(info) {
         const nuevoInicio = info.event.start;
         const nuevoFin = info.event.end;
@@ -144,12 +192,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // prepara los datos para mostrarerror
+    // Muestra el aviso con el error que devolvió el sistema.
+    // descripcion: muestra el aviso con el error que devolvió el sistema.
+    // entradas: no requiere datos externos
+    // salida: presenta el mensaje de error al usuario
     function mostrarError(mensaje) {
         avisoEmpalme.textContent = mensaje;
         avisoEmpalme.hidden = false;
     }
 
     // prepara los datos para guardarmovimiento
+    // Envía al sistema la fecha y hora nuevas del tandeo.
+    // descripcion: envía al sistema la fecha y hora nuevas del tandeo.
+    // entradas: no requiere datos externos
+    // salida: guarda el cambio o muestra el aviso de empalme
     async function guardarMovimiento() {
         if (!cambioPendiente) return;
 
@@ -205,14 +261,26 @@ document.addEventListener('DOMContentLoaded', function () {
         eventDurationEditable: false,
         events: {
             url: espacioCalendario.dataset.eventosUrl,
+            // Prepara los filtros para consultar el calendario.
+            // descripcion: prepara los filtros para consultar el calendario.
+            // entradas: filtros elegidos en la pantalla
+            // salida: devuelve los filtros actuales para buscar tandeos
             extraParams: function () {
                 return { zona_id: filtroColonia ? filtroColonia.value : '' };
             },
+            // Muestra un aviso si no se pueden cargar los tandeos.
+            // descripcion: muestra un aviso si no se pueden cargar los tandeos.
+            // entradas: error ocurrido al consultar el calendario
+            // salida: informa al usuario que ocurrió un problema
             failure: function () {
                 alert('No se pudieron cargar los tandeos. Actualiza la página e inténtalo de nuevo.');
             },
         },
         eventDrop: abrirConfirmacion,
+        // Acomoda el nombre, las calles y el horario del tandeo.
+        // descripcion: acomoda el nombre, las calles y el horario del tandeo.
+        // entradas: datos del tandeo que aparece en el calendario
+        // salida: devuelve el contenido que se muestra en el evento
         eventContent: function (info) {
             const datos = info.event.extendedProps;
             const tarjeta = document.createElement('div');
@@ -235,6 +303,10 @@ document.addEventListener('DOMContentLoaded', function () {
             tarjeta.append(cabecera, calle, horario);
             return { domNodes: [tarjeta] };
         },
+        // Abre el detalle del tandeo que seleccionó el usuario.
+        // descripcion: abre el detalle del tandeo que seleccionó el usuario.
+        // entradas: tandeo seleccionado en el calendario
+        // salida: muestra los datos del tandeo seleccionado
         eventClick: function (info) {
             const datos = info.event.extendedProps;
             document.getElementById('detalle-circuito').textContent = datos.circuito;
@@ -251,10 +323,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     calendario.render();
 
+    // Atiende la acción de click en el control correspondiente.
+    // descripcion: atiende la acción de click en el control correspondiente.
+    // entradas: acción del usuario en el control
+    // salida: actualiza la pantalla o ejecuta la acción relacionada
     document.getElementById('cerrar-detalle-tandeo').addEventListener('click', function () {
         dialogoDetalle.close();
     });
 
+    // Atiende la acción de click en el control correspondiente.
+    // descripcion: atiende la acción de click en el control correspondiente.
+    // entradas: acción del usuario en el control
+    // salida: actualiza la pantalla o ejecuta la acción relacionada
     document.getElementById('cancelar-movimiento').addEventListener('click', function () {
         dialogoMovimiento.close();
         cambioPendiente = null;
@@ -264,11 +344,19 @@ document.addEventListener('DOMContentLoaded', function () {
     campoHoraCambio.addEventListener('input', actualizarHoraPropuesta);
     campoHoraCambio.addEventListener('change', actualizarHoraPropuesta);
 
+    // Atiende la acción de close en el control correspondiente.
+    // descripcion: atiende la acción de close en el control correspondiente.
+    // entradas: acción del usuario en el control
+    // salida: actualiza la pantalla o ejecuta la acción relacionada
     dialogoMovimiento.addEventListener('close', function () {
         cambioPendiente = null;
     });
 
     if (filtroColonia) {
+        // Atiende la acción de change en el control correspondiente.
+        // descripcion: atiende la acción de change en el control correspondiente.
+        // entradas: acción del usuario en el control
+        // salida: actualiza la pantalla o ejecuta la acción relacionada
         filtroColonia.addEventListener('change', function () {
             calendario.refetchEvents();
         });
@@ -276,6 +364,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const limpiarFiltroCalendario = document.getElementById('limpiar-filtro-calendario');
     if (limpiarFiltroCalendario && filtroColonia) {
+        // Atiende la acción de click en el control correspondiente.
+        // descripcion: atiende la acción de click en el control correspondiente.
+        // entradas: acción del usuario en el control
+        // salida: actualiza la pantalla o ejecuta la acción relacionada
         limpiarFiltroCalendario.addEventListener('click', function () {
             filtroColonia.value = '';
             filtroColonia.dispatchEvent(new Event('change'));

@@ -19,10 +19,18 @@ use App\Http\Controllers\reportesController;
 // INICIO DE SESIÓN
 // ==================================================
 
+// Define la respuesta que entrega esta ruta al usuario.
+// descripcion: define la respuesta que entrega esta ruta al usuario.
+// entradas: solicitud que llega a la ruta
+// salida: muestra la pantalla o respuesta asignada a la ruta
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Agrupa las rutas que comparten permisos de acceso.
+// descripcion: agrupa las rutas que comparten permisos de acceso.
+// entradas: rutas que pertenecen al grupo
+// salida: aplica a las rutas los permisos compartidos
 Route::middleware('guest')->group(function () {
     Route::get('/login', [loginController::class, 'mostrarInicioSesion'])
         ->name('login');
@@ -43,6 +51,10 @@ Route::middleware('guest')->group(function () {
         ->name('password.update');
 });
 
+// Agrupa las rutas que comparten permisos de acceso.
+// descripcion: agrupa las rutas que comparten permisos de acceso.
+// entradas: rutas que pertenecen al grupo
+// salida: aplica a las rutas los permisos compartidos
 Route::middleware('auth')->group(function () {
 
 Route::post('/logout', [loginController::class, 'cerrarSesion'])
@@ -50,6 +62,10 @@ Route::post('/logout', [loginController::class, 'cerrarSesion'])
 
 // Panel principal
 
+// Define la respuesta que entrega esta ruta al usuario.
+// descripcion: define la respuesta que entrega esta ruta al usuario.
+// entradas: solicitud que llega a la ruta
+// salida: muestra la pantalla o respuesta asignada a la ruta
 Route::get('/dashboard', function () {
     app(\App\Services\repeticionTandeoService::class)->crearSiguientes();
 
@@ -78,21 +94,49 @@ Route::get('/dashboard', function () {
     $busqueda = trim((string) request('buscar', ''));
 
     $tandeosMes = \App\Models\TandeoProgramado::query()
+        // Define la respuesta que entrega esta ruta al usuario.
+        // descripcion: define la respuesta que entrega esta ruta al usuario.
+        // entradas: solicitud que llega a la ruta
+        // salida: muestra la pantalla o respuesta asignada a la ruta
         ->when($busqueda !== '', function ($consulta) use ($busqueda) {
+            // Define la respuesta que entrega esta ruta al usuario.
+            // descripcion: define la respuesta que entrega esta ruta al usuario.
+            // entradas: solicitud que llega a la ruta
+            // salida: muestra la pantalla o respuesta asignada a la ruta
             $consulta->whereHas('circuito', function ($circuito) use ($busqueda) {
                 $circuito->where('nombre', 'like', '%' . $busqueda . '%')
                     ->orWhere('descripcion', 'like', '%' . $busqueda . '%')
+                    // Define la respuesta que entrega esta ruta al usuario.
+                    // descripcion: define la respuesta que entrega esta ruta al usuario.
+                    // entradas: solicitud que llega a la ruta
+                    // salida: muestra la pantalla o respuesta asignada a la ruta
                     ->orWhereHas('zona', function ($zona) use ($busqueda) {
                         $zona->where('nombre', 'like', '%' . $busqueda . '%');
                     });
             });
         })
+        // Define la respuesta que entrega esta ruta al usuario.
+        // descripcion: define la respuesta que entrega esta ruta al usuario.
+        // entradas: solicitud que llega a la ruta
+        // salida: muestra la pantalla o respuesta asignada a la ruta
         ->when($busqueda === '', function ($consulta) use ($inicioMes, $finMes) {
             $consulta->whereBetween('fecha', [$inicioMes, $finMes]);
         })
+        // Define la respuesta que entrega esta ruta al usuario.
+        // descripcion: define la respuesta que entrega esta ruta al usuario.
+        // entradas: solicitud que llega a la ruta
+        // salida: muestra la pantalla o respuesta asignada a la ruta
         ->when(auth()->user()->rol === 'tandeador', function ($consulta) {
+            // Define la respuesta que entrega esta ruta al usuario.
+            // descripcion: define la respuesta que entrega esta ruta al usuario.
+            // entradas: solicitud que llega a la ruta
+            // salida: muestra la pantalla o respuesta asignada a la ruta
             $consulta->where(function ($filtro) {
                 $filtro->where('tandeador_id', auth()->user()->getKey())
+                    // Define la respuesta que entrega esta ruta al usuario.
+                    // descripcion: define la respuesta que entrega esta ruta al usuario.
+                    // entradas: solicitud que llega a la ruta
+                    // salida: muestra la pantalla o respuesta asignada a la ruta
                     ->orWhereHas('tandeadores', function ($personas) {
                         $personas->where('usuarios.id', auth()->user()->getKey());
                     });
@@ -102,6 +146,10 @@ Route::get('/dashboard', function () {
             'tandeadores',
             'circuito.zona',
             'circuito.puntoAbastecimiento',
+            // Define la respuesta que entrega esta ruta al usuario.
+            // descripcion: define la respuesta que entrega esta ruta al usuario.
+            // entradas: solicitud que llega a la ruta
+            // salida: muestra la pantalla o respuesta asignada a la ruta
             'cumplimientos' => function ($consulta) {
                 $consulta->orderByDesc('fecha_captura')->orderByDesc('id');
             },
@@ -127,6 +175,10 @@ Route::post('/calendario/mover', [calendarioController::class, 'mover'])
     ->middleware('rol:administrador,capturista')
     ->name('calendario.mover');
 Route::middleware('rol:administrador')->prefix('usuarios')
+// Define la respuesta que entrega esta ruta al usuario.
+// descripcion: define la respuesta que entrega esta ruta al usuario.
+// entradas: solicitud que llega a la ruta
+// salida: muestra la pantalla o respuesta asignada a la ruta
 ->name('usuarios.')->group(function () {
     Route::get('/', [usuarioController::class, 'index'])
     ->name('index');
@@ -144,6 +196,10 @@ Route::middleware('rol:administrador')->prefix('usuarios')
 
 
 Route::middleware('rol:administrador')->prefix('historial')
+// Define la respuesta que entrega esta ruta al usuario.
+// descripcion: define la respuesta que entrega esta ruta al usuario.
+// entradas: solicitud que llega a la ruta
+// salida: muestra la pantalla o respuesta asignada a la ruta
 ->name('historial.')->group(function () {
     Route::get('/', [historialActividadController::class, 'index'])
     ->name('index');
@@ -154,6 +210,10 @@ Route::middleware('rol:administrador')->prefix('historial')
 
 // REPORTES
 Route::middleware('rol:administrador,capturista')->prefix('reportes')
+// Define la respuesta que entrega esta ruta al usuario.
+// descripcion: define la respuesta que entrega esta ruta al usuario.
+// entradas: solicitud que llega a la ruta
+// salida: muestra la pantalla o respuesta asignada a la ruta
 ->name('reportes.')->group(function () {
     Route::get('/', [reportesController::class, 'index'])
     ->name('index');
@@ -166,6 +226,10 @@ Route::middleware('rol:administrador,capturista')->prefix('reportes')
 // ZONAS
 // ==================================================
 
+// Agrupa las rutas que comparten permisos de acceso.
+// descripcion: agrupa las rutas que comparten permisos de acceso.
+// entradas: rutas que pertenecen al grupo
+// salida: aplica a las rutas los permisos compartidos
 Route::middleware('rol:administrador,capturista')->group(function () {
     Route::get('/zonas', [zonasController::class, 'index'])
     ->name('zonas.index');
@@ -185,6 +249,10 @@ Route::middleware('rol:administrador,capturista')->group(function () {
 // CIRCUITOS
 // ==================================================
 
+// Agrupa las rutas que comparten permisos de acceso.
+// descripcion: agrupa las rutas que comparten permisos de acceso.
+// entradas: rutas que pertenecen al grupo
+// salida: aplica a las rutas los permisos compartidos
 Route::middleware('rol:administrador,capturista')->group(function () {
 Route::get('/circuitos', [circuitosController::class, 'index'])
     ->name('circuitos.index');
@@ -216,6 +284,10 @@ Route::put('/circuitos/{id}/desactivar', [circuitosController::class, 'desactiva
 Route::get('/tandeos', [tandeosController::class, 'index'])
     ->name('tandeos.index');
 
+// Agrupa las rutas que comparten permisos de acceso.
+// descripcion: agrupa las rutas que comparten permisos de acceso.
+// entradas: rutas que pertenecen al grupo
+// salida: aplica a las rutas los permisos compartidos
 Route::middleware('rol:administrador,capturista')->group(function () {
     Route::get('/tandeos/crear', [tandeosController::class, 'create'])
     ->name('createTandeo');
@@ -231,6 +303,10 @@ Route::middleware('rol:administrador,capturista')->group(function () {
 // CUMPLIMIENTO DE TANDEOS
 // ==================================================
 
+// Agrupa las rutas que comparten permisos de acceso.
+// descripcion: agrupa las rutas que comparten permisos de acceso.
+// entradas: rutas que pertenecen al grupo
+// salida: aplica a las rutas los permisos compartidos
 Route::middleware('rol:administrador,capturista')->group(function () {
     Route::get('/cumplimiento', [cumplimientoController::class, 'index'])
     ->name('cumplimiento.index');
@@ -247,6 +323,10 @@ Route::middleware('rol:administrador,capturista')->group(function () {
 // REPROGRAMACIONES
 // ==================================================
 
+// Agrupa las rutas que comparten permisos de acceso.
+// descripcion: agrupa las rutas que comparten permisos de acceso.
+// entradas: rutas que pertenecen al grupo
+// salida: aplica a las rutas los permisos compartidos
 Route::middleware('rol:administrador,capturista')->group(function () {
 Route::post('/reprogramaciones/apagon/previa', [reprogramacionController::class, 'previa'])
     ->name('reprogramaciones.apagon.previa');

@@ -31,18 +31,30 @@ class tandeoProgramado extends Model
     ];
 
     // realiza el proceso de apoyo llamado circuito
+    // Relaciona el tandeo con el circuito al que pertenece.
+    // descripcion: relaciona el tandeo con el circuito al que pertenece.
+    // entradas: registro actual del modelo
+    // salida: permite consultar los datos del circuito
     public function circuito()
     {
         return $this->belongsTo(circuitosModel::class, 'circuito_id');
     }
 
     // relaciona el tandeo con su tandeador principal
+    // Relaciona el tandeo con su tandeador principal.
+    // descripcion: relaciona el tandeo con su tandeador principal.
+    // entradas: registro actual del modelo
+    // salida: permite consultar al tandeador asignado
     public function tandeador()
     {
         return $this->belongsTo(usuarioModel::class, 'tandeador_id');
     }
 
     // relaciona el registro con sus tandeadores asignados
+    // Relaciona el tandeo con las personas asignadas para atenderlo.
+    // descripcion: relaciona el tandeo con las personas asignadas para atenderlo.
+    // entradas: registro actual del modelo
+    // salida: permite consultar los tandeadores asignados
     public function tandeadores()
     {
         return $this->belongsToMany(usuarioModel::class, 'tandeo_tandeador', 'tandeo_id', 'usuario_id');
@@ -50,18 +62,30 @@ class tandeoProgramado extends Model
 
 
     // relaciona el tandeo con sus registros de cumplimiento
+    // Relaciona el tandeo con sus registros de cumplimiento.
+    // descripcion: relaciona el tandeo con sus registros de cumplimiento.
+    // entradas: registro actual del modelo
+    // salida: permite consultar los cumplimientos del tandeo
     public function cumplimientos()
     {
         return $this->hasMany(CumplimientoTandeo::class, 'tandeo_id');
     }
 
     // Fecha y hora de inicio completas (calculada)
+    // Calcula la fecha y hora de inicio del tandeo.
+    // descripcion: calcula la fecha y hora de inicio del tandeo.
+    // entradas: no requiere datos externos
+    // salida: devuelve la fecha y hora de inicio
     public function getInicioAttribute(): Carbon
     {
         return Carbon::parse($this->fecha->format('Y-m-d') . ' ' . $this->hora_inicio_programada);
     }
 
     // Fecha y hora de fin completas; si termina "antes" de empezar, cruzó la medianoche
+    // Calcula la fecha y hora de término del tandeo.
+    // descripcion: calcula la fecha y hora de término del tandeo.
+    // entradas: no requiere datos externos
+    // salida: devuelve la fecha y hora de término, considerando el cambio de día
     public function getFinAttribute(): Carbon
     {
         $fin = Carbon::parse($this->fecha->format('Y-m-d') . ' ' . $this->hora_fin_programada);
@@ -70,6 +94,10 @@ class tandeoProgramado extends Model
     }
 
     // Guarda un nuevo horario a partir de fechas y horas completas
+    // Actualiza la fecha, hora de inicio y hora de término del tandeo.
+    // descripcion: actualiza la fecha, hora de inicio y hora de término del tandeo.
+    // entradas: fecha u horario que se debe revisar o cambiar
+    // salida: guarda el nuevo horario en el registro
     public function aplicarHorario(Carbon $inicio, Carbon $fin): void
     {
         $this->update([

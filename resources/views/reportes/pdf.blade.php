@@ -1,5 +1,5 @@
 {{-- vista de pdf en el modulo reportes --}}
-// archivo del sistema: archivo de codigo del sistema
+{{-- archivo del sistema: archivo de codigo del sistema --}}
 <!DOCTYPE html>
 <html lang="es">
 <head>

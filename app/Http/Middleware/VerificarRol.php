@@ -16,6 +16,10 @@ class VerificarRol
      * 2) capturista
      * 3) tandeador
      */
+    // Comprueba el rol del usuario antes de permitir el acceso.
+    // descripcion: comprueba el rol del usuario antes de permitir el acceso.
+    // entradas: solicitud con los datos enviados por el usuario; siguiente paso para continuar la solicitud; lista de datos que se deben procesar
+    // salida: continúa con la solicitud o devuelve un aviso de acceso denegado
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
         if (!auth()->check()) {

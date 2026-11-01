@@ -13,6 +13,10 @@ use Illuminate\Http\Request;
 class calendarioController extends controller
 {
     // consulta y muestra los registros de la pantalla
+    // Consulta los registros y prepara la pantalla de listado.
+    // descripcion: consulta los registros y prepara la pantalla de listado.
+    // entradas: no requiere datos externos
+    // salida: muestra la pantalla con los datos consultados
     public function index()
     {
         $colonias = zonasModel::where('activo', true)->orderBy('nombre')->get();
@@ -21,6 +25,10 @@ class calendarioController extends controller
     }
 
     // prepara los tandeos para mostrarlos en el calendario
+    // Consulta y prepara los tandeos que aparecen en el calendario.
+    // descripcion: consulta y prepara los tandeos que aparecen en el calendario.
+    // entradas: solicitud con los datos enviados por el usuario; dato necesario para realizar el proceso
+    // salida: devuelve los tandeos en formato JSON para mostrarlos en el calendario
     public function eventos(Request $request, repeticionTandeoService $repeticiones)
     {
         $datos = $request->validate([
@@ -44,20 +52,44 @@ class calendarioController extends controller
             'circuito.zona',
             'tandeadores',
             'tandeador',
+            // Ordena los cumplimientos para consultar primero el registro más reciente.
+            // descripcion: ordena los cumplimientos para consultar primero el registro más reciente.
+            // entradas: cumplimientos relacionados con el tandeo
+            // salida: devuelve los cumplimientos ordenados por fecha de captura
             'cumplimientos' => function ($consulta) {
                 $consulta->orderByDesc('fecha_captura')->orderByDesc('id');
             },
         ])
             ->whereDate('fecha', '>=', $fechaInicio)
             ->whereDate('fecha', '<', $fechaFin)
+            // Aplica el filtro solo cuando se recibió el dato correspondiente.
+            // descripcion: aplica el filtro solo cuando se recibió el dato correspondiente.
+            // entradas: consulta y valor del filtro elegido
+            // salida: añade el filtro a la consulta cuando se necesita
             ->when($request->zona_id, function ($consulta) use ($request) {
+                // Filtra los registros según la relación que deben cumplir.
+                // descripcion: filtra los registros según la relación que deben cumplir.
+                // entradas: consulta y registros relacionados
+                // salida: añade la condición correspondiente a la consulta
                 $consulta->whereHas('circuito', function ($circuitos) use ($request) {
                     $circuitos->where('zona_id', $request->zona_id);
                 });
             })
+            // Aplica el filtro solo cuando se recibió el dato correspondiente.
+            // descripcion: aplica el filtro solo cuando se recibió el dato correspondiente.
+            // entradas: consulta y valor del filtro elegido
+            // salida: añade el filtro a la consulta cuando se necesita
             ->when(auth()->user()->rol === 'tandeador', function ($consulta) {
+                // Agrega una condición para filtrar los registros consultados.
+                // descripcion: agrega una condición para filtrar los registros consultados.
+                // entradas: consulta que se está filtrando
+                // salida: deja la condición agregada a la consulta
                 $consulta->where(function ($filtro) {
                     $filtro->where('tandeador_id', auth()->user()->getKey())
+                        // Filtra los registros según la relación que deben cumplir.
+                        // descripcion: filtra los registros según la relación que deben cumplir.
+                        // entradas: consulta y registros relacionados
+                        // salida: añade la condición correspondiente a la consulta
                         ->orWhereHas('tandeadores', function ($personas) {
                             $personas->where('usuarios.id', auth()->user()->getKey());
                         });
@@ -67,6 +99,10 @@ class calendarioController extends controller
             ->orderBy('hora_inicio_programada')
             ->get();
 
+        // Prepara cada registro para guardarlo o mostrarlo.
+        // descripcion: prepara cada registro para guardarlo o mostrarlo.
+        // entradas: registro que se está transformando
+        // salida: devuelve el registro con sus datos preparados
         $eventos = $tandeos->map(function ($tandeo) {
             $colonia = $tandeo->circuito->zona->nombre;
             $calles = $tandeo->circuito->descripcion ?: 'Sin calles registradas';
@@ -137,10 +173,10 @@ class calendarioController extends controller
     }
     
     //La función mover permite cambiar la fecha y hora de un tandeo programado, 
-    // verificando que no se empalme con otros tandeos y aplicando los cambios si es posible
-    // descripcion: valida y guarda el cambio de horario solicitado desde el calendario
-    // entradas: solicitud con identificador del tandeo y nueva fecha y hora
-    // salida: respuesta con confirmacion o aviso si el horario se empalma
+    // Revisa y guarda el nuevo horario propuesto para el tandeo.
+    // descripcion: revisa y guarda el nuevo horario propuesto para el tandeo.
+    // entradas: solicitud con los datos enviados por el usuario; dato necesario para realizar el proceso
+    // salida: devuelve el resultado del cambio o los avisos de empalme
     public function mover(Request $request, reprogramacionService $reprogramaciones)
     {
         //primero se validan los datos recibidos en la solicitud, 

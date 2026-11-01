@@ -13,11 +13,19 @@ use Illuminate\Http\Request;
 class reprogramacionController extends controller
 {
     // recibe los datos y servicios que necesita la clase
+    // Recibe y guarda los datos que necesita este componente.
+    // descripcion: recibe y guarda los datos que necesita este componente.
+    // entradas: dato necesario para realizar el proceso
+    // salida: deja preparados los datos para usarlos en el componente
     public function __construct(private reprogramacionService $servicio)
     {
     }
 
     // prepara la vista previa de una reprogramacion manual
+    // Calcula una reprogramación manual y prepara la vista previa.
+    // descripcion: calcula una reprogramación manual y prepara la vista previa.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: muestra los cambios propuestos antes de guardarlos
     public function previaManual(Request $request)
     {
         [$id, $inicio, $ajustes, $motivos, $motivo, $circuitoId, $tandeadorId, $duracionManual, $horasAtraso] = $this->datosManual($request);
@@ -32,6 +40,10 @@ class reprogramacionController extends controller
     }
 
     // valida y guarda la reprogramacion manual
+    // Confirma y guarda la reprogramación manual.
+    // descripcion: confirma y guarda la reprogramación manual.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: guarda los cambios y regresa con un mensaje
     public function storeManual(Request $request)
     {
         [$id, $inicio, $ajustes, $motivos, $motivo, $circuitoId, $tandeadorId, $duracionManual, $horasAtraso] = 
@@ -51,6 +63,10 @@ class reprogramacionController extends controller
     }
 
     // organiza los datos enviados para la reprogramacion manual
+    // Organiza los datos recibidos para continuar con la reprogramación.
+    // descripcion: organiza los datos recibidos para continuar con la reprogramación.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: devuelve los datos de la solicitud en un formato preparado
     private function datosManual(Request $request): array
     {
         $request->validate([
@@ -80,6 +96,10 @@ class reprogramacionController extends controller
             $circuito = circuitosModel::find($circuitoId);
             $asignado = $circuito && usuarioModel::whereKey($tandeadorId)
                 ->where('rol', 'tandeador')
+                // Filtra los registros según la relación que deben cumplir.
+                // descripcion: filtra los registros según la relación que deben cumplir.
+                // entradas: consulta y registros relacionados
+                // salida: añade la condición correspondiente a la consulta
                 ->whereHas('zonas', function ($consulta) use ($circuito) {
                     $consulta->where('zonas.id', $circuito->zona_id);
                 })
@@ -125,6 +145,10 @@ class reprogramacionController extends controller
     }
     // Vista previa: calcula los movimientos pero NO guarda nada.
     // También se usa para "Recalcular" con los ajustes escritos a mano.
+    // Calcula los tandeos afectados por un apagón y prepara la vista previa.
+    // descripcion: calcula los tandeos afectados por un apagón y prepara la vista previa.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: muestra los cambios propuestos antes de guardarlos
     public function previa(Request $request)
     {
         $request->validate([
@@ -147,6 +171,10 @@ class reprogramacionController extends controller
     }
 
     // Confirmación: aplica los movimientos y guarda el historial
+    // Valida y guarda la información recibida desde el formulario.
+    // descripcion: valida y guarda la información recibida desde el formulario.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: guarda el registro y muestra un mensaje o los errores encontrados
     public function store(Request $request)
     {
         $request->validate([
@@ -166,6 +194,10 @@ class reprogramacionController extends controller
     }
 
     // prepara la vista previa de la fuga
+    // Calcula los tandeos afectados por una fuga y prepara la vista previa.
+    // descripcion: calcula los tandeos afectados por una fuga y prepara la vista previa.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: muestra los cambios propuestos antes de guardarlos
     public function previaFuga(Request $request)
     {
         $datos = $request->validate([
@@ -198,6 +230,10 @@ class reprogramacionController extends controller
     }
 
     // valida y guarda la reprogramacion por fuga
+    // Confirma y guarda la reprogramación por fuga.
+    // descripcion: confirma y guarda la reprogramación por fuga.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: guarda los cambios y regresa con un mensaje
     public function storeFuga(Request $request)
     {
         $datos = $request->validate([
@@ -230,6 +266,10 @@ class reprogramacionController extends controller
      * Un horario cuenta como ajustado si es distinto al propuesto,
      * o si ya venía ajustado de un recálculo anterior.
      */
+    // Organiza los horarios modificados en la vista previa.
+    // descripcion: organiza los horarios modificados en la vista previa.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: devuelve los ajustes para volver a calcular los movimientos
     private function leerAjustes(Request $request): array
     {
         $nuevos     = $request->input('nuevo', []);

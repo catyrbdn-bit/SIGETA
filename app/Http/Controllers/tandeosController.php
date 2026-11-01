@@ -20,6 +20,10 @@ use Illuminate\Validation\ValidationException;
 class tandeosController extends controller
 {
     // consulta y muestra los registros de la pantalla
+    // Consulta los registros y prepara la pantalla de listado.
+    // descripcion: consulta los registros y prepara la pantalla de listado.
+    // entradas: dato necesario para realizar el proceso
+    // salida: muestra la pantalla con los datos consultados
     public function index(repeticionTandeoService $repeticiones)
     {
         $repeticiones->crearSiguientes();
@@ -28,13 +32,29 @@ class tandeosController extends controller
             'circuito.zona',
             'tandeador',
             'tandeadores',
+            // Ordena los cumplimientos para consultar primero el registro más reciente.
+            // descripcion: ordena los cumplimientos para consultar primero el registro más reciente.
+            // entradas: cumplimientos relacionados con el tandeo
+            // salida: devuelve los cumplimientos ordenados por fecha de captura
             'cumplimientos' => function ($consulta) {
                 $consulta->orderByDesc('fecha_captura')->orderByDesc('id');
             },
         ])
+            // Aplica el filtro solo cuando se recibió el dato correspondiente.
+            // descripcion: aplica el filtro solo cuando se recibió el dato correspondiente.
+            // entradas: consulta y valor del filtro elegido
+            // salida: añade el filtro a la consulta cuando se necesita
             ->when(auth()->user()->rol === 'tandeador', function ($consulta) {
+                // Agrega una condición para filtrar los registros consultados.
+                // descripcion: agrega una condición para filtrar los registros consultados.
+                // entradas: consulta que se está filtrando
+                // salida: deja la condición agregada a la consulta
                 $consulta->where(function ($filtro) {
                     $filtro->where('tandeador_id', auth()->user()->getKey())
+                        // Filtra los registros según la relación que deben cumplir.
+                        // descripcion: filtra los registros según la relación que deben cumplir.
+                        // entradas: consulta y registros relacionados
+                        // salida: añade la condición correspondiente a la consulta
                         ->orWhereHas('tandeadores', function ($personas) {
                             $personas->where('usuarios.id', auth()->user()->getKey());
                         });
@@ -50,6 +70,10 @@ class tandeosController extends controller
     }
 
     // prepara los datos para mostrar el formulario de registro
+    // Prepara el formulario para registrar un nuevo dato.
+    // descripcion: prepara el formulario para registrar un nuevo dato.
+    // entradas: no requiere datos externos
+    // salida: muestra el formulario de registro
     public function create()
     {
         $zonas = zonasModel::where('activo', true)
@@ -68,10 +92,10 @@ class tandeosController extends controller
     // Valida los datos de entrada, verifica que el circuito y la zona sean válidos y activos, 
     // y luego crea el tandeo programado. Si se especifica que el tandeo debe repetirse, 
     // también se crean las repeticiones correspondientes. 
-    // Además, registra la acción en el historial de actividad del sistema.
-    // descripcion: registra un tandeo y calcula su horario de fin
-    // entradas: zona, circuito, fecha, hora de inicio, duracion y datos de repeticion opcionales
-    // salida: redirige a la lista de tandeos con un mensaje de confirmacion
+    // Valida y guarda la información recibida desde el formulario.
+    // descripcion: valida y guarda la información recibida desde el formulario.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: guarda el registro y muestra un mensaje o los errores encontrados
     public function store(Request $request)
     {
         // Aqui se validan los datos de entrada
@@ -141,6 +165,10 @@ class tandeosController extends controller
             ->all();
         $tandeadorPrincipal = $tandeadoresIds[0] ?? null;
         // Valida que haya al menos un tandeador activo en la zona del circuito
+        // Agrupa los cambios para guardarlos como una sola operación.
+        // descripcion: agrupa los cambios para guardarlos como una sola operación.
+        // entradas: registros que se actualizan durante la operación
+        // salida: confirma los cambios o los revierte si ocurre un error
         DB::transaction(function () use ($fechas, $circuito, $horaInicio, $duracionMinutos, $datos, $serieId, $tandeadoresIds, $tandeadorPrincipal) {
             if ($serieId) {
                 TandeoRepeticion::create([
@@ -199,6 +227,10 @@ class tandeosController extends controller
     }
 
     // busca el registro y prepara el formulario de edicion
+    // Busca el registro y prepara el formulario para modificarlo.
+    // descripcion: busca el registro y prepara el formulario para modificarlo.
+    // entradas: identificador del registro relacionado
+    // salida: muestra el formulario con los datos actuales
     public function edit($id)
     {
         $tandeo = TandeoProgramado::with('circuito')->findOrFail($id);
@@ -209,6 +241,10 @@ class tandeosController extends controller
     }
 
     // elimina el registro seleccionado
+    // Elimina el registro seleccionado y atiende sus datos relacionados.
+    // descripcion: elimina el registro seleccionado y atiende sus datos relacionados.
+    // entradas: identificador del registro relacionado
+    // salida: elimina el registro y regresa al listado con un mensaje
     public function destroy($id)
     {
         $tandeo = TandeoProgramado::findOrFail($id);
@@ -220,17 +256,33 @@ class tandeosController extends controller
             : collect([$tandeo]);
         $ids = $tandeos->pluck('id');
 
+        // Agrupa los cambios para guardarlos como una sola operación.
+        // descripcion: agrupa los cambios para guardarlos como una sola operación.
+        // entradas: registros que se actualizan durante la operación
+        // salida: confirma los cambios o los revierte si ocurre un error
         DB::transaction(function () use ($serie, $tandeos, $ids) {
             if ($serie && $serie->activa) {
                 $serie->update(['activa' => false]);
             }
 
             cumplimientoTandeo::whereIn('tandeo_id', $ids)->get()
+                // Realiza la misma acción con cada registro de la lista.
+                // descripcion: realiza la misma acción con cada registro de la lista.
+                // entradas: registro que se debe atender
+                // salida: actualiza o elimina el registro según la acción indicada
                 ->each(fn ($cumplimiento) => $cumplimiento->delete());
 
             Reprogramacion::whereIn('tandeo_id', $ids)->get()
+                // Realiza la misma acción con cada registro de la lista.
+                // descripcion: realiza la misma acción con cada registro de la lista.
+                // entradas: registro que se debe atender
+                // salida: actualiza o elimina el registro según la acción indicada
                 ->each(fn ($reprogramacion) => $reprogramacion->delete());
 
+            // Realiza la misma acción con cada registro de la lista.
+            // descripcion: realiza la misma acción con cada registro de la lista.
+            // entradas: registro que se debe atender
+            // salida: actualiza o elimina el registro según la acción indicada
             $tandeos->each(fn ($ocurrencia) => $ocurrencia->delete());
         });
 
@@ -256,12 +308,20 @@ class tandeosController extends controller
     }
 
     // evita repetir el mismo horario para un circuito
+    // Comprueba que el horario del circuito respete el ciclo permitido.
+    // descripcion: comprueba que el horario del circuito respete el ciclo permitido.
+    // entradas: identificador del registro relacionado; fecha u horario que se debe revisar o cambiar
+    // salida: continúa si el horario es válido o muestra un error
     private function validarHorarioUnico(int $circuitoId, Carbon $nuevoInicio, ?string $ignorarSerieId = null): void
     {
         $tandeos = TandeoProgramado::where('circuito_id', $circuitoId)
             ->whereDate('fecha', $nuevoInicio->toDateString())
             ->get();
 
+        // Comprueba si algún tandeo de la lista cumple la condición indicada.
+        // descripcion: comprueba si algún tandeo de la lista cumple la condición indicada.
+        // entradas: tandeo que se está comparando
+        // salida: indica si se encontró un tandeo que cumple la condición
         $duplicado = $tandeos->contains(fn ($tandeo) =>
             Carbon::parse($tandeo->fecha->format('Y-m-d') . ' ' . $tandeo->hora_inicio_programada)
                 ->format('H:i') === $nuevoInicio->format('H:i')
@@ -269,6 +329,10 @@ class tandeosController extends controller
 
         if (! $duplicado) {
             $series = TandeoRepeticion::where('activa', true)
+                // Aplica el filtro solo cuando se recibió el dato correspondiente.
+                // descripcion: aplica el filtro solo cuando se recibió el dato correspondiente.
+                // entradas: consulta y valor del filtro elegido
+                // salida: añade el filtro a la consulta cuando se necesita
                 ->when($ignorarSerieId, fn ($consulta) => $consulta->where('repeticion_uuid', '!=', $ignorarSerieId))
                 ->get();
 

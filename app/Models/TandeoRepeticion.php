@@ -27,6 +27,10 @@ class TandeoRepeticion extends Model
     ];
 
     // realiza el proceso de apoyo llamado circuito
+    // Relaciona el tandeo con el circuito al que pertenece.
+    // descripcion: relaciona el tandeo con el circuito al que pertenece.
+    // entradas: registro actual del modelo
+    // salida: permite consultar los datos del circuito
     public function circuito()
     {
         return $this->belongsTo(circuitosModel::class, 'circuito_id');

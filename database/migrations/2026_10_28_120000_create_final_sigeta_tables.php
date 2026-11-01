@@ -8,8 +8,16 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     // crea o actualiza la estructura de la base de datos
+    // Aplica los cambios de esta migración a la base de datos.
+    // descripcion: aplica los cambios de esta migración a la base de datos.
+    // entradas: no recibe datos; utiliza la definición de esta migración
+    // salida: actualiza la estructura de la base de datos
     public function up(): void
     {
+        // Define los campos y restricciones de la tabla.
+        // descripcion: define los campos y restricciones de la tabla.
+        // entradas: columnas de la tabla que se crea o modifica
+        // salida: deja preparada la estructura que utilizará el sistema
         Schema::create('reglas_reprogramacion', function (Blueprint $table) {
             $table->id();
             $table->string('tipo_evento', 30);
@@ -23,6 +31,10 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Define los campos y restricciones de la tabla.
+        // descripcion: define los campos y restricciones de la tabla.
+        // entradas: columnas de la tabla que se crea o modifica
+        // salida: deja preparada la estructura que utilizará el sistema
         Schema::create('notificaciones', function (Blueprint $table) {
             $table->id();
             $table->foreignId('usuario_id')->nullable()->constrained('usuarios')->nullOnDelete();
@@ -39,6 +51,10 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Define los campos y restricciones de la tabla.
+        // descripcion: define los campos y restricciones de la tabla.
+        // entradas: columnas de la tabla que se crea o modifica
+        // salida: deja preparada la estructura que utilizará el sistema
         Schema::create('respaldos_bd', function (Blueprint $table) {
             $table->id();
             $table->foreignId('usuario_id')->nullable()->constrained('usuarios')->nullOnDelete();
@@ -49,11 +65,19 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Define los campos y restricciones de la tabla.
+        // descripcion: define los campos y restricciones de la tabla.
+        // entradas: columnas de la tabla que se crea o modifica
+        // salida: deja preparada la estructura que utilizará el sistema
         Schema::table('historial_actividad', function (Blueprint $table) {
             $table->foreignId('respaldo_id')->nullable()
                 ->constrained('respaldos_bd')->nullOnDelete();
         });
 
+        // Define los campos y restricciones de la tabla.
+        // descripcion: define los campos y restricciones de la tabla.
+        // entradas: columnas de la tabla que se crea o modifica
+        // salida: deja preparada la estructura que utilizará el sistema
         Schema::table('reprogramaciones', function (Blueprint $table) {
             $table->foreignId('historial_id')->nullable()
                 ->constrained('historial_actividad')->nullOnDelete();
@@ -75,6 +99,10 @@ return new class extends Migration
                 continue;
             }
 
+            // Define los campos y restricciones de la tabla.
+            // descripcion: define los campos y restricciones de la tabla.
+            // entradas: columnas de la tabla que se crea o modifica
+            // salida: deja preparada la estructura que utilizará el sistema
             Schema::table($nombreTabla, function (Blueprint $table) use ($nombreTabla, $columnas) {
                 $table->dropUnique($nombreTabla . '_sync_uuid_unique');
                 $table->dropColumn($columnas);
@@ -91,12 +119,24 @@ return new class extends Migration
     }
 
     // revierte los cambios de la migracion
+    // Revierte los cambios de esta migración en la base de datos.
+    // descripcion: revierte los cambios de esta migración en la base de datos.
+    // entradas: no recibe datos; utiliza la definición de esta migración
+    // salida: restablece la estructura anterior de la base de datos
     public function down(): void
     {
+        // Define los campos y restricciones de la tabla.
+        // descripcion: define los campos y restricciones de la tabla.
+        // entradas: columnas de la tabla que se crea o modifica
+        // salida: deja preparada la estructura que utilizará el sistema
         Schema::table('reprogramaciones', function (Blueprint $table) {
             $table->dropConstrainedForeignId('historial_id');
         });
 
+        // Define los campos y restricciones de la tabla.
+        // descripcion: define los campos y restricciones de la tabla.
+        // entradas: columnas de la tabla que se crea o modifica
+        // salida: deja preparada la estructura que utilizará el sistema
         Schema::table('historial_actividad', function (Blueprint $table) {
             $table->dropConstrainedForeignId('respaldo_id');
         });

@@ -4,6 +4,10 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
+// Define la respuesta que entrega esta ruta al usuario.
+// descripcion: define la respuesta que entrega esta ruta al usuario.
+// entradas: solicitud que llega a la ruta
+// salida: muestra la pantalla o respuesta asignada a la ruta
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');

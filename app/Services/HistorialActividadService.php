@@ -10,10 +10,10 @@ class HistorialActividadService
     //Esta función registra una actividad en el historial de actividades, 
     // incluyendo información sobre el usuario, tipo de actividad, acción realizada, 
     // descripción y detalles adicionales. Si no se proporciona un ID o nombre de usuario,
-    //  se obtiene del usuario autenticado.
-    // descripcion: guarda una accion en el historial con sus detalles y el usuario relacionado
-    // entradas: tipo, accion, descripcion, detalles y datos opcionales del usuario
-    // salida: no devuelve un valor
+    // Guarda una acción realizada para que aparezca en el historial.
+    // descripcion: guarda una acción realizada para que aparezca en el historial.
+    // entradas: dato necesario para realizar el proceso; lista de datos que se deben procesar; identificador del registro relacionado
+    // salida: crea un registro de actividad con sus detalles
     public function registrar(
         string $tipo,
         string $accion,

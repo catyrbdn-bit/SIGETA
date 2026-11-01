@@ -1,5 +1,5 @@
 {{-- vista de edit en el modulo tandeos --}}
-// archivo del sistema: archivo de codigo del sistema
+{{-- archivo del sistema: archivo de codigo del sistema --}}
 @extends('layouts.app')
 
 @section('titulo', 'Editar tandeo - SIGETA')

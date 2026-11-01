@@ -1,5 +1,5 @@
 {{-- vista de dashboard en el modulo . --}}
-// archivo del sistema: archivo de codigo del sistema
+{{-- archivo del sistema: archivo de codigo del sistema --}}
 @extends('layouts.app')
 
 @section('titulo', 'Panel principal - SIGETA')

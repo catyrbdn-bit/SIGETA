@@ -24,6 +24,10 @@ class zonasModel extends Authenticatable
     ];
 
     // relaciona el registro con sus tandeadores asignados
+    // Relaciona el tandeo con las personas asignadas para atenderlo.
+    // descripcion: relaciona el tandeo con las personas asignadas para atenderlo.
+    // entradas: registro actual del modelo
+    // salida: permite consultar los tandeadores asignados
     public function tandeadores()
     {
         return $this->belongsToMany(usuarioModel::class, 'tandeador_zona', 'zona_id', 'usuario_id');

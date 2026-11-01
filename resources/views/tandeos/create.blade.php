@@ -1,5 +1,5 @@
 {{-- vista de create en el modulo tandeos --}}
-// archivo del sistema: archivo de codigo del sistema
+{{-- archivo del sistema: archivo de codigo del sistema --}}
 @extends('layouts.app')
 
 @section('titulo', 'Programar tandeo - SIGETA')

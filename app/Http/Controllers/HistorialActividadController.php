@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Hash;
 class historialActividadController extends controller
 {
     // consulta y muestra los registros de la pantalla
+    // Consulta los registros y prepara la pantalla de listado.
+    // descripcion: consulta los registros y prepara la pantalla de listado.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: muestra la pantalla con los datos consultados
     public function index(Request $request)
     {
         $filtros = $request->validate([
@@ -25,9 +29,25 @@ class historialActividadController extends controller
         ]);
 
         $registros = HistorialActividad::query()
+            // Aplica el filtro solo cuando se recibió el dato correspondiente.
+            // descripcion: aplica el filtro solo cuando se recibió el dato correspondiente.
+            // entradas: consulta y valor del filtro elegido
+            // salida: añade el filtro a la consulta cuando se necesita
             ->when($filtros['usuario'] ?? null, fn ($consulta, $usuario) => $consulta->where('usuario_nombre', $usuario))
+            // Aplica el filtro solo cuando se recibió el dato correspondiente.
+            // descripcion: aplica el filtro solo cuando se recibió el dato correspondiente.
+            // entradas: consulta y valor del filtro elegido
+            // salida: añade el filtro a la consulta cuando se necesita
             ->when($filtros['tipo'] ?? null, fn ($consulta, $tipo) => $consulta->where('tipo', $tipo))
+            // Aplica el filtro solo cuando se recibió el dato correspondiente.
+            // descripcion: aplica el filtro solo cuando se recibió el dato correspondiente.
+            // entradas: consulta y valor del filtro elegido
+            // salida: añade el filtro a la consulta cuando se necesita
             ->when($filtros['desde'] ?? null, fn ($consulta, $fecha) => $consulta->whereDate('created_at', '>=', $fecha))
+            // Aplica el filtro solo cuando se recibió el dato correspondiente.
+            // descripcion: aplica el filtro solo cuando se recibió el dato correspondiente.
+            // entradas: consulta y valor del filtro elegido
+            // salida: añade el filtro a la consulta cuando se necesita
             ->when($filtros['hasta'] ?? null, fn ($consulta, $fecha) => $consulta->whereDate('created_at', '<=', $fecha))
             ->orderByDesc('created_at')
             ->paginate(25)
@@ -40,6 +60,10 @@ class historialActividadController extends controller
     }
 
     // elimina los registros antiguos despues de validar la contrasena
+    // Elimina los registros antiguos después de confirmar la contraseña.
+    // descripcion: elimina los registros antiguos después de confirmar la contraseña.
+    // entradas: solicitud con los datos enviados por el usuario; dato necesario para realizar el proceso
+    // salida: elimina los registros permitidos y deja constancia en el historial
     public function depurar(Request $request, HistorialActividadService $historial)
     {
         $datos = $request->validate([
@@ -54,6 +78,10 @@ class historialActividadController extends controller
             ]);
         }
 
+        // Agrupa los cambios para guardarlos como una sola operación.
+        // descripcion: agrupa los cambios para guardarlos como una sola operación.
+        // entradas: registros que se actualizan durante la operación
+        // salida: confirma los cambios o los revierte si ocurre un error
         $cantidad = DB::transaction(function () use ($historial) {
             $fechaCorte = now()->subYear();
             $cantidad = HistorialActividad::where('created_at', '<', $fechaCorte)->count();

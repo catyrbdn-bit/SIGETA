@@ -30,6 +30,10 @@ class Reprogramacion extends Model
     ];
 
     // relaciona el registro con su tandeo programado
+    // Relaciona el registro con el tandeo programado al que pertenece.
+    // descripcion: relaciona el registro con el tandeo programado al que pertenece.
+    // entradas: no requiere datos externos
+    // salida: permite consultar el tandeo relacionado
     public function tandeo()
     {
         return $this->belongsTo(tandeoProgramado::class, 'tandeo_id');

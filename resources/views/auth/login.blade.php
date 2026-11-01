@@ -1,5 +1,5 @@
 {{-- vista de login en el modulo auth --}}
-// archivo del sistema: archivo de codigo del sistema
+{{-- archivo del sistema: archivo de codigo del sistema --}}
 <!DOCTYPE html>
 <html lang="es-MX">
 <head>

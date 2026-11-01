@@ -8,8 +8,16 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     // crea o actualiza la estructura de la base de datos
+    // Aplica los cambios de esta migración a la base de datos.
+    // descripcion: aplica los cambios de esta migración a la base de datos.
+    // entradas: no recibe datos; utiliza la definición de esta migración
+    // salida: actualiza la estructura de la base de datos
     public function up(): void
     {
+        // Define los campos y restricciones de la tabla.
+        // descripcion: define los campos y restricciones de la tabla.
+        // entradas: columnas de la tabla que se crea o modifica
+        // salida: deja preparada la estructura que utilizará el sistema
         Schema::create('sync_devices', function (Blueprint $table) {
             $table->id();
             $table->uuid('sync_uuid')->unique();
@@ -19,6 +27,10 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Define los campos y restricciones de la tabla.
+        // descripcion: define los campos y restricciones de la tabla.
+        // entradas: columnas de la tabla que se crea o modifica
+        // salida: deja preparada la estructura que utilizará el sistema
         Schema::create('sync_changes', function (Blueprint $table) {
             $table->id();
             $table->uuid('sync_uuid')->unique();
@@ -37,6 +49,10 @@ return new class extends Migration
             $table->index('status');
         });
 
+        // Define los campos y restricciones de la tabla.
+        // descripcion: define los campos y restricciones de la tabla.
+        // entradas: columnas de la tabla que se crea o modifica
+        // salida: deja preparada la estructura que utilizará el sistema
         Schema::create('sync_conflicts', function (Blueprint $table) {
             $table->id();
             $table->uuid('sync_uuid')->unique();
@@ -53,6 +69,10 @@ return new class extends Migration
     }
 
     // revierte los cambios de la migracion
+    // Revierte los cambios de esta migración en la base de datos.
+    // descripcion: revierte los cambios de esta migración en la base de datos.
+    // entradas: no recibe datos; utiliza la definición de esta migración
+    // salida: restablece la estructura anterior de la base de datos
     public function down(): void
     {
         Schema::dropIfExists('sync_conflicts');

@@ -12,12 +12,20 @@ use Illuminate\Support\Facades\Password;
 class passwordResetController extends controller
 {
     // muestra el formulario para recuperar la contrasena
+    // Muestra el formulario para solicitar la recuperación de contraseña.
+    // descripcion: muestra el formulario para solicitar la recuperación de contraseña.
+    // entradas: no requiere datos externos
+    // salida: muestra la pantalla de recuperación
     public function solicitar()
     {
         return view('auth.forgot-password');
     }
 
     // valida el correo y solicita el enlace para cambiar la contrasena
+    // Valida la cuenta y envía el enlace de recuperación de contraseña.
+    // descripcion: valida la cuenta y envía el enlace de recuperación de contraseña.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: envía el enlace o muestra un mensaje sobre el resultado
     public function enviarEnlace(Request $request)
     {
         $request->validate(['email' => ['required', 'email']]);
@@ -36,6 +44,10 @@ class passwordResetController extends controller
     }
 
     // muestra el formulario para crear una contrasena nueva
+    // Revisa el enlace recibido y muestra el formulario para cambiar la contraseña.
+    // descripcion: revisa el enlace recibido y muestra el formulario para cambiar la contraseña.
+    // entradas: dato necesario para realizar el proceso
+    // salida: muestra el formulario o informa que el enlace no es válido
     public function cambiar($token)
     {
         return view('auth.reset-password', [
@@ -45,6 +57,10 @@ class passwordResetController extends controller
     }
 
     // valida el enlace y guarda la contrasena nueva
+    // Valida el enlace y guarda la contraseña nueva del usuario.
+    // descripcion: valida el enlace y guarda la contraseña nueva del usuario.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: guarda la contraseña y muestra un mensaje sobre el resultado
     public function guardarNueva(Request $request)
     {
         $datos = $request->validate([
@@ -53,6 +69,10 @@ class passwordResetController extends controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
+        // Guarda la contraseña nueva y actualiza la cuenta del usuario.
+        // descripcion: guarda la contraseña nueva y actualiza la cuenta del usuario.
+        // entradas: usuario y contraseña nueva
+        // salida: guarda la contraseña cifrada y actualiza al usuario
         $estado = Password::reset($datos, function ($usuario, $password) {
             $usuario->forceFill([
                 'password' => Hash::make($password),

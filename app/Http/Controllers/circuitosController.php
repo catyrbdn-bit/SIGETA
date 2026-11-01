@@ -12,6 +12,10 @@ use App\Models\PuntoAbastecimiento;
 class circuitosController extends controller
 {
     // consulta y muestra los registros de la pantalla
+    // Consulta los registros y prepara la pantalla de listado.
+    // descripcion: consulta los registros y prepara la pantalla de listado.
+    // entradas: no requiere datos externos
+    // salida: muestra la pantalla con los datos consultados
     public function index()
     {
         $circuitos = circuitosModel::with('zona', 'puntoAbastecimiento')->get();
@@ -19,6 +23,10 @@ class circuitosController extends controller
     }
 
     // prepara los datos para mostrar el formulario de registro
+    // Prepara el formulario para registrar un nuevo dato.
+    // descripcion: prepara el formulario para registrar un nuevo dato.
+    // entradas: no requiere datos externos
+    // salida: muestra el formulario de registro
     public function create()
     {
         $zonas = zonasModel::all();
@@ -27,6 +35,10 @@ class circuitosController extends controller
     }
 
     // valida y guarda la informacion recibida
+    // Valida y guarda la información recibida desde el formulario.
+    // descripcion: valida y guarda la información recibida desde el formulario.
+    // entradas: solicitud con los datos enviados por el usuario
+    // salida: guarda el registro y muestra un mensaje o los errores encontrados
     public function store(Request $request)
     {
         $request->validate([
@@ -57,6 +69,10 @@ class circuitosController extends controller
     }
 
     // busca el registro y prepara el formulario de edicion
+    // Busca el registro y prepara el formulario para modificarlo.
+    // descripcion: busca el registro y prepara el formulario para modificarlo.
+    // entradas: identificador del registro relacionado
+    // salida: muestra el formulario con los datos actuales
     public function edit($id)
     {
         $circuito = circuitosModel::findOrFail($id);
@@ -66,6 +82,10 @@ class circuitosController extends controller
     }
 
     // valida y guarda los cambios del registro
+    // Valida y guarda los cambios del registro.
+    // descripcion: valida y guarda los cambios del registro.
+    // entradas: solicitud con los datos enviados por el usuario; identificador del registro relacionado
+    // salida: actualiza el registro y muestra un mensaje o los errores encontrados
     public function update(Request $request, $id)
     {
         $circuito = circuitosModel::findOrFail($id);
@@ -105,11 +125,19 @@ class circuitosController extends controller
     }
 
     // elimina el registro seleccionado
+    // Elimina el registro seleccionado y atiende sus datos relacionados.
+    // descripcion: elimina el registro seleccionado y atiende sus datos relacionados.
+    // entradas: identificador del registro relacionado
+    // salida: elimina el registro y regresa al listado con un mensaje
     public function destroy($id)
     {
         $circuito = circuitosModel::findOrFail($id);
 
         $tandeosAsociados = $circuito->tandeos()
+            // Ordena los cumplimientos para consultar primero el registro más reciente.
+            // descripcion: ordena los cumplimientos para consultar primero el registro más reciente.
+            // entradas: cumplimientos relacionados con el tandeo
+            // salida: devuelve los cumplimientos ordenados por fecha de captura
             ->with(['cumplimientos' => function ($consulta) {
                 $consulta->orderByDesc('fecha_captura')->orderByDesc('id');
             }])
@@ -135,6 +163,10 @@ class circuitosController extends controller
     }
 
     // desactiva el circuito seleccionado
+    // Desactiva el circuito para que no se use en nuevos tandeos.
+    // descripcion: desactiva el circuito para que no se use en nuevos tandeos.
+    // entradas: identificador del registro relacionado
+    // salida: guarda el cambio y regresa al listado con un mensaje
     public function desactivar($id)
     {
         $circuito = circuitosModel::findOrFail($id);
@@ -152,6 +184,10 @@ class circuitosController extends controller
     }
 
     // muestra la confirmacion para eliminar la colonia
+    // Prepara la confirmación para eliminar la colonia y sus datos asociados.
+    // descripcion: prepara la confirmación para eliminar la colonia y sus datos asociados.
+    // entradas: identificador del registro relacionado
+    // salida: muestra la pantalla de confirmación
     public function confirmDelete($id)
     {
         $circuito = circuitosModel::findOrFail($id);
