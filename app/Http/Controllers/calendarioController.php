@@ -120,10 +120,10 @@ class calendarioController extends controller
 
             if (now()->lt($tandeo->inicio)) {
                 $estado = 'programado';
-            } elseif ($tandeo->estado !== 'programado') {
-                $estado = str_replace(' ', '_', $tandeo->estado);
             } elseif ($cumplimiento) {
                 $estado = str_replace(' ', '_', $cumplimiento->resultado);
+            } elseif ($tandeo->estado !== 'programado') {
+                $estado = str_replace(' ', '_', $tandeo->estado);
             } elseif (now()->betweenIncluded($tandeo->inicio, $tandeo->fin)) {
                 $estado = 'en_curso';
             } else {

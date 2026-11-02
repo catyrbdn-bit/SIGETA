@@ -11,6 +11,9 @@
     @if (session('success'))
         <div class="alert alert-success" role="alert">{{ session('success') }}</div>
     @endif
+    @if (session('warning'))
+        <div class="alert alert-warning" role="alert">{{ session('warning') }}</div>
+    @endif
     @if ($errors->any())
         <div class="alert alert-danger" role="alert">
             <ul class="mb-0">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
@@ -20,32 +23,37 @@
 
  
 
-    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
-                <input type="search" id="buscar-tandeo" class="form-control" style="max-width: 340px" placeholder="Buscar por circuito, colonia o calle..." aria-label="Buscar por circuito, colonia o calle">
-                <button type="button" id="limpiar-busqueda-cumplimiento" class="btn btn-outline-secondary">Quitar filtro</button>
-                <form action="{{ route('reprogramaciones.apagon.previa') }}" method="POST">
-            @csrf
-            <button type="submit" class="btn btn-outline-warning">Apagon general</button>
-        </form>
-        <form action="{{ route('reprogramaciones.fuga.previa') }}" method="POST">
-            @csrf
-            <input type="hidden" name="tipo_fuga" value="laguna">
-            <input type="hidden" name="horas_atraso" value="6">
-            <button type="submit" class="btn btn-outline-info">Fuga laguna</button>
-        </form>
-        <form action="{{ route('reprogramaciones.fuga.previa') }}" method="POST">
-            @csrf
-            <input type="hidden" name="tipo_fuga" value="pozo">
-            <input type="hidden" name="horas_atraso" value="4">
-            <button type="submit" class="btn btn-outline-info">Fuga pozo</button>
-        </form>
-   
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div class="d-flex align-items-center gap-1">
+            <input type="search" id="buscar-tandeo" class="form-control" style="max-width: 340px" placeholder="Buscar por circuito, colonia o calle..." aria-label="Buscar por circuito, colonia o calle">
+            <button type="button" id="limpiar-busqueda-cumplimiento" class="btn btn-outline-secondary">Quitar filtro</button>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <form action="{{ route('reprogramaciones.apagon.previa') }}" method="POST" class="m-0">
+                @csrf
+                <button type="submit" class="btn btn-outline-warning">Apagon general</button>
+            </form>
+            <form action="{{ route('reprogramaciones.fuga.previa') }}" method="POST" class="m-0">
+                @csrf
+                <input type="hidden" name="tipo_fuga" value="laguna">
+                <input type="hidden" name="horas_atraso" value="6">
+                <button type="submit" class="btn btn-outline-info">Fuga laguna</button>
+            </form>
+            <form action="{{ route('reprogramaciones.fuga.previa') }}" method="POST" class="m-0">
+                @csrf
+                <input type="hidden" name="tipo_fuga" value="pozo">
+                <input type="hidden" name="horas_atraso" value="4">
+                <button type="submit" class="btn btn-outline-info">Fuga pozo</button>
+            </form>
+        </div>
+
         <button type="submit" form="form-cumplimientos" class="btn btn-primary">Guardar cambios</button>
     </div>
 
     <form id="form-cumplimientos" action="{{ route('storeCumplimiento') }}" method="POST">
         @csrf
-        <div class="table-responsive">
+<div class="table-responsive">
             <table class="table table-bordered table-hover align-middle" id="tabla-cumplimientos">
                 <thead class="table-light">
                     <tr>

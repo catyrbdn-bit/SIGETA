@@ -374,3 +374,55 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+// descarga los reportes y avisa cuando el archivo se genero
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.descargar-reporte').forEach(function (boton) {
+        boton.addEventListener('click', async function (evento) {
+            evento.preventDefault();
+
+            const aviso = document.getElementById('aviso-descarga-reporte');
+            const error = document.getElementById('error-descarga-reporte');
+            const textoOriginal = boton.textContent;
+            aviso.classList.add('d-none');
+            error.classList.add('d-none');
+            boton.disabled = true;
+            boton.textContent = 'Generando archivo...';
+
+            try {
+                const respuesta = await fetch(boton.href, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                });
+
+                const tipoArchivo = respuesta.headers.get('Content-Type') || '';
+                if (!respuesta.ok || (!tipoArchivo.includes('pdf') && !tipoArchivo.includes('spreadsheet'))) {
+                    throw new Error('No se pudo generar el archivo. Revisa los filtros e inténtalo de nuevo.');
+                }
+
+                const archivo = await respuesta.blob();
+                const enlaceDescarga = document.createElement('a');
+                const urlArchivo = URL.createObjectURL(archivo);
+                const disposicion = respuesta.headers.get('Content-Disposition') || '';
+                const nombreArchivo = disposicion.match(/filename="?([^";]+)"?/i)?.[1]
+                    || boton.dataset.nombre
+                    || 'reporte';
+
+                enlaceDescarga.href = urlArchivo;
+                enlaceDescarga.download = nombreArchivo;
+                document.body.appendChild(enlaceDescarga);
+                enlaceDescarga.click();
+                enlaceDescarga.remove();
+                setTimeout(function () { URL.revokeObjectURL(urlArchivo); }, 1000);
+
+                aviso.textContent = 'El archivo ' + nombreArchivo + ' se generó y la descarga comenzó. Revisa la carpeta Descargas o la ubicación configurada en tu navegador.';
+                aviso.classList.remove('d-none');
+            } catch (fallo) {
+                error.textContent = fallo.message || 'Ocurrió un error al generar el reporte.';
+                error.classList.remove('d-none');
+            } finally {
+                boton.disabled = false;
+                boton.textContent = textoOriginal;
+            }
+        });
+    });
+});

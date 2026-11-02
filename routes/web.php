@@ -219,6 +219,8 @@ Route::middleware('rol:administrador,capturista')->prefix('reportes')
     ->name('index');
     Route::get('/cumplimiento-circuito/excel', [reportesController::class, 'cumplimientoCircuitoExcel'])
     ->name('cumplimiento.circuito.excel');
+    Route::get('/vista-previa/{tipo}', [reportesController::class, 'vistaPrevia'])
+    ->name('vista-previa');
     Route::get('/{tipo}/pdf', [reportesController::class, 'generarPdf'])
     ->name('pdf');
 });

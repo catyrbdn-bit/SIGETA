@@ -96,10 +96,10 @@
                     }
                     if (now()->lt($tandeo->inicio)) {
                         $estado = 'programado';
-                    } elseif ($tandeo->estado !== 'programado') {
-                        $estado = $tandeo->estado;
                     } elseif ($cumplimiento) {
                         $estado = $cumplimiento->resultado;
+                    } elseif ($tandeo->estado !== 'programado') {
+                        $estado = $tandeo->estado;
                     } elseif (now()->betweenIncluded($tandeo->inicio, $tandeo->fin)) {
                         $estado = 'en_curso';
                     } else {

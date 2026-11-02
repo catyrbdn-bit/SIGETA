@@ -212,10 +212,18 @@ class cumplimientoController extends controller
                     'fecha_captura' => now(),
                 ];
                 $registro = $registros->get((int) $tandeoId);
+
+                // No vuelve a guardar filas que conservan los mismos datos
+                $mismosDatos = $registro
+                    && $registro->resultado === $resultado
+                    && (string) ($registro->horas_atraso ?? '') === (string) ($horasAtraso ?? '')
+                    && trim((string) ($registro->observaciones ?? '')) === trim((string) ($valores['observaciones'] ?? ''));
+
+                if ($mismosDatos) continue;
+
                 $antes = $registro?->only(['resultado', 'horas_atraso', 'observaciones']);
-                
+
                 if ($registro) $registro->update($valores);
-                
                 else CumplimientoTandeo::create(array_merge($valores, ['tandeo_id' => $tandeoId]));
                 $cambios[] = ['tandeo_id' => (int) $tandeoId, 'circuito' => $tandeo->circuito->nombre, 
                 'antes' => $antes, 'despues' => $valores];
@@ -231,6 +239,11 @@ class cumplimientoController extends controller
             );
         }
         
+        if (!$cambios) {
+            return redirect()->route('cumplimiento.index')
+                ->with('warning', 'No se guardaron cambios. Selecciona un estado disponible y vuelve a intentarlo.');
+        }
+
         return redirect()->route('cumplimiento.index')->with('success', 'Cambios de cumplimiento guardados correctamente.');
     }
 
