@@ -2,17 +2,17 @@
 // archivo del sistema: archivo que define las rutas de acceso del sistema
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\loginController;
-use App\Http\Controllers\Auth\passwordResetController;
-use App\Http\Controllers\usuarioController;
-use App\Http\Controllers\zonasController;
-use App\Http\Controllers\circuitosController;
-use App\Http\Controllers\tandeosController;
-use App\Http\Controllers\cumplimientoController;
-use App\Http\Controllers\reprogramacionController;
-use App\Http\Controllers\calendarioController;
-use App\Http\Controllers\historialActividadController;
-use App\Http\Controllers\reportesController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\UsuarioController;
+use App\Http\Controllers\ZonasController;
+use App\Http\Controllers\CircuitosController;
+use App\Http\Controllers\TandeosController;
+use App\Http\Controllers\CumplimientoController;
+use App\Http\Controllers\ReprogramacionController;
+use App\Http\Controllers\CalendarioController;
+use App\Http\Controllers\HistorialActividadController;
+use App\Http\Controllers\ReportesController;
 
 
 // ==================================================
@@ -32,22 +32,22 @@ Route::get('/', function () {
 // entradas: rutas que pertenecen al grupo
 // salida: aplica a las rutas los permisos compartidos
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [loginController::class, 'mostrarInicioSesion'])
+    Route::get('/login', [LoginController::class, 'mostrarInicioSesion'])
         ->name('login');
 
-    Route::post('/login', [loginController::class, 'iniciarSesion'])
+    Route::post('/login', [LoginController::class, 'iniciarSesion'])
         ->name('iniciarSesion');
 
-    Route::get('/forgot-password', [passwordResetController::class, 'solicitar'])
+    Route::get('/forgot-password', [PasswordResetController::class, 'solicitar'])
         ->name('password.request');
 
-    Route::post('/forgot-password', [passwordResetController::class, 'enviarEnlace'])
+    Route::post('/forgot-password', [PasswordResetController::class, 'enviarEnlace'])
         ->name('password.email');
 
-    Route::get('/reset-password/{token}', [passwordResetController::class, 'cambiar'])
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'cambiar'])
         ->name('password.reset');
 
-    Route::post('/reset-password', [passwordResetController::class, 'guardarNueva'])
+    Route::post('/reset-password', [PasswordResetController::class, 'guardarNueva'])
         ->name('password.update');
 });
 
@@ -57,7 +57,7 @@ Route::middleware('guest')->group(function () {
 // salida: aplica a las rutas los permisos compartidos
 Route::middleware('auth')->group(function () {
 
-Route::post('/logout', [loginController::class, 'cerrarSesion'])
+Route::post('/logout', [LoginController::class, 'cerrarSesion'])
     ->name('cerrarSesion');
 
 // Panel principal
@@ -67,7 +67,7 @@ Route::post('/logout', [loginController::class, 'cerrarSesion'])
 // entradas: solicitud que llega a la ruta
 // salida: muestra la pantalla o respuesta asignada a la ruta
 Route::get('/dashboard', function () {
-    app(\App\Services\repeticionTandeoService::class)->crearSiguientes();
+    app(\App\Services\RepeticionTandeoService::class)->crearSiguientes();
 
     $mesNumero = request('mes_num');
     $anioSeleccionado = request('anio');
@@ -161,17 +161,17 @@ Route::get('/dashboard', function () {
     return view('dashboard', compact('tandeosMes', 'mesActual', 'mesNumero', 'anioSeleccionado', 'fechaMes', 'busqueda'));
 })->name('dashboard');
 
-Route::get('/calendario', [calendarioController::class, 'index'])
+Route::get('/calendario', [CalendarioController::class, 'index'])
     ->middleware('rol:administrador,capturista,tandeador')
     ->name('calendario.index');
 
 
 
-Route::get('/calendario/eventos', [calendarioController::class, 'eventos'])
+Route::get('/calendario/eventos', [CalendarioController::class, 'eventos'])
     ->middleware('rol:administrador,capturista,tandeador')
     ->name('calendario.eventos');
 
-Route::post('/calendario/mover', [calendarioController::class, 'mover'])
+Route::post('/calendario/mover', [CalendarioController::class, 'mover'])
     ->middleware('rol:administrador,capturista')
     ->name('calendario.mover');
 Route::middleware('rol:administrador')->prefix('usuarios')
@@ -180,17 +180,17 @@ Route::middleware('rol:administrador')->prefix('usuarios')
 // entradas: solicitud que llega a la ruta
 // salida: muestra la pantalla o respuesta asignada a la ruta
 ->name('usuarios.')->group(function () {
-    Route::get('/', [usuarioController::class, 'index'])
+    Route::get('/', [UsuarioController::class, 'index'])
     ->name('index');
-    Route::get('/crear', [usuarioController::class, 'create'])
+    Route::get('/crear', [UsuarioController::class, 'create'])
     ->name('create');
-    Route::post('/', [usuarioController::class, 'store'])
+    Route::post('/', [UsuarioController::class, 'store'])
     ->name('store');
-    Route::get('/{id}/editar', [usuarioController::class, 'edit'])
+    Route::get('/{id}/editar', [UsuarioController::class, 'edit'])
     ->name('edit');
-    Route::put('/{id}', [usuarioController::class, 'update'])
+    Route::put('/{id}', [UsuarioController::class, 'update'])
     ->name('update');
-    Route::delete('/{id}', [usuarioController::class, 'destroy'])
+    Route::delete('/{id}', [UsuarioController::class, 'destroy'])
     ->name('destroy');
 });
 
@@ -201,9 +201,9 @@ Route::middleware('rol:administrador')->prefix('historial')
 // entradas: solicitud que llega a la ruta
 // salida: muestra la pantalla o respuesta asignada a la ruta
 ->name('historial.')->group(function () {
-    Route::get('/', [historialActividadController::class, 'index'])
+    Route::get('/', [HistorialActividadController::class, 'index'])
     ->name('index');
-    Route::post('/depurar', [historialActividadController::class, 'depurar'])
+    Route::post('/depurar', [HistorialActividadController::class, 'depurar'])
     ->name('depurar');
 });
 // ==================================================
@@ -215,13 +215,13 @@ Route::middleware('rol:administrador,capturista')->prefix('reportes')
 // entradas: solicitud que llega a la ruta
 // salida: muestra la pantalla o respuesta asignada a la ruta
 ->name('reportes.')->group(function () {
-    Route::get('/', [reportesController::class, 'index'])
+    Route::get('/', [ReportesController::class, 'index'])
     ->name('index');
-    Route::get('/cumplimiento-circuito/excel', [reportesController::class, 'cumplimientoCircuitoExcel'])
+    Route::get('/cumplimiento-circuito/excel', [ReportesController::class, 'cumplimientoCircuitoExcel'])
     ->name('cumplimiento.circuito.excel');
-    Route::get('/vista-previa/{tipo}', [reportesController::class, 'vistaPrevia'])
+    Route::get('/vista-previa/{tipo}', [ReportesController::class, 'vistaPrevia'])
     ->name('vista-previa');
-    Route::get('/{tipo}/pdf', [reportesController::class, 'generarPdf'])
+    Route::get('/{tipo}/pdf', [ReportesController::class, 'generarPdf'])
     ->name('pdf');
 });
 
@@ -233,17 +233,19 @@ Route::middleware('rol:administrador,capturista')->prefix('reportes')
 // entradas: rutas que pertenecen al grupo
 // salida: aplica a las rutas los permisos compartidos
 Route::middleware('rol:administrador,capturista')->group(function () {
-    Route::get('/zonas', [zonasController::class, 'index'])
+    Route::get('/zonas', [ZonasController::class, 'index'])
     ->name('zonas.index');
-    Route::get('/zonas/crear', [zonasController::class, 'create'])
+    Route::get('/zonas/crear', [ZonasController::class, 'create'])
     ->name('createZona');
-    Route::post('/zonas/guardar', [zonasController::class, 'store'])
+    Route::post('/zonas/guardar', [ZonasController::class, 'store'])
     ->name('storeZona');
-    Route::put('/zonas/{zona}', [zonasController::class, 'update'])
+    Route::put('/zonas/{zona}', [ZonasController::class, 'update'])
     ->name('updateZona');
-    Route::get('/zonas/{id}/editar', [zonasController::class, 'edit'])
+    Route::put('/zonas/{id}/desactivar', [ZonasController::class, 'desactivar'])
+    ->name('desactivarZona');
+    Route::get('/zonas/{id}/editar', [ZonasController::class, 'edit'])
     ->name('editZona');
-    Route::delete('/zonas/{id}', [zonasController::class, 'destroy'])->name('deleteZona');
+    Route::delete('/zonas/{id}', [ZonasController::class, 'destroy'])->name('deleteZona');
 });
 
 
@@ -256,25 +258,25 @@ Route::middleware('rol:administrador,capturista')->group(function () {
 // entradas: rutas que pertenecen al grupo
 // salida: aplica a las rutas los permisos compartidos
 Route::middleware('rol:administrador,capturista')->group(function () {
-Route::get('/circuitos', [circuitosController::class, 'index'])
+Route::get('/circuitos', [CircuitosController::class, 'index'])
     ->name('circuitos.index');
 
-Route::get('/circuitos/crear', [circuitosController::class, 'create'])
+Route::get('/circuitos/crear', [CircuitosController::class, 'create'])
     ->name('createCircuito');
 
-Route::post('/circuitos/guardar', [circuitosController::class, 'store'])
+Route::post('/circuitos/guardar', [CircuitosController::class, 'store'])
     ->name('storeCircuito');
 
-Route::put('/circuitos/{circuito}', [circuitosController::class, 'update'])
+Route::put('/circuitos/{circuito}', [CircuitosController::class, 'update'])
     ->name('updateCircuito');
 
-Route::get('/circuitos/{id}/editar', [circuitosController::class, 'edit'])
+Route::get('/circuitos/{id}/editar', [CircuitosController::class, 'edit'])
     ->name('editCircuito');
 
-Route::delete('/circuitos/{id}', [circuitosController::class, 'destroy'])
+Route::delete('/circuitos/{id}', [CircuitosController::class, 'destroy'])
     ->name('deleteCircuito');
 
-Route::put('/circuitos/{id}/desactivar', [circuitosController::class, 'desactivar'])
+Route::put('/circuitos/{id}/desactivar', [CircuitosController::class, 'desactivar'])
     ->name('desactivarCircuito');
 });
 
@@ -283,7 +285,7 @@ Route::put('/circuitos/{id}/desactivar', [circuitosController::class, 'desactiva
 // TANDEOS PROGRAMADOS
 // ==================================================
 
-Route::get('/tandeos', [tandeosController::class, 'index'])
+Route::get('/tandeos', [TandeosController::class, 'index'])
     ->name('tandeos.index');
 
 // Agrupa las rutas que comparten permisos de acceso.
@@ -291,13 +293,13 @@ Route::get('/tandeos', [tandeosController::class, 'index'])
 // entradas: rutas que pertenecen al grupo
 // salida: aplica a las rutas los permisos compartidos
 Route::middleware('rol:administrador,capturista')->group(function () {
-    Route::get('/tandeos/crear', [tandeosController::class, 'create'])
+    Route::get('/tandeos/crear', [TandeosController::class, 'create'])
     ->name('createTandeo');
-    Route::post('/tandeos/guardar', [tandeosController::class, 'store'])
+    Route::post('/tandeos/guardar', [TandeosController::class, 'store'])
     ->name('storeTandeo');
-    Route::get('/tandeos/{id}/editar', [tandeosController::class, 'edit'])
+    Route::get('/tandeos/{id}/editar', [TandeosController::class, 'edit'])
     ->name('editTandeo');
-    Route::delete('/tandeos/{id}', [tandeosController::class, 'destroy'])->name('deleteTandeo');
+    Route::delete('/tandeos/{id}', [TandeosController::class, 'destroy'])->name('deleteTandeo');
 });
     
 
@@ -310,13 +312,13 @@ Route::middleware('rol:administrador,capturista')->group(function () {
 // entradas: rutas que pertenecen al grupo
 // salida: aplica a las rutas los permisos compartidos
 Route::middleware('rol:administrador,capturista')->group(function () {
-    Route::get('/cumplimiento', [cumplimientoController::class, 'index'])
+    Route::get('/cumplimiento', [CumplimientoController::class, 'index'])
     ->name('cumplimiento.index');
-    Route::post('/cumplimiento/guardar', [cumplimientoController::class, 'store'])
+    Route::post('/cumplimiento/guardar', [CumplimientoController::class, 'store'])
     ->name('storeCumplimiento');
-    Route::post('/cumplimiento/apagon-general', [cumplimientoController::class, 'apagonGeneral'])
+    Route::post('/cumplimiento/apagon-general', [CumplimientoController::class, 'apagonGeneral'])
     ->name('apagonGeneral');
-    Route::post('/cumplimiento/fuga', [cumplimientoController::class, 'fuga'])
+    Route::post('/cumplimiento/fuga', [CumplimientoController::class, 'fuga'])
     ->name('registrarFuga');
 });
 
@@ -330,22 +332,22 @@ Route::middleware('rol:administrador,capturista')->group(function () {
 // entradas: rutas que pertenecen al grupo
 // salida: aplica a las rutas los permisos compartidos
 Route::middleware('rol:administrador,capturista')->group(function () {
-Route::post('/reprogramaciones/apagon/previa', [reprogramacionController::class, 'previa'])
+Route::post('/reprogramaciones/apagon/previa', [ReprogramacionController::class, 'previa'])
     ->name('reprogramaciones.apagon.previa');
 
-Route::post('/reprogramaciones/apagon', [reprogramacionController::class, 'store'])
+Route::post('/reprogramaciones/apagon', [ReprogramacionController::class, 'store'])
     ->name('reprogramaciones.apagon.store');
 
-Route::post('/reprogramaciones/fuga/previa', [reprogramacionController::class, 'previaFuga'])
+Route::post('/reprogramaciones/fuga/previa', [ReprogramacionController::class, 'previaFuga'])
     ->name('reprogramaciones.fuga.previa');
 
-Route::post('/reprogramaciones/fuga', [reprogramacionController::class, 'storeFuga'])
+Route::post('/reprogramaciones/fuga', [ReprogramacionController::class, 'storeFuga'])
     ->name('reprogramaciones.fuga.store');
 
-Route::post('/reprogramaciones/manual/previa', [reprogramacionController::class, 'previaManual'])
+Route::post('/reprogramaciones/manual/previa', [ReprogramacionController::class, 'previaManual'])
     ->name('reprogramaciones.manual.previa');
 
-Route::post('/reprogramaciones/manual/guardar', [reprogramacionController::class, 'storeManual'])
+Route::post('/reprogramaciones/manual/guardar', [ReprogramacionController::class, 'storeManual'])
     ->name('reprogramaciones.manual.store');
 
 });

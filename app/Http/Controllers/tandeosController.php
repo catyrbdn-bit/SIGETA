@@ -6,25 +6,25 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\TandeoProgramado;
 use App\Models\TandeoRepeticion;
-use App\Models\circuitosModel;
-use App\Models\usuarioModel;
-use App\Models\zonasModel;
-use App\Models\cumplimientoTandeo;
+use App\Models\CircuitosModel;
+use App\Models\UsuarioModel;
+use App\Models\ZonasModel;
+use App\Models\CumplimientoTandeo;
 use App\Models\Reprogramacion;
-use App\Services\repeticionTandeoService;
+use App\Services\RepeticionTandeoService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-class tandeosController extends controller
+class TandeosController extends Controller
 {
     // consulta y muestra los registros de la pantalla
     // Consulta los registros y prepara la pantalla de listado.
     // descripcion: consulta los registros y prepara la pantalla de listado.
     // entradas: dato necesario para realizar el proceso
     // salida: muestra la pantalla con los datos consultados
-    public function index(repeticionTandeoService $repeticiones)
+    public function index(RepeticionTandeoService $repeticiones)
     {
         $repeticiones->crearSiguientes();
 
@@ -64,7 +64,7 @@ class tandeosController extends controller
             ->orderBy('hora_inicio_programada')
             ->get();
 
-        $zonas = zonasModel::where('activo', true)->orderBy('nombre')->get();
+        $zonas = ZonasModel::where('activo', true)->orderBy('nombre')->get();
 
         return view('tandeos.index', compact('tandeos', 'zonas'));
     }
@@ -76,11 +76,11 @@ class tandeosController extends controller
     // salida: muestra el formulario de registro
     public function create()
     {
-        $zonas = zonasModel::where('activo', true)
+        $zonas = ZonasModel::where('activo', true)
             ->orderBy('nombre')
             ->get();
 
-        $circuitos = circuitosModel::with('zona')
+        $circuitos = CircuitosModel::with('zona')
             ->where('activo', true)
             ->orderBy('nombre')
             ->get();
@@ -88,14 +88,12 @@ class tandeosController extends controller
         return view('tandeos.create', compact('zonas', 'circuitos'));
     }
 
-    //Esta función se encarga de almacenar un nuevo tandeo en la base de datos. 
-    // Valida los datos de entrada, verifica que el circuito y la zona sean válidos y activos, 
-    // y luego crea el tandeo programado. Si se especifica que el tandeo debe repetirse, 
-    // también se crean las repeticiones correspondientes. 
-    // Valida y guarda la información recibida desde el formulario.
-    // descripcion: valida y guarda la información recibida desde el formulario.
-    // entradas: solicitud con los datos enviados por el usuario
-    // salida: guarda el registro y muestra un mensaje o los errores encontrados
+    /**
+     * Valida y registra el tandeo, junto con sus repeticiones cuando se solicitan.
+     *
+     * @param Request $request Datos de colonia, circuito, fecha, horario y repetición.
+     * @return \Illuminate\Http\RedirectResponse Regresa al listado con el resultado del registro.
+     */
     public function store(Request $request)
     {
         // Aqui se validan los datos de entrada
@@ -110,11 +108,11 @@ class tandeosController extends controller
         ]);
 
         // Verifica que la zona y el circuito sean validos y activos
-        $zonaActiva = zonasModel::whereKey($datos['zona_id'])
+        $zonaActiva = ZonasModel::whereKey($datos['zona_id'])
             ->where('activo', true)
             ->exists();
         // Verifica que el circuito sea valido, activo y pertenezca a la zona seleccionada
-        $circuito = circuitosModel::whereKey($datos['circuito_id'])
+        $circuito = CircuitosModel::whereKey($datos['circuito_id'])
             ->where('zona_id', $datos['zona_id'])
             ->where('activo', true)
             ->first();
@@ -235,7 +233,7 @@ class tandeosController extends controller
     {
         $tandeo = TandeoProgramado::with('circuito')->findOrFail($id);
 
-        $circuitos = circuitosModel::with('zona')->where('activo', true)->get();
+        $circuitos = CircuitosModel::with('zona')->where('activo', true)->get();
 
         return view('tandeos.edit', compact('tandeo', 'circuitos'));
     }
@@ -265,7 +263,7 @@ class tandeosController extends controller
                 $serie->update(['activa' => false]);
             }
 
-            cumplimientoTandeo::whereIn('tandeo_id', $ids)->get()
+            CumplimientoTandeo::whereIn('tandeo_id', $ids)->get()
                 // Realiza la misma acción con cada registro de la lista.
                 // descripcion: realiza la misma acción con cada registro de la lista.
                 // entradas: registro que se debe atender

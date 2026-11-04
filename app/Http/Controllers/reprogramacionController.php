@@ -3,21 +3,21 @@
 namespace App\Http\Controllers;
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
-use App\Models\tandeoProgramado;
-use App\Models\circuitosModel;
-use App\Models\usuarioModel;
-use App\Services\reprogramacionService;
+use App\Models\TandeoProgramado;
+use App\Models\CircuitosModel;
+use App\Models\UsuarioModel;
+use App\Services\ReprogramacionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
-class reprogramacionController extends controller
+class ReprogramacionController extends Controller
 {
     // recibe los datos y servicios que necesita la clase
     // Recibe y guarda los datos que necesita este componente.
     // descripcion: recibe y guarda los datos que necesita este componente.
     // entradas: dato necesario para realizar el proceso
     // salida: deja preparados los datos para usarlos en el componente
-    public function __construct(private reprogramacionService $servicio)
+    public function __construct(private ReprogramacionService $servicio)
     {
     }
 
@@ -59,7 +59,11 @@ class reprogramacionController extends controller
             ? 'Reprogramación confirmada y atraso guardado en Cumplimiento.'
             : 'Horario reprogramado y tandeos afectados recorridos correctamente.';
 
-        return redirect()->route('cumplimiento.index')->with('success', $mensaje);
+        $destino = $origenCumplimiento
+            ? route('cumplimiento.index')
+            : route('tandeos.index');
+
+        return redirect($destino)->with('success', $mensaje);
     }
 
     // organiza los datos enviados para la reprogramacion manual
@@ -93,8 +97,8 @@ class reprogramacionController extends controller
         $tandeadorId = $request->tandeador_id ? (int) $request->tandeador_id : null;
 
         if ($tandeadorId) {
-            $circuito = circuitosModel::find($circuitoId);
-            $asignado = $circuito && usuarioModel::whereKey($tandeadorId)
+            $circuito = CircuitosModel::find($circuitoId);
+            $asignado = $circuito && UsuarioModel::whereKey($tandeadorId)
                 ->where('rol', 'tandeador')
                 // Filtra los registros según la relación que deben cumplir.
                 // descripcion: filtra los registros según la relación que deben cumplir.

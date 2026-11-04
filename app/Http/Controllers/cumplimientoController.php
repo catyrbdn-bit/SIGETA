@@ -6,28 +6,30 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\CumplimientoTandeo;
-use App\Models\tandeoProgramado;
-use App\Models\zonasModel;
+use App\Models\TandeoProgramado;
+use App\Models\ZonasModel;
 use App\Models\Reprogramacion;
-use App\Services\reprogramacionService;
-use App\Services\repeticionTandeoService;
+use App\Services\ReprogramacionService;
+use App\Services\RepeticionTandeoService;
 use Carbon\Carbon;
 
-class cumplimientoController extends controller
+class CumplimientoController extends Controller
 {
-    // consulta y muestra los registros de la pantalla
-    // Consulta los registros y prepara la pantalla de listado.
-    // descripcion: consulta los registros y prepara la pantalla de listado.
-    // entradas: dato necesario para realizar el proceso
-    // salida: muestra la pantalla con los datos consultados
-    public function index(repeticionTandeoService $repeticiones)
+
+    /**
+     * Prepara el listado semanal de tandeos y sus registros de cumplimiento.
+     *
+     * @param RepeticionTandeoService $repeticiones Servicio que completa la lista de tandeos repetidos.
+     * @return \Illuminate\Contracts\View\View Muestra la tabla de cumplimiento.
+     */
+    public function index(RepeticionTandeoService $repeticiones)
     {
         $repeticiones->crearSiguientes();
 
         $inicioSemana = now()->startOfWeek()->toDateString();
         $finSemana = now()->endOfWeek()->toDateString();
 
-        $tandeos = tandeoProgramado::whereDate('fecha', '>=', $inicioSemana)
+        $tandeos = TandeoProgramado::whereDate('fecha', '>=', $inicioSemana)
             ->whereDate('fecha', '<=', $finSemana)
             ->with('circuito.zona')
             ->orderBy('fecha')
@@ -41,16 +43,20 @@ class cumplimientoController extends controller
             ->unique('tandeo_id')
             ->keyBy('tandeo_id');
 
-        $zonas = zonasModel::where('activo', true)->get();
+        $zonas = ZonasModel::where('activo', true)->get();
 
         return view('cumplimiento.index', compact('tandeos', 'zonas', 'cumplimientos'));
     }
 
-    // Valida y guarda la información recibida desde el formulario.
-    // descripcion: valida y guarda la información recibida desde el formulario.
-    // entradas: solicitud con los datos enviados por el usuario; dato necesario para realizar el proceso
-    // salida: guarda el registro y muestra un mensaje o los errores encontrados
-    public function store(Request $request, reprogramacionService $servicio)
+    /**
+     * Guarda el estado, el atraso y las observaciones de los tandeos.
+     * Si un atraso causa empalmes, prepara la vista previa de la reprogramación.
+     *
+     * @param Request $request Estados, horas de atraso y observaciones capturados.
+     * @param ReprogramacionService $servicio Servicio que revisa y calcula los empalmes.
+     * @return \Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse Muestra una vista previa o regresa al listado.
+     */
+    public function store(Request $request, ReprogramacionService $servicio)
     {
         $datos = $request->validate([
             'cumplimientos' => ['required', 'array'],
@@ -60,7 +66,7 @@ class cumplimientoController extends controller
         ]);
 
         $ids = array_keys($datos['cumplimientos']);
-        $tandeosValidos = tandeoProgramado::with('circuito')
+        $tandeosValidos = TandeoProgramado::with('circuito')
             ->whereIn('id', $ids)
             ->whereBetween('fecha', [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()])
             ->get()
@@ -268,7 +274,7 @@ class cumplimientoController extends controller
     {
         $request->validate(['horas_atraso' => 'required|integer|min:1']);
 
-        $tandeosHoy = tandeoProgramado::whereDate('fecha', now())
+        $tandeosHoy = TandeoProgramado::whereDate('fecha', now())
             ->where('estado', 'programado')
             ->get()
             // Conserva solo los registros que cumplen la condición indicada.
@@ -311,7 +317,7 @@ class cumplimientoController extends controller
             'horas_atraso' => 'required|integer|min:1',
         ]);
 
-        $tandeosZona = tandeoProgramado::whereDate('fecha', now())
+        $tandeosZona = TandeoProgramado::whereDate('fecha', now())
             ->where('estado', 'programado')
             // Filtra los registros según la relación que deben cumplir.
             // descripcion: filtra los registros según la relación que deben cumplir.

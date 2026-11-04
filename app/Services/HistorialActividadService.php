@@ -7,13 +7,18 @@ use App\Models\HistorialActividad;
 
 class HistorialActividadService
 {
-    //Esta función registra una actividad en el historial de actividades, 
-    // incluyendo información sobre el usuario, tipo de actividad, acción realizada, 
-    // descripción y detalles adicionales. Si no se proporciona un ID o nombre de usuario,
-    // Guarda una acción realizada para que aparezca en el historial.
-    // descripcion: guarda una acción realizada para que aparezca en el historial.
-    // entradas: dato necesario para realizar el proceso; lista de datos que se deben procesar; identificador del registro relacionado
-    // salida: crea un registro de actividad con sus detalles
+
+    /**
+     * Guarda una acción realizada por un usuario en el historial de actividad.
+     *
+     * @param string $tipo Tipo de actividad registrada.
+     * @param string $accion Nombre de la acción realizada.
+     * @param string $descripcion Resumen de lo ocurrido.
+     * @param array $detalles Información adicional de la acción.
+     * @param int|null $usuarioId Identificador del usuario, si se proporciona.
+     * @param string|null $usuarioNombre Nombre de usuario, si se proporciona.
+     * @return void
+     */
     public function registrar(
         string $tipo,
         string $accion,

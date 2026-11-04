@@ -8,7 +8,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class circuitosModel extends Model
+class CircuitosModel extends Model
 {
     protected $table = 'circuitos';
 
@@ -32,7 +32,7 @@ class circuitosModel extends Model
     // salida: permite consultar la colonia del circuito
     public function zona()
     {
-        return $this->belongsTo(zonasModel::class);
+        return $this->belongsTo(ZonasModel::class);
     }
 
     // relaciona el circuito con sus tandeos programados
@@ -44,7 +44,7 @@ class circuitosModel extends Model
     {
         // hasMany define una relación de uno a muchos:
         // un circuito puede tener múltiples tandeos programados
-        return $this->hasMany(tandeoProgramado::class, 'circuito_id');
+        return $this->hasMany(TandeoProgramado::class, 'circuito_id');
     }
 
     // relaciona el circuito con su punto de abastecimiento
@@ -68,7 +68,7 @@ class circuitosModel extends Model
     // salida: devuelve el código que se asignará al circuito
     public static function generarCodigo(int $zonaId): string
     {
-        $zona = zonasModel::findOrFail($zonaId);
+        $zona = ZonasModel::findOrFail($zonaId);
 
         $iniciales = collect(preg_split('/\s+/', trim(Str::ascii($zona->nombre))))
             ->filter()

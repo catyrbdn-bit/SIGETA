@@ -4,11 +4,11 @@ namespace App\Services;
 // archivo del sistema: archivo con procesos que utiliza el sistema
 
 use App\Models\TandeoRepeticion;
-use App\Models\tandeoProgramado;
+use App\Models\TandeoProgramado;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-class repeticionTandeoService
+class RepeticionTandeoService
 {
     // Crea las fechas que faltan para dejar cargados los próximos días.
     // Crea las próximas repeticiones de los tandeos programados.
@@ -38,12 +38,12 @@ class repeticionTandeoService
 
                 while ($proximaFecha->lessThanOrEqualTo($fechaLimite)) {
                     $proximaFecha->setTimeFromTimeString($serie->hora_inicio);
-                    $yaExisteEnSerie = tandeoProgramado::where('repeticion_uuid', $serie->repeticion_uuid)
+                    $yaExisteEnSerie = TandeoProgramado::where('repeticion_uuid', $serie->repeticion_uuid)
                         ->whereDate('fecha_repeticion', $proximaFecha->toDateString())
                         ->exists();
 
                     if (! $yaExisteEnSerie) {
-                        $mismoHorario = tandeoProgramado::where('circuito_id', $serie->circuito_id)
+                        $mismoHorario = TandeoProgramado::where('circuito_id', $serie->circuito_id)
                             ->whereDate('fecha', $proximaFecha->toDateString())
                             ->get()
                             // Comprueba si algún tandeo de la lista cumple la condición indicada.
@@ -58,7 +58,7 @@ class repeticionTandeoService
                         if (! $mismoHorario) {
                             $fin = $proximaFecha->copy()->addMinutes((int) $serie->duracion_minutos);
                             $fecha = $proximaFecha->toDateString();
-                            $tandeo = new tandeoProgramado();
+                            $tandeo = new TandeoProgramado();
                             $tandeo->forceFill([
                                 'circuito_id' => $serie->circuito_id,
                                 'fecha' => $proximaFecha->toDateString(),

@@ -4,10 +4,16 @@ namespace App\Http\Controllers;
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use Illuminate\Http\Request;
-use App\Models\zonasModel;
-use App\Models\usuarioModel;
+use App\Models\ZonasModel;
+use App\Models\UsuarioModel;
+use App\Models\CircuitosModel;
+use App\Models\TandeoProgramado;
+use App\Models\TandeoRepeticion;
+use App\Models\CumplimientoTandeo;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
-class zonasController extends controller
+class ZonasController extends Controller
 {
     // consulta y muestra los registros de la pantalla
     // Consulta los registros y prepara la pantalla de listado.
@@ -16,7 +22,9 @@ class zonasController extends controller
     // salida: muestra la pantalla con los datos consultados
     public function index()
     {
-        $zonas = zonasModel::with('tandeadores')->get();
+        $zonas = ZonasModel::with('tandeadores')
+            ->withCount(['circuitos', 'tandeos'])
+            ->get();
         return view('zonas.index', compact('zonas'));
     }
 
@@ -28,7 +36,7 @@ class zonasController extends controller
     // salida: muestra el formulario de registro
     public function create()
     {
-        $tandeadores = usuarioModel::where('rol', 'tandeador')
+        $tandeadores = UsuarioModel::where('rol', 'tandeador')
             ->where('activo', true)
             ->orderBy('nombre')
             ->get();
@@ -45,14 +53,16 @@ class zonasController extends controller
     public function store(Request $request)
     {
         $datos = $request->validate([
-            'nombre' => 'required|string|max:100',
+            'nombre' => ['required', 'string', 'max:100', 'unique:zonas,nombre'],
             'descripcion' => 'nullable|string|max:255',
             'activo' => 'required|boolean',
             'tandeadores' => 'nullable|array',
             'tandeadores.*' => 'integer|exists:usuarios,id,rol,tandeador,activo,1',
+        ], [
+            'nombre.unique' => 'Ya existe una colonia con ese nombre.',
         ]);
 
-        $zona = zonasModel::create([
+        $zona = ZonasModel::create([
             'nombre' => $datos['nombre'],
             'descripcion' => $datos['descripcion'] ?? null,
             'activo' => $datos['activo'],
@@ -81,8 +91,8 @@ class zonasController extends controller
     // salida: muestra el formulario con los datos actuales
     public function edit($id)
     {
-        $zona = zonasModel::with('tandeadores')->findOrFail($id);
-        $tandeadores = usuarioModel::where('rol', 'tandeador')
+        $zona = ZonasModel::with('tandeadores')->findOrFail($id);
+        $tandeadores = UsuarioModel::where('rol', 'tandeador')
             ->where('activo', true)
             ->orderBy('nombre')
             ->get();
@@ -97,16 +107,19 @@ class zonasController extends controller
     // salida: actualiza el registro y muestra un mensaje o los errores encontrados
     public function update(Request $request, $id)
     {
+        $zona = ZonasModel::findOrFail($id);
+
         $datos = $request->validate([
-            'nombre' => 'required|string|max:100',
+            'nombre' => ['required', 'string', 'max:100', Rule::unique('zonas', 'nombre')->ignore($zona->id)],
             'descripcion' => 'nullable|string|max:255',
             'activo' => 'required|boolean',
             'tandeadores' => 'nullable|array',
             'tandeadores.*' => 'integer|exists:usuarios,id,rol,tandeador,activo,1',
             'actualizar_tandeos_futuros' => 'nullable|boolean',
+        ], [
+            'nombre.unique' => 'Ya existe una colonia con ese nombre.',
         ]);
 
-        $zona = zonasModel::findOrFail($id);
         $antes = $zona->only(['nombre', 'activo']);
         $nuevosTandeadores = array_map('intval', $datos['tandeadores'] ?? []);
         $cantidadTandeosActualizados = 0;
@@ -138,7 +151,7 @@ class zonasController extends controller
             // descripcion: filtra los registros según la relación que deben cumplir.
             // entradas: consulta y registros relacionados
             // salida: añade la condición correspondiente a la consulta
-            $tandeosFuturos = \App\Models\tandeoProgramado::whereHas('circuito', function ($consulta) use ($zona) {
+            $tandeosFuturos = \App\Models\TandeoProgramado::whereHas('circuito', function ($consulta) use ($zona) {
                 $consulta->where('zona_id', $zona->id);
             })->with('circuito')->get()
                 // Conserva solo los registros que cumplen la condición indicada.
@@ -198,23 +211,60 @@ class zonasController extends controller
 
         return redirect()->route('zonas.index')->with('success', $mensaje);
     }
-    // elimina la colonia seleccionada y sus datos asociados
-    // Elimina el registro seleccionado y atiende sus datos relacionados.
-    // descripcion: elimina el registro seleccionado y atiende sus datos relacionados.
-    // entradas: identificador del registro relacionado
-    // salida: elimina el registro y regresa al listado con un mensaje
-    public function destroy($id)
+    // Desactiva la colonia y conserva sus circuitos y tandeos.
+    public function desactivar($id)
     {
-        $zona = zonasModel::findOrFail($id);
-        $datosZona = $zona->only(["nombre", "activo"]);
-        $zona->delete();
+        $zona = ZonasModel::findOrFail($id);
+        $zona->update(['activo' => false]);
+
         app(\App\Services\HistorialActividadService::class)->registrar(
-            "colonias", "eliminacion", "Se eliminó una colonia.", ["colonia_eliminada" => $datosZona]
+            'colonias',
+            'edicion',
+            'Se desactivó una colonia para conservar sus datos asociados.',
+            ['colonia' => $zona->nombre]
         );
 
         return redirect()->route('zonas.index')
-                        ->with('success', 'Colonia eliminada exitosamente');
+            ->with('success', 'Colonia desactivada. Sus circuitos y tandeos se conservaron.');
+    }
 
+    // Elimina la colonia y los datos operativos asociados despues de confirmar.
+    public function destroy(Request $request, $id)
+    {
+        $request->validate([
+            'confirmar_eliminacion' => ['required', 'accepted'],
+        ], [
+            'confirmar_eliminacion.accepted' => 'Confirma la eliminación definitiva para continuar.',
+        ]);
+
+        $zona = ZonasModel::findOrFail($id);
+        $datosZona = $zona->only(['nombre', 'activo']);
+        $circuitoIds = $zona->circuitos()->pluck('id');
+        $tandeoIds = TandeoProgramado::whereIn('circuito_id', $circuitoIds)->pluck('id');
+        $cantidadCircuitos = $circuitoIds->count();
+        $cantidadTandeos = $tandeoIds->count();
+
+        DB::transaction(function () use ($zona, $circuitoIds, $tandeoIds) {
+            CumplimientoTandeo::whereIn('tandeo_id', $tandeoIds)->delete();
+            TandeoProgramado::whereIn('id', $tandeoIds)->delete();
+            TandeoRepeticion::whereIn('circuito_id', $circuitoIds)->delete();
+            CircuitosModel::whereIn('id', $circuitoIds)->delete();
+            $zona->delete();
+        });
+
+        app(\App\Services\HistorialActividadService::class)->registrar(
+            'colonias',
+            'eliminacion',
+            'Se eliminó una colonia y sus datos asociados.',
+            [
+                'colonia_eliminada' => $datosZona,
+                'circuitos_eliminados' => $cantidadCircuitos,
+                'tandeos_eliminados' => $cantidadTandeos,
+            ]
+        );
+
+        return redirect()->route('zonas.index')
+            ->with('success', "Colonia eliminada junto con {$cantidadCircuitos} circuitos y {$cantidadTandeos} tandeos asociados.");
     }
 
     //alertas para confirmar la eliminacion de la zona
@@ -224,7 +274,7 @@ class zonasController extends controller
     // salida: muestra la pantalla de confirmación
     public function confirmDelete($id)
     {
-        $zona = zonasModel::findOrFail($id);
+        $zona = ZonasModel::findOrFail($id);
         return view('zonas.delete', compact('zona'));
 
     }

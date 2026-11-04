@@ -36,6 +36,6 @@ class Reprogramacion extends Model
     // salida: permite consultar el tandeo relacionado
     public function tandeo()
     {
-        return $this->belongsTo(tandeoProgramado::class, 'tandeo_id');
+        return $this->belongsTo(TandeoProgramado::class, 'tandeo_id');
     }
 }

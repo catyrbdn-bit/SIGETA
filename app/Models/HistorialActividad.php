@@ -30,6 +30,6 @@ class HistorialActividad extends Model
     // salida: permite consultar los datos del usuario relacionado
     public function usuario()
     {
-        return $this->belongsTo(usuarioModel::class, 'usuario_id');
+        return $this->belongsTo(UsuarioModel::class, 'usuario_id');
     }
 }

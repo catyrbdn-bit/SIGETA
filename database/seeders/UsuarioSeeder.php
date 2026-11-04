@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 // archivo del sistema: archivo que carga datos iniciales de ejemplo
 
-use App\Models\usuarioModel;
+use App\Models\UsuarioModel;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -16,7 +16,7 @@ class UsuarioSeeder extends Seeder
     // salida: registra los datos iniciales en la base de datos
     public function run(): void
     {
-        usuarioModel::create([
+        UsuarioModel::create([
             'nombre' => 'Administrador',
             'apellido_paterno' => 'Prueba',
             'apellido_materno' => 'SIGETA',

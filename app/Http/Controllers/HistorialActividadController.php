@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Models\HistorialActividad;
-use App\Models\usuarioModel;
+use App\Models\UsuarioModel;
 use App\Services\HistorialActividadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
-class historialActividadController extends controller
+class HistorialActividadController extends Controller
 {
     // consulta y muestra los registros de la pantalla
     // Consulta los registros y prepara la pantalla de listado.

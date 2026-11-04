@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
-use App\Models\usuarioModel;
+use App\Models\UsuarioModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
-class usuarioController extends controller
+class UsuarioController extends Controller
 {
     // consulta y muestra los registros de la pantalla
     // Consulta los registros y prepara la pantalla de listado.
@@ -17,7 +17,7 @@ class usuarioController extends controller
     // salida: muestra la pantalla con los datos consultados
     public function index()
     {
-        $usuarios = usuarioModel::orderBy('nombre')->orderBy('apellido_paterno')->get();
+        $usuarios = UsuarioModel::orderBy('nombre')->orderBy('apellido_paterno')->get();
 
         return view('usuarios.index', compact('usuarios'));
     }
@@ -51,7 +51,7 @@ class usuarioController extends controller
 
         $datos['password'] = Hash::make($datos['password']);
         $datos['activo'] = true;
-        $usuario = usuarioModel::create($datos);
+        $usuario = UsuarioModel::create($datos);
 
         app(\App\Services\HistorialActividadService::class)->registrar(
             'usuarios',
@@ -70,7 +70,7 @@ class usuarioController extends controller
     // salida: muestra el formulario con los datos actuales
     public function edit($id)
     {
-        $usuario = usuarioModel::findOrFail($id);
+        $usuario = UsuarioModel::findOrFail($id);
 
         return view('usuarios.edit', compact('usuario'));
     }
@@ -82,7 +82,7 @@ class usuarioController extends controller
     // salida: actualiza el registro y muestra un mensaje o los errores encontrados
     public function update(Request $request, $id)
     {
-        $usuario = usuarioModel::findOrFail($id);
+        $usuario = UsuarioModel::findOrFail($id);
 
         $datos = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
@@ -125,7 +125,7 @@ class usuarioController extends controller
     // salida: elimina el registro y regresa al listado con un mensaje
     public function destroy($id)
     {
-        $usuario = usuarioModel::findOrFail($id);
+        $usuario = UsuarioModel::findOrFail($id);
         $datosUsuario = $usuario->only(['nombre', 'apellido_paterno', 'apellido_materno', 'usuario', 'rol']);
         $usuario->delete();
 

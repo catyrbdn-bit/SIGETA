@@ -8,7 +8,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
-class tandeoProgramado extends Model
+class TandeoProgramado extends Model
 {
     protected $table = 'tandeos_programados';
 
@@ -37,7 +37,7 @@ class tandeoProgramado extends Model
     // salida: permite consultar los datos del circuito
     public function circuito()
     {
-        return $this->belongsTo(circuitosModel::class, 'circuito_id');
+        return $this->belongsTo(CircuitosModel::class, 'circuito_id');
     }
 
     // relaciona el tandeo con su tandeador principal
@@ -47,7 +47,7 @@ class tandeoProgramado extends Model
     // salida: permite consultar al tandeador asignado
     public function tandeador()
     {
-        return $this->belongsTo(usuarioModel::class, 'tandeador_id');
+        return $this->belongsTo(UsuarioModel::class, 'tandeador_id');
     }
 
     // relaciona el registro con sus tandeadores asignados
@@ -57,7 +57,7 @@ class tandeoProgramado extends Model
     // salida: permite consultar los tandeadores asignados
     public function tandeadores()
     {
-        return $this->belongsToMany(usuarioModel::class, 'tandeo_tandeador', 'tandeo_id', 'usuario_id');
+        return $this->belongsToMany(UsuarioModel::class, 'tandeo_tandeador', 'tandeo_id', 'usuario_id');
     }
 
 

@@ -6,7 +6,7 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class usuarioModel extends Authenticatable
+class UsuarioModel extends Authenticatable
 {
     use Notifiable;
 
@@ -51,6 +51,6 @@ class usuarioModel extends Authenticatable
     // salida: permite consultar las colonias asignadas al tandeador
     public function zonas()
     {
-        return $this->belongsToMany(zonasModel::class, 'tandeador_zona', 'usuario_id', 'zona_id');
+        return $this->belongsToMany(ZonasModel::class, 'tandeador_zona', 'usuario_id', 'zona_id');
     }
 }

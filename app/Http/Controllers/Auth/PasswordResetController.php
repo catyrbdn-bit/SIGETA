@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Auth;
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
-use App\Http\Controllers\controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 
-class passwordResetController extends controller
+class PasswordResetController extends Controller
 {
     // muestra el formulario para recuperar la contrasena
     // Muestra el formulario para solicitar la recuperación de contraseña.

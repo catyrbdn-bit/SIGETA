@@ -33,6 +33,6 @@ class TandeoRepeticion extends Model
     // salida: permite consultar los datos del circuito
     public function circuito()
     {
-        return $this->belongsTo(circuitosModel::class, 'circuito_id');
+        return $this->belongsTo(CircuitosModel::class, 'circuito_id');
     }
 }

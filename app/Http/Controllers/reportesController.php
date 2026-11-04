@@ -4,15 +4,15 @@ namespace App\Http\Controllers;
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Exports\CumplimientoCircuitoExport;
-use App\Models\circuitosModel;
+use App\Models\CircuitosModel;
 use App\Models\Reprogramacion;
-use App\Models\tandeoProgramado;
-use App\Models\zonasModel;
+use App\Models\TandeoProgramado;
+use App\Models\ZonasModel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 
-class reportesController extends controller
+class ReportesController extends Controller
 {
     // consulta y muestra los registros de la pantalla
     // Consulta los registros y prepara la pantalla de listado.
@@ -21,8 +21,8 @@ class reportesController extends controller
     // salida: muestra la pantalla con los datos consultados
     public function index(Request $request)
     {
-        $zonas = zonasModel::where('activo', true)->orderBy('nombre')->get();
-        $circuitos = circuitosModel::with('zona')
+        $zonas = ZonasModel::where('activo', true)->orderBy('nombre')->get();
+        $circuitos = CircuitosModel::with('zona')
             ->where('activo', true)
             ->orderBy('nombre')
             ->get();
@@ -150,12 +150,12 @@ class reportesController extends controller
         }
 
         $periodo = ($filtros['desde'] ?? 'Sin fecha inicial') . ' a ' . ($filtros['hasta'] ?? 'Sin fecha final');
-        $zona = isset($filtros['zona_id']) ? zonasModel::find($filtros['zona_id'])?->nombre : 'Todas las colonias';
-        $circuito = isset($filtros['circuito_id']) ? circuitosModel::find($filtros['circuito_id'])?->nombre : 'Todos los circuitos';
+        $zona = isset($filtros['zona_id']) ? ZonasModel::find($filtros['zona_id'])?->nombre : 'Todas las colonias';
+        $circuito = isset($filtros['circuito_id']) ? CircuitosModel::find($filtros['circuito_id'])?->nombre : 'Todos los circuitos';
 
         return view('reportes.index', [
-            'zonas' => zonasModel::where('activo', true)->orderBy('nombre')->get(),
-            'circuitos' => circuitosModel::with('zona')->where('activo', true)->orderBy('nombre')->get(),
+            'zonas' => ZonasModel::where('activo', true)->orderBy('nombre')->get(),
+            'circuitos' => CircuitosModel::with('zona')->where('activo', true)->orderBy('nombre')->get(),
             'desde' => $filtros['desde'] ?? '',
             'hasta' => $filtros['hasta'] ?? '',
             'zonaSeleccionada' => $filtros['zona_id'] ?? '',
@@ -317,10 +317,10 @@ class reportesController extends controller
             . ' a '
             . ($filtros['hasta'] ?? 'Sin fecha final');
         $zona = isset($filtros['zona_id'])
-            ? zonasModel::find($filtros['zona_id'])?->nombre
+            ? ZonasModel::find($filtros['zona_id'])?->nombre
             : 'Todas las colonias';
         $circuito = isset($filtros['circuito_id'])
-            ? circuitosModel::find($filtros['circuito_id'])?->nombre
+            ? CircuitosModel::find($filtros['circuito_id'])?->nombre
             : 'Todos los circuitos';
 
         return Pdf::loadView('reportes.pdf', compact(
@@ -409,7 +409,7 @@ class reportesController extends controller
     // salida: devuelve los tandeos que cumplen con los filtros
     private function tandeosFiltrados(array $filtros)
     {
-        return tandeoProgramado::with([
+        return TandeoProgramado::with([
             'circuito.zona',
             // Ordena los cumplimientos para consultar primero el registro más reciente.
             // descripcion: ordena los cumplimientos para consultar primero el registro más reciente.

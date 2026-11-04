@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Models\TandeoProgramado;
-use App\Models\zonasModel;
-use App\Services\reprogramacionService;
-use App\Services\repeticionTandeoService;
+use App\Models\ZonasModel;
+use App\Services\ReprogramacionService;
+use App\Services\RepeticionTandeoService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
-class calendarioController extends controller
+class CalendarioController extends Controller
 {
     // consulta y muestra los registros de la pantalla
     // Consulta los registros y prepara la pantalla de listado.
@@ -19,7 +19,7 @@ class calendarioController extends controller
     // salida: muestra la pantalla con los datos consultados
     public function index()
     {
-        $colonias = zonasModel::where('activo', true)->orderBy('nombre')->get();
+        $colonias = ZonasModel::where('activo', true)->orderBy('nombre')->get();
 
         return view('calendario.index', compact('colonias'));
     }
@@ -29,7 +29,7 @@ class calendarioController extends controller
     // descripcion: consulta y prepara los tandeos que aparecen en el calendario.
     // entradas: solicitud con los datos enviados por el usuario; dato necesario para realizar el proceso
     // salida: devuelve los tandeos en formato JSON para mostrarlos en el calendario
-    public function eventos(Request $request, repeticionTandeoService $repeticiones)
+    public function eventos(Request $request, RepeticionTandeoService $repeticiones)
     {
         $datos = $request->validate([
             'start' => 'required|date',
@@ -171,13 +171,15 @@ class calendarioController extends controller
 
         return response()->json($eventos);
     }
-    
-    //La función mover permite cambiar la fecha y hora de un tandeo programado, 
-    // Revisa y guarda el nuevo horario propuesto para el tandeo.
-    // descripcion: revisa y guarda el nuevo horario propuesto para el tandeo.
-    // entradas: solicitud con los datos enviados por el usuario; dato necesario para realizar el proceso
-    // salida: devuelve el resultado del cambio o los avisos de empalme
-    public function mover(Request $request, reprogramacionService $reprogramaciones)
+
+    /**
+     * Valida y guarda el nuevo horario de un tandeo movido en el calendario.
+     *
+     * @param Request $request Identificador del tandeo y horario propuesto.
+     * @param ReprogramacionService $reprogramaciones Servicio que revisa empalmes y registra el movimiento.
+     * @return \Illuminate\Http\JsonResponse Informa si el cambio se guardó o si existe un conflicto.
+     */
+    public function mover(Request $request, ReprogramacionService $reprogramaciones)
     {
         //primero se validan los datos recibidos en la solicitud, 
         // asegurando que se reciba un tandeo válido y una nueva fecha y hora

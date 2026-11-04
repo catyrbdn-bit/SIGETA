@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use App\Models\circuitosModel;
-use App\Models\zonasModel;
+use App\Models\CircuitosModel;
+use App\Models\ZonasModel;
 use App\Models\PuntoAbastecimiento;
 
-class circuitosController extends controller
+class CircuitosController extends Controller
 {
     // consulta y muestra los registros de la pantalla
     // Consulta los registros y prepara la pantalla de listado.
@@ -18,7 +18,7 @@ class circuitosController extends controller
     // salida: muestra la pantalla con los datos consultados
     public function index()
     {
-        $circuitos = circuitosModel::with('zona', 'puntoAbastecimiento')->get();
+        $circuitos = CircuitosModel::with('zona', 'puntoAbastecimiento')->get();
         return view('circuitos.index', compact('circuitos'));
     }
 
@@ -29,7 +29,7 @@ class circuitosController extends controller
     // salida: muestra el formulario de registro
     public function create()
     {
-        $zonas = zonasModel::all();
+        $zonas = ZonasModel::all();
         $puntos = PuntoAbastecimiento::where('activo', true)->orderBy('nombre')->get();
         return view('circuitos.create', compact('zonas', 'puntos'));
     }
@@ -49,9 +49,9 @@ class circuitosController extends controller
             'activo' => 'required|boolean',
         ]);
 
-        $circuito = circuitosModel::create([
+        $circuito = CircuitosModel::create([
             'zona_id' => $request->zona_id,
-            'nombre' => circuitosModel::generarCodigo((int) $request->zona_id),
+            'nombre' => CircuitosModel::generarCodigo((int) $request->zona_id),
             'descripcion' => $request->descripcion,
             'duracion' => $request->duracion,
             'punto_abastecimiento_id' => $request->punto_abastecimiento_id ?: null,
@@ -75,8 +75,8 @@ class circuitosController extends controller
     // salida: muestra el formulario con los datos actuales
     public function edit($id)
     {
-        $circuito = circuitosModel::findOrFail($id);
-        $zonas = zonasModel::all();
+        $circuito = CircuitosModel::findOrFail($id);
+        $zonas = ZonasModel::all();
         $puntos = PuntoAbastecimiento::where('activo', true)->orderBy('nombre')->get();
         return view('circuitos.edit', compact('circuito', 'zonas', 'puntos'));
     }
@@ -88,7 +88,7 @@ class circuitosController extends controller
     // salida: actualiza el registro y muestra un mensaje o los errores encontrados
     public function update(Request $request, $id)
     {
-        $circuito = circuitosModel::findOrFail($id);
+        $circuito = CircuitosModel::findOrFail($id);
 
         $request->validate([
             'zona_id' => 'required|exists:zonas,id',
@@ -101,7 +101,7 @@ class circuitosController extends controller
         // Si cambia de zona, el código se regenera para que las iniciales coincidan
         $nombre = $circuito->nombre;
         if ((int) $request->zona_id !== (int) $circuito->zona_id) {
-            $nombre = circuitosModel::generarCodigo((int) $request->zona_id);
+            $nombre = CircuitosModel::generarCodigo((int) $request->zona_id);
         }
 
         $antes = $circuito->only(["zona_id", "nombre", "descripcion", "duracion", "punto_abastecimiento_id", "activo"]);
@@ -131,7 +131,7 @@ class circuitosController extends controller
     // salida: elimina el registro y regresa al listado con un mensaje
     public function destroy($id)
     {
-        $circuito = circuitosModel::findOrFail($id);
+        $circuito = CircuitosModel::findOrFail($id);
 
         $tandeosAsociados = $circuito->tandeos()
             // Ordena los cumplimientos para consultar primero el registro más reciente.
@@ -169,7 +169,7 @@ class circuitosController extends controller
     // salida: guarda el cambio y regresa al listado con un mensaje
     public function desactivar($id)
     {
-        $circuito = circuitosModel::findOrFail($id);
+        $circuito = CircuitosModel::findOrFail($id);
         $circuito->update(['activo' => false]);
 
         app(\App\Services\HistorialActividadService::class)->registrar(
@@ -190,7 +190,7 @@ class circuitosController extends controller
     // salida: muestra la pantalla de confirmación
     public function confirmDelete($id)
     {
-        $circuito = circuitosModel::findOrFail($id);
+        $circuito = CircuitosModel::findOrFail($id);
         return view('circuitos.delete', compact('circuito'));
     }
 }

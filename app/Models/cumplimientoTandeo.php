@@ -7,7 +7,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class cumplimientoTandeo extends Model
+class CumplimientoTandeo extends Model
 {
     protected $table = 'cumplimiento_tandeos';
 
@@ -38,6 +38,6 @@ class cumplimientoTandeo extends Model
     // salida: permite consultar quién capturó el cumplimiento
     public function capturadoPor()
     {
-        return $this->belongsTo(usuarioModel::class, 'capturado_por_id');
+        return $this->belongsTo(UsuarioModel::class, 'capturado_por_id');
     }
 }

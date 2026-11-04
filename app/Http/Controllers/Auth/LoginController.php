@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Auth;
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
-use App\Http\Controllers\controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class loginController extends controller
+class LoginController extends Controller
 {
     /**
      * Mostrar el formulario de inicio de sesión.
@@ -21,19 +21,12 @@ class loginController extends controller
         return view('auth.login');
     }
 
-  
-    //Funcion para procesar el inicio de sesion
-    //Se ingresan los datos del formulario recibidos en $request, 
-    // y se valida si son correctos, si no se regresa al 
-    // formulario con un mensaje de error
-
-    // descripcion: valida las credenciales y registra el resultado del inicio de sesion
-    // entradas: solicitud con el nombre de usuario y la contrasena
-    // salida: redirige al panel si los datos son correctos o vuelve al formulario con un error
-    // Valida las credenciales y permite el acceso al usuario correcto.
-    // descripcion: valida las credenciales y permite el acceso al usuario correcto.
-    // entradas: solicitud con los datos enviados por el usuario
-    // salida: abre el panel si los datos son válidos o muestra un aviso si no lo son
+    /**
+     * Valida las credenciales y registra el resultado del inicio de sesión.
+     *
+     * @param Request $request Datos de usuario y contraseña enviados desde el formulario.
+     * @return \Illuminate\Http\RedirectResponse Abre el panel o vuelve al formulario con un aviso.
+     */
     public function iniciarSesion(Request $request)
     {
         // Validar los datos del formulario

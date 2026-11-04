@@ -1,7 +1,7 @@
 <?php
 // archivo del sistema: archivo con opciones de configuracion de laravel
 
-use App\Models\usuarioModel;
+use App\Models\UsuarioModel;
 
 return [
 
@@ -38,7 +38,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => 'App\Models\usuarioModel',
+            'model' => 'App\Models\UsuarioModel',
         ],
     ],
 

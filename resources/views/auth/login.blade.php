@@ -117,8 +117,10 @@
                 </div>
             @endif
 
-            <form action="{{ route('iniciarSesion') }}" method="POST">
+            <form action="{{ route('iniciarSesion') }}" method="POST" novalidate>
                 @csrf
+
+                <div id="error-validacion-login" class="mensaje-error" role="alert" hidden></div>
 
                 <div class="campo">
                     <label for="usuario">Usuario:</label>
@@ -152,6 +154,32 @@
         </section>
     </main>
 
+<script>
+    const formularioLogin = document.querySelector('form');
+    const campoUsuario = document.getElementById('usuario');
+    const campoContrasena = document.getElementById('password');
+    const mensajeValidacion = document.getElementById('error-validacion-login');
+
+    formularioLogin.addEventListener('submit', function (evento) {
+        const faltaUsuario = campoUsuario.value.trim() === '';
+        const faltaContrasena = campoContrasena.value === '';
+
+        if (faltaUsuario || faltaContrasena) {
+            evento.preventDefault();
+            mensajeValidacion.textContent = faltaUsuario && faltaContrasena
+                ? 'Escribe tu nombre de usuario y contraseña.'
+                : (faltaUsuario ? 'Escribe tu nombre de usuario.' : 'Escribe tu contraseña.');
+            mensajeValidacion.hidden = false;
+            (faltaUsuario ? campoUsuario : campoContrasena).focus();
+        }
+    });
+
+    [campoUsuario, campoContrasena].forEach(function (campo) {
+        campo.addEventListener('input', function () {
+            mensajeValidacion.hidden = true;
+        });
+    });
+</script>
 </body>
 </html>
 
