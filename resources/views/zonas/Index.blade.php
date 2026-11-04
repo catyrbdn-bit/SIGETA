@@ -1,11 +1,9 @@
-{{-- vista de index en el modulo zonas --}}
-{{-- archivo del sistema: archivo de codigo del sistema --}}
 @extends('layouts.app')
 
 @section('titulo', 'Colonias atendidas por SAPUA - SIGETA')
 
 @section('estilos')
-{{-- estilos visuales de la pantalla --}}
+
 <style>
 
         * {
@@ -164,10 +162,18 @@
             overflow-wrap: anywhere;
         }
 
-        main.contenido-principal .contenido-vista th:nth-child(1) { width: 24%; }
-        main.contenido-principal .contenido-vista th:nth-child(2) { width: 30%; }
-        main.contenido-principal .contenido-vista th:nth-child(3) { width: 18%; }
-        main.contenido-principal .contenido-vista th:nth-child(4) { width: 28%; }
+        main.contenido-principal .contenido-vista th:nth-child(1) { 
+            width: 24%; 
+        }
+        main.contenido-principal .contenido-vista th:nth-child(2) { 
+            width: 30%; 
+        }
+        main.contenido-principal .contenido-vista th:nth-child(3) {
+            width: 18%; 
+        }
+        main.contenido-principal .contenido-vista th:nth-child(4) { 
+            width: 28%; 
+        }
 
         main.contenido-principal .contenido-vista .acciones {
             justify-content: center;
@@ -192,7 +198,7 @@
 @section('content')
 <div class="contenido-vista">
 <h1>Colonias atendidas por SAPUA</h1>
-    <p class="subtitulo">Lista de colonias registradas en el sistema.</p>
+ 
 
     @if (session('success'))
         <p id="mensaje-exito" class="mensaje-exito">{{ session('success') }}</p>
@@ -209,7 +215,7 @@
 
     <section class="panel">
         <div class="barra-acciones">
-            <strong>Lista de colonias</strong>
+        
             <a href="{{ route('createZona') }}" class="btn btn-primary">+ Nueva Colonia</a>
         </div>
 
@@ -276,7 +282,7 @@
                                         </dialog>
                                     @else
                                         <form action="{{ route('deleteZona', $zona->id) }}" method="POST"
-                                              data-confirmacion-titulo="Eliminar colonia" data-confirmacion-mensaje="¿Eliminar definitivamente esta colonia?">
+                                              onsubmit="return confirm('¿Eliminar definitivamente esta colonia?');">
                                             @csrf
                                             @method('DELETE')
                                             <input type="hidden" name="confirmar_eliminacion" value="1">

@@ -7,7 +7,7 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
             <div>
                 <h2>Respaldos de base de datos</h2>
-                <p class="text-muted mb-0">Crea copias y restaura una copia anterior si es necesario.</p>
+                <p class="text-muted mb-0">Crea copias y restaura una copia anterior si es necesario</p>
             </div>
             <form action="{{ route('respaldos.store') }}" method="POST">
                 @csrf
@@ -15,9 +15,20 @@
             </form>
         </div>
 
-        @if (session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
-        @if (session('error')) <div class="alert alert-danger">{{ session('error') }}</div> @endif
-        @if ($errors->any()) <div class="alert alert-warning">{{ $errors->first() }}</div> @endif
+        @if (session('success')) <div class="alert alert-success">
+            {{ session('success') }}
+        </div> 
+        @endif
+
+        @if (session('error')) <div class="alert alert-danger">
+            {{ session('error') }}
+        </div> 
+        @endif
+
+        @if ($errors->any()) <div class="alert alert-warning">
+            {{ $errors->first() }}
+        </div> 
+        @endif
 
         <div class="table-responsive">
             <table class="table table-bordered table-hover align-middle">
