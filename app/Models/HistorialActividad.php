@@ -17,6 +17,7 @@ class HistorialActividad extends Model
         'descripcion',
         'detalles',
         'ip',
+        'respaldo_id',
     ];
 
     protected $casts = [

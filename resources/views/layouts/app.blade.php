@@ -25,12 +25,18 @@
             overflow-x: hidden;
         }
 
+        .container-fluid > .row {
+            min-height: 100vh;
+            align-items: stretch;
+        }
+
         .menu-lateral {
             position: sticky;
             top: 0;
             height: 100vh;
             max-height: 100vh;
-            overflow-y: auto;
+            min-height: 100vh;
+            overflow: hidden;
             background: #5b9bd5;
             color: #ffffff;
         }
@@ -69,6 +75,14 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 8px;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        .menu-navegacion::-webkit-scrollbar {
+            display: none;
         }
 
         .contenido-principal {
@@ -127,10 +141,15 @@
                 position: static;
                 height: auto;
                 max-height: none;
+                min-height: 0;
                 overflow: visible;
             }
 
-            .menu-navegacion { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .menu-navegacion {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                flex: initial;
+                overflow: visible;
+            }
             .contenido-principal { padding: 16px !important; }
             .contenido-principal .contenido-vista { margin: 0 !important; }
             .contenido-principal #buscar { width: 100%; max-width: 100%; }
@@ -177,6 +196,7 @@
                             @if (Auth::user()->rol === 'administrador')
                                 <a href="{{ route('usuarios.index') }}" class="btn btn-outline-secondary text-start">Gestión de usuarios</a>
                                 <a href="{{ route('historial.index') }}" class="btn btn-outline-secondary text-start">Historial de actividad</a>
+                                <a href="{{ route('respaldos.index') }}" class="btn btn-outline-secondary text-start">Respaldos de base de datos</a>
                             @endif
 
                             <a href="{{ route('calendario.index') }}" class="btn btn-outline-secondary text-start">Calendario</a>
@@ -196,6 +216,14 @@
             </main>
         </div>
     </div>
+    <dialog id="aviso-sigeta" class="aviso-sigeta" aria-labelledby="aviso-sigeta-titulo">
+        <h2 id="aviso-sigeta-titulo">Confirmar acción</h2>
+        <p data-aviso-sigeta-mensaje></p>
+        <div class="acciones-aviso-sigeta">
+            <button type="button" class="btn btn-outline-secondary" data-aviso-sigeta-cancelar>Cancelar</button>
+            <button type="button" class="btn btn-primary" data-aviso-sigeta-aceptar>Continuar</button>
+        </div>
+    </dialog>
 </body>
 </html>
 

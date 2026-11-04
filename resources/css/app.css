@@ -43,3 +43,105 @@ body {
 .table thead th {
     background-color: #eaf0f5;
 }
+/* aviso emergente que se usa para confirmar acciones del sistema */
+.aviso-sigeta {
+    width: min(680px, calc(100% - 32px));
+    max-height: calc(100vh - 40px);
+    margin: auto;
+    padding: 24px;
+    overflow-y: auto;
+    border: 1px solid #cbd5df;
+    border-radius: 12px;
+    color: #243447;
+    box-shadow: 0 18px 50px rgba(20, 40, 60, 0.25);
+}
+
+.aviso-sigeta::backdrop {
+    background: rgba(20, 35, 50, 0.55);
+}
+
+.aviso-sigeta h2 {
+    margin: 0 0 16px;
+    color: #24527a;
+}
+
+.aviso-sigeta p {
+    white-space: pre-line;
+}
+
+.acciones-aviso-sigeta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Mantiene completos los controles y textos de la tabla de cumplimiento */
+.cumplimiento-barra {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 22px;
+}
+
+.cumplimiento-busqueda,
+.cumplimiento-acciones-superiores {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.cumplimiento-busqueda {
+    flex: 1 1 390px;
+}
+
+.cumplimiento-busqueda input {
+    flex: 1 1 260px;
+    min-width: 220px;
+}
+
+.cumplimiento-acciones-superiores {
+    flex: 1 1 auto;
+    justify-content: space-between;
+}
+
+.cumplimiento-acciones-superiores form,
+.cumplimiento-acciones-superiores button,
+.cumplimiento-busqueda button {
+    flex-shrink: 0;
+}
+
+.tabla-cumplimientos {
+    min-width: 1420px;
+}
+
+.tabla-cumplimientos th:nth-child(5),
+.tabla-cumplimientos td:nth-child(5) {
+    min-width: 155px;
+}
+
+.tabla-cumplimientos th:nth-child(8),
+.tabla-cumplimientos td:nth-child(8) {
+    min-width: 175px;
+}
+
+.tabla-cumplimientos .estado-select {
+    min-width: 135px;
+}
+
+.tabla-cumplimientos td:nth-child(8) .btn {
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .cumplimiento-busqueda,
+    .cumplimiento-acciones-superiores {
+        flex-basis: 100%;
+    }
+
+    .cumplimiento-acciones-superiores {
+        justify-content: flex-start;
+    }
+}

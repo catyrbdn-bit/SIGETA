@@ -122,7 +122,7 @@
             <a href="{{ route('circuitos.index') }}" class="boton boton-secundario" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver a circuitos</a>
 
             <form action="{{ route('desactivarCircuito', $circuito->id) }}" method="POST"
-                  onsubmit="return confirm('¿Desactivar este circuito?');">
+                  data-confirmacion-titulo="Desactivar circuito" data-confirmacion-mensaje="Al desactivarlo, se conservarán sus tandeos y no podrá usarse para programar nuevos.">
                 @csrf
                 @method('PUT')
                 <button type="submit" class="boton boton-peligro">Desactivar circuito</button>

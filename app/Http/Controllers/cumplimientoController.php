@@ -93,6 +93,7 @@ class CumplimientoController extends Controller
         }
 
         $atrasosConEmpalme = [];
+        $iniciosAtraso = [];
         foreach ($atrasosNuevos as $id => $horas) {
             $tandeo = $tandeosValidos->get($id);
             if (!$tandeo) {
@@ -116,6 +117,7 @@ class CumplimientoController extends Controller
             }
 
             $inicioNuevo = $tandeo->inicio->copy()->addHours($horasMover);
+            $iniciosAtraso[$id] = $inicioNuevo;
             $duracion = (int) $tandeo->inicio->diffInMinutes($tandeo->fin);
             $resultado = $servicio->simularManual(
                 $id,
@@ -139,6 +141,17 @@ class CumplimientoController extends Controller
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'cumplimientos' => 'Guarda un atraso que requiere recorrido a la vez. Después puedes registrar los demás cambios.',
             ]);
+        }
+
+        $atrasosSinEmpalme = [];
+        if (count($atrasosConEmpalme) === 0) {
+            foreach ($atrasosNuevos as $idAtraso => $horasAtraso) {
+                $atrasosSinEmpalme[$idAtraso] = [
+                'id' => $idAtraso,
+                'horas' => $horasAtraso,
+                'inicio' => $iniciosAtraso[$idAtraso],
+                ];
+            }
         }
 
         if (count($atrasosConEmpalme) === 1) {
@@ -188,8 +201,62 @@ class CumplimientoController extends Controller
         // descripcion: agrupa los cambios para guardarlos como una sola operación.
         // entradas: registros que se actualizan durante la operación
         // salida: confirma los cambios o los revierte si ocurre un error
-        DB::transaction(function () use ($datos, $tandeosValidos, $registros, &$cambios) {
+        DB::transaction(function () use ($datos, $tandeosValidos, $registros, $servicio, $atrasosSinEmpalme, &$cambios) {
+            foreach ($atrasosSinEmpalme as $atrasoSinEmpalme) {
+                $idAtraso = $atrasoSinEmpalme['id'];
+                $tandeoAtrasado = $tandeosValidos->get($idAtraso);
+                $registroAtrasado = $registros->get($idAtraso);
+                $filaAtraso = $datos['cumplimientos'][$idAtraso];
+                $duracion = (int) $tandeoAtrasado->inicio->diffInMinutes($tandeoAtrasado->fin);
+
+                $comprobacion = $servicio->simularManual(
+                    $idAtraso,
+                    $atrasoSinEmpalme['inicio'],
+                    [],
+                    [],
+                    'Atraso registrado desde Cumplimiento.',
+                    (int) $tandeoAtrasado->circuito_id,
+                    $duracion
+                );
+
+                if (count($comprobacion['movimientos']) > 1) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'cumplimientos' => 'Un atraso provoca empalmes con otro cambio. Guarda ese atraso por separado para revisar la vista previa.',
+                    ]);
+                }
+
+                $servicio->aplicarManual(
+                    $idAtraso,
+                    $atrasoSinEmpalme['inicio'],
+                    (int) auth()->user()->getKey(),
+                    [],
+                    [],
+                    'Atraso registrado desde Cumplimiento.',
+                    (int) $tandeoAtrasado->circuito_id,
+                    $tandeoAtrasado->tandeador_id,
+                    $duracion,
+                    $atrasoSinEmpalme['horas'],
+                    $registroAtrasado?->id,
+                    $filaAtraso['observaciones'] ?? $registroAtrasado?->observaciones
+                );
+
+                $cambios[] = [
+                    'tandeo_id' => $idAtraso,
+                    'circuito' => $tandeoAtrasado->circuito->nombre,
+                    'antes' => $registroAtrasado?->only(['resultado', 'horas_atraso', 'observaciones']),
+                    'despues' => [
+                        'resultado' => 'atraso',
+                        'horas_atraso' => $atrasoSinEmpalme['horas'],
+                        'observaciones' => $filaAtraso['observaciones'] ?? null,
+                    ],
+                ];
+            }
+
             foreach ($datos['cumplimientos'] as $tandeoId => $fila) {
+                if (isset($atrasosSinEmpalme[(int) $tandeoId])) {
+                    continue;
+                }
+
                 $tandeo = $tandeosValidos->get((int) $tandeoId);
                 if (!$tandeo) continue;
 
@@ -253,6 +320,34 @@ class CumplimientoController extends Controller
         return redirect()->route('cumplimiento.index')->with('success', 'Cambios de cumplimiento guardados correctamente.');
     }
 
+    public function destroy($id)
+    {
+        $registro = CumplimientoTandeo::with('tandeo.circuito')->findOrFail($id);
+        $tandeo = $registro->tandeo;
+
+        $detalles = [
+            'tandeo_id' => $tandeo->id,
+            'circuito' => $tandeo->circuito->nombre ?? 'Sin circuito',
+            'resultado' => $registro->resultado,
+            'horas_atraso' => $registro->horas_atraso,
+            'motivo' => $registro->motivo,
+            'observaciones' => $registro->observaciones,
+        ];
+
+        DB::transaction(function () use ($registro, $detalles) {
+            $registro->delete();
+
+            app(\App\Services\HistorialActividadService::class)->registrar(
+                'cumplimiento',
+                'eliminacion',
+                'Se eliminó una captura de cumplimiento.',
+                $detalles
+            );
+        });
+
+        return redirect()->route('cumplimiento.index')
+            ->with('success', 'Se eliminó la captura de cumplimiento. El tandeo y su horario permanecen.');
+    }
     // revisa si el tandeo ya tiene un atraso registrado
     // Comprueba si el cumplimiento del tandeo ya tiene un atraso registrado.
     // descripcion: comprueba si el cumplimiento del tandeo ya tiene un atraso registrado.
@@ -265,94 +360,7 @@ class CumplimientoController extends Controller
             && $registro->motivo === 'otro';
     }
 
-    // Botón "Apagón general": el registro/reprogramación se atiende en FN.8.
-    // Prepara la solicitud para reprogramar tandeos por apagón general.
-    // descripcion: prepara la solicitud para reprogramar tandeos por apagón general.
-    // entradas: solicitud con los datos enviados por el usuario
-    // salida: envía al usuario a la vista previa o muestra un aviso
-    public function apagonGeneral(Request $request)
-    {
-        $request->validate(['horas_atraso' => 'required|integer|min:1']);
 
-        $tandeosHoy = TandeoProgramado::whereDate('fecha', now())
-            ->where('estado', 'programado')
-            ->get()
-            // Conserva solo los registros que cumplen la condición indicada.
-            // descripcion: conserva solo los registros que cumplen la condición indicada.
-            // entradas: registro que se está revisando
-            // salida: indica si el registro se conserva o se descarta
-            ->filter(fn ($tandeo) => now()->greaterThanOrEqualTo($tandeo->inicio));
-
-        foreach ($tandeosHoy as $tandeo) {
-            CumplimientoTandeo::create([
-                'tandeo_id' => $tandeo->id,
-                'resultado' => 'atraso',
-                'horas_atraso' => $request->horas_atraso,
-                'motivo' => 'apagon_general',
-                'capturado_por_id' => auth()->user()->getKey(),
-                'fecha_captura' => now(),
-            ]);
-        }
-
-        
-        app(\App\Services\HistorialActividadService::class)->registrar(
-            'apagon_general',
-            'registrado',
-            'Se registró un apagón general desde Gestión de cumplimiento.',
-            ['horas_atraso' => (int) $request->horas_atraso, 'tandeos_afectados' => $tandeosHoy->pluck('id')->all()]
-        );
-        return redirect()->route('cumplimiento.index')
-            ->with('success', 'Apagón general registrado; se aplicó a los tandeos cuyo horario ya había iniciado.');
-    }
-
-    // Botón "Fuga": afecta los tandeos de hoy solo en la zona indicada.
-    // Prepara la solicitud para reprogramar tandeos afectados por una fuga.
-    // descripcion: prepara la solicitud para reprogramar tandeos afectados por una fuga.
-    // entradas: solicitud con los datos enviados por el usuario
-    // salida: envía al usuario a la vista previa o muestra un aviso
-    public function fuga(Request $request)
-    {
-        $request->validate([
-            'zona_id' => 'required|exists:zonas,id',
-            'horas_atraso' => 'required|integer|min:1',
-        ]);
-
-        $tandeosZona = TandeoProgramado::whereDate('fecha', now())
-            ->where('estado', 'programado')
-            // Filtra los registros según la relación que deben cumplir.
-            // descripcion: filtra los registros según la relación que deben cumplir.
-            // entradas: consulta y registros relacionados
-            // salida: añade la condición correspondiente a la consulta
-            ->whereHas('circuito', function ($query) use ($request) {
-                $query->where('zona_id', $request->zona_id);
-            })
-            ->get()
-            // Conserva solo los registros que cumplen la condición indicada.
-            // descripcion: conserva solo los registros que cumplen la condición indicada.
-            // entradas: registro que se está revisando
-            // salida: indica si el registro se conserva o se descarta
-            ->filter(fn ($tandeo) => now()->greaterThanOrEqualTo($tandeo->inicio));
-
-        foreach ($tandeosZona as $tandeo) {
-            CumplimientoTandeo::create([
-                'tandeo_id' => $tandeo->id,
-                'resultado' => 'atraso',
-                'horas_atraso' => $request->horas_atraso,
-                'motivo' => 'fuga',
-                'capturado_por_id' => auth()->user()->getKey(),
-                'fecha_captura' => now(),
-            ]);
-        }
-
-        app(\App\Services\HistorialActividadService::class)->registrar(
-            'fuga',
-            'registrada',
-            'Se registró una fuga desde Gestión de cumplimiento.',
-            ['zona_id' => (int) $request->zona_id, 'horas_atraso' => (int) $request->horas_atraso, 'tandeos_afectados' => $tandeosZona->pluck('id')->all()]
-        );
-        return redirect()->route('cumplimiento.index')
-            ->with('success', 'Fuga registrada; se aplicó a los tandeos de la colonia seleccionada cuyo horario ya había iniciado.');
-    }
 }
 
 

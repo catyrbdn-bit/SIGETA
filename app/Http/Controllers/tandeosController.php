@@ -120,7 +120,7 @@ class TandeosController extends Controller
         // Si no lo son, lanza una excepción de validación con un mensaje 
         // de error específico para el campo 'circuito_id'. 
         // Esto asegura que solo se puedan programar tandeos 
-        // en circuitos activos que pertenezcan a la zona seleccionada.
+        // en circuitos activos que pertenezcan a la zona seleccionada
         if (! $zonaActiva || ! $circuito) {
             throw ValidationException::withMessages([
                 'circuito_id' => 'Selecciona un circuito activo que pertenezca a la zona elegida.',

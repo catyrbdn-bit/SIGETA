@@ -5,7 +5,7 @@
 @section('titulo', 'Cumplimiento de tandeos - SIGETA')
 
 @section('content')
-<div class="container py-4">
+<div class="container py-4 cumplimiento-vista">
     <h1 class="h3 mb-3">Cumplimiento de tandeos </h1>
 
     @if (session('success'))
@@ -23,13 +23,14 @@
 
  
 
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-        <div class="d-flex align-items-center gap-1">
-            <input type="search" id="buscar-tandeo" class="form-control" style="max-width: 340px" placeholder="Buscar por circuito, colonia o calle..." aria-label="Buscar por circuito, colonia o calle">
-            <button type="button" id="limpiar-busqueda-cumplimiento" class="btn btn-outline-secondary">Quitar filtro</button>
+    <div class="cumplimiento-barra mb-3">
+        <div class="cumplimiento-busqueda">
+            <input type="search" id="buscar-tandeo" class="form-control" placeholder="Buscar por circuito, colonia o calle..." aria-label="Buscar por circuito, colonia o calle">
+            <button type="button" id="limpiar-busqueda-cumplimiento" class="btn btn-outline-secondary text-nowrap">Quitar filtro</button>
         </div>
 
-        <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="cumplimiento-acciones-superiores">
+          <div class="d-flex flex-wrap align-items-center gap-2">
             <form action="{{ route('reprogramaciones.apagon.previa') }}" method="POST" class="m-0">
                 @csrf
                 <button type="submit" class="btn btn-outline-warning">Apagon general</button>
@@ -46,15 +47,15 @@
                 <input type="hidden" name="horas_atraso" value="4">
                 <button type="submit" class="btn btn-outline-info">Fuga pozo</button>
             </form>
+          </div>
+          <button type="submit" form="form-cumplimientos" class="btn btn-primary text-nowrap">Guardar cambios</button>
         </div>
-
-        <button type="submit" form="form-cumplimientos" class="btn btn-primary">Guardar cambios</button>
     </div>
 
     <form id="form-cumplimientos" action="{{ route('storeCumplimiento') }}" method="POST">
         @csrf
 <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle" id="tabla-cumplimientos">
+            <table class="table table-bordered table-hover align-middle tabla-cumplimientos" id="tabla-cumplimientos">
                 <thead class="table-light">
                     <tr>
                         <th>Circuito / Colonia</th>
@@ -139,7 +140,14 @@
                                 @endif
                             </td>
                             <td><input class="form-control" type="text" maxlength="1000" name="cumplimientos[{{ $tandeo->id }}][observaciones]" value="{{ old("cumplimientos.{$tandeo->id}.observaciones", $registro->observaciones ?? '') }}" placeholder="Agregar observación..."></td>
-                            <td><a class="btn btn-sm btn-outline-primary" href="{{ route('editTandeo', $tandeo->id) }}">Editar tandeo</a></td>
+                                                        <td>
+                                <div class="d-flex flex-column gap-2 align-items-center">
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ route('editTandeo', $tandeo->id) }}">Editar tandeo</a>
+                                    @if ($registro)
+                                        <button type="submit" form="eliminar-cumplimiento-{{ $registro->id }}" class="btn btn-sm btn-outline-danger">Eliminar registro</button>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr><td colspan="8" class="text-center text-muted">No hay tandeos programados esta semana</td></tr>
@@ -150,7 +158,21 @@
         </div>
     </form>
 
-    <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary mt-2" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver</a>
+        @foreach ($tandeos as $tandeo)
+        @php $registroEliminar = $cumplimientos[$tandeo->id] ?? null; @endphp
+        @if ($registroEliminar)
+            <form id="eliminar-cumplimiento-{{ $registroEliminar->id }}"
+                  action="{{ route('deleteCumplimiento', $registroEliminar->id) }}"
+                  method="POST"
+                  class="d-none"
+                  data-confirmacion-titulo="Eliminar captura de cumplimiento"
+                  data-confirmacion-mensaje="Solo se eliminará la captura guardada de este tandeo. El tandeo y su horario permanecerán. Los demás cambios pendientes de esta pantalla no se guardarán. La eliminación quedará registrada en el historial.">
+                @csrf
+                @method('DELETE')
+            </form>
+        @endif
+    @endforeach
+<a href="{{ route('dashboard') }}" class="btn btn-outline-secondary mt-2" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver</a>
 </div>
 
 

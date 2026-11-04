@@ -13,6 +13,7 @@ use App\Http\Controllers\ReprogramacionController;
 use App\Http\Controllers\CalendarioController;
 use App\Http\Controllers\HistorialActividadController;
 use App\Http\Controllers\ReportesController;
+use App\Http\Controllers\RespaldoController;
 
 
 // ==================================================
@@ -206,6 +207,13 @@ Route::middleware('rol:administrador')->prefix('historial')
     Route::post('/depurar', [HistorialActividadController::class, 'depurar'])
     ->name('depurar');
 });
+
+Route::middleware('rol:administrador')->prefix('respaldos')
+    ->name('respaldos.')->group(function () {
+        Route::get('/', [RespaldoController::class, 'index'])->name('index');
+        Route::post('/crear', [RespaldoController::class, 'store'])->name('store');
+        Route::post('/{respaldo}/restaurar', [RespaldoController::class, 'restore'])->name('restore');
+    });
 // ==================================================
 
 // REPORTES
@@ -316,10 +324,8 @@ Route::middleware('rol:administrador,capturista')->group(function () {
     ->name('cumplimiento.index');
     Route::post('/cumplimiento/guardar', [CumplimientoController::class, 'store'])
     ->name('storeCumplimiento');
-    Route::post('/cumplimiento/apagon-general', [CumplimientoController::class, 'apagonGeneral'])
-    ->name('apagonGeneral');
-    Route::post('/cumplimiento/fuga', [CumplimientoController::class, 'fuga'])
-    ->name('registrarFuga');
+    Route::delete('/cumplimiento/{id}', [CumplimientoController::class, 'destroy'])
+    ->name('deleteCumplimiento');
 });
 
     

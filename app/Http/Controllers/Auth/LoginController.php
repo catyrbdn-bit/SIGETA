@@ -24,8 +24,8 @@ class LoginController extends Controller
     /**
      * Valida las credenciales y registra el resultado del inicio de sesión.
      *
-     * @param Request $request Datos de usuario y contraseña enviados desde el formulario.
-     * @return \Illuminate\Http\RedirectResponse Abre el panel o vuelve al formulario con un aviso.
+     * @param Request $request Datos de usuario y contraseña enviados desde el formulario
+     * @return \Illuminate\Http\RedirectResponse Abre el panel o vuelve al formulario con un aviso
      */
     public function iniciarSesion(Request $request)
     {

@@ -121,7 +121,7 @@
                     <td class="text-nowrap">
                         <a href="{{ route('editTandeo', $tandeo->id) }}" class="btn btn-sm btn-outline-primary">Reprogramar horario</a>
                         
-                        <form action="{{ route('deleteTandeo', $tandeo->id) }}" method="POST" class="d-inline" onsubmit="return confirm(@js($tandeo->repeticion_uuid ? 'Se eliminarán todos los tandeos de esta repetición y su historial. Si solo quieres cambiar fechas, usa Editar. ¿Continuar?' : '¿Estás seguro de eliminar este tandeo? Esta acción no se puede deshacer.'))">
+                        <form action="{{ route('deleteTandeo', $tandeo->id) }}" method="POST" class="d-inline" data-confirmacion-titulo="Eliminar tandeo" data-confirmacion-mensaje="{{ $tandeo->repeticion_uuid ? 'Se eliminarán todos los tandeos de esta repetición y su historial. Si solo quieres cambiar fechas, usa Editar. ¿Continuar?' : '¿Estás seguro de eliminar este tandeo? Esta acción no se puede deshacer.' }}">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>

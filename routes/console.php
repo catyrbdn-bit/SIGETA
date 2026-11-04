@@ -3,6 +3,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 // Define la respuesta que entrega esta ruta al usuario.
 // descripcion: define la respuesta que entrega esta ruta al usuario.
@@ -11,3 +12,6 @@ use Illuminate\Support\Facades\Artisan;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+Schedule::command('avisos:resumen-semanal')->weeklyOn(5, '08:00')->withoutOverlapping();
+Schedule::command('avisos:revisar-pendientes')->everyFiveMinutes()->withoutOverlapping();

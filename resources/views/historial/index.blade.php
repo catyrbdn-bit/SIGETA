@@ -99,30 +99,179 @@
                     <h2 id="titulo-historial-{{ $registro->id }}" class="h5">Detalle de la acción</h2>
                     <p>{{ $registro->descripcion }}</p>
 
-                    @foreach ($registro->detalles as $nombre => $valor)
-                        @if ($nombre === 'movimientos' && is_array($valor))
-                            <h3 class="h6 mt-3">Tandeos afectados</h3>
-                            @foreach ($valor as $movimiento)
-                                <div class="movimiento-historial">
-                                    <p><strong>Circuito:</strong> {{ $movimiento['circuito'] ?? 'Sin dato' }}</p>
-                                    <p><strong>Tandeo:</strong> {{ $movimiento['tandeo_id'] ?? 'Sin dato' }}</p>
-                                    <p><strong>Horario anterior:</strong> {{ $movimiento['horario_anterior'] ?? 'Sin dato' }}</p>
-                                    <p><strong>Horario nuevo:</strong> {{ $movimiento['horario_nuevo'] ?? 'Sin dato' }}</p>
-                                    @if (!empty($movimiento['motivo']))
-                                        <p><strong>Motivo:</strong> {{ $movimiento['motivo'] }}</p>
-                                    @endif
-                                </div>
-                            @endforeach
-                        @elseif (is_array($valor))
-                            <div class="detalle-campo-historial">
-                                <strong>{{ ucfirst(str_replace('_', ' ', $nombre)) }}</strong>
-                                <pre>{{ json_encode($valor, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
-                            </div>
-                        @else
-                            <p><strong>{{ ucfirst(str_replace('_', ' ', $nombre)) }}:</strong> {{ $valor }}</p>
-                        @endif
-                    @endforeach
+                    @php
+                        $antes = $registro->detalles['antes'] ?? [];
+                        $despues = $registro->detalles['despues'] ?? [];
+                        $cambios = [];
+                        if (is_array($antes) && is_array($despues)) {
+                            foreach ($despues as $campo => $valorNuevo) {
+                                if (!array_key_exists($campo, $antes) || $antes[$campo] !== $valorNuevo) {
+                                    $cambios[$campo] = $valorNuevo;
+                                }
+                            }
+                        }
+                        $etiquetasCampos = [
+                            'nombre' => 'Nombre',
+                            'apellido_paterno' => 'Apellido paterno',
+                            'apellido_materno' => 'Apellido materno',
+                            'usuario' => 'Usuario',
+                            'usuario_editado' => 'Usuario editado',
+                            'usuario_registrado' => 'Usuario registrado',
+                            'usuario_eliminado' => 'Usuario eliminado',
+                            'rol' => 'Rol',
+                            'activo' => 'Estado',
+                            'zona_id' => 'Colonia (identificador)',
+                            'circuito_id' => 'Circuito (identificador)',
+                            'circuito' => 'Circuito',
+                            'descripcion' => 'Calles',
+                            'duracion' => 'Duración (horas)',
+                            'punto_abastecimiento_id' => 'Punto de abastecimiento (identificador)',
+                            'cadena' => 'Cadena de cambios',
+                            'tandeo_id' => 'Tandeo',
+                            'tandeos_movidos' => 'Tandeos movidos',
+                            'tandeos_eliminados' => 'Tandeos eliminados',
+                            'fecha' => 'Fecha',
+                            'fecha_inicial' => 'Fecha inicial',
+                            'hora_inicio' => 'Hora de inicio',
+                            'horas_atraso' => 'Horas de atraso',
+                            'repeticion_dias' => 'Repetición cada (días)',
+                            'repeticion_completa' => 'Repetición completa',
+                            'motivo' => 'Motivo',
+                            'resultado' => 'Estado del cumplimiento',
+                            'observaciones' => 'Observaciones',
+                        ];
+                        $formatearDato = function ($dato, $campo = null) {
+                            if ($dato === null || $dato === '') return 'Sin dato';
+                            if ($campo === 'activo' || $campo === 'repeticion_completa') {
+                                return $dato ? 'Sí' : 'No';
+                            }
+                            if ($campo === 'resultado') {
+                                return ucfirst(str_replace('_', ' ', (string) $dato));
+                            }
+                            if (is_bool($dato)) return $dato ? 'Sí' : 'No';
+                            return is_scalar($dato) ? (string) $dato : 'Información relacionada';
+                        };
+                        $movimientos = $registro->detalles['movimientos'] ?? [];
+                        $registrosCambios = [];
+                        foreach (($registro->detalles['registros'] ?? []) as $fila) {
+                            $antesFila = $fila['antes'] ?? [];
+                            $despuesFila = $fila['despues'] ?? [];
+                            foreach (['resultado', 'horas_atraso', 'motivo', 'observaciones'] as $campoFila) {
+                                if (array_key_exists($campoFila, $despuesFila)
+                                    && (!array_key_exists($campoFila, $antesFila) || $antesFila[$campoFila] !== $despuesFila[$campoFila])) {
+                                    $registrosCambios[] = [
+                                        'circuito' => $fila['circuito'] ?? 'Sin dato',
+                                        'tandeo' => $fila['tandeo_id'] ?? 'Sin dato',
+                                        'campo' => $campoFila,
+                                        'antes' => $antesFila[$campoFila] ?? null,
+                                        'despues' => $despuesFila[$campoFila],
+                                    ];
+                                }
+                            }
+                        }
+                    @endphp
 
+                    @php
+                        $hayDatosAccion = false;
+                        foreach ($registro->detalles as $nombre => $valor) {
+                            if (!in_array($nombre, ['antes', 'despues', 'movimientos', 'registros'], true)) {
+                                $hayDatosAccion = true;
+                                break;
+                            }
+                        }
+                    @endphp
+                    @if ($hayDatosAccion)
+                        <h3 class="h6 mt-3">Datos de la acción</h3>
+                        <div class="table-responsive detalle-campo-historial">
+                            <table class="table table-bordered table-sm align-middle mb-0">
+                                <thead class="table-light"><tr><th>Dato</th><th>Valor</th></tr></thead>
+                                <tbody>
+                                    @foreach ($registro->detalles as $nombre => $valor)
+                                        @if (in_array($nombre, ['antes', 'despues', 'movimientos', 'registros'], true))
+                                            @continue
+                                        @endif
+                                        @if (is_array($valor))
+                                            @foreach ($valor as $campo => $dato)
+                                                @if (!is_array($dato))
+                                                    <tr>
+                                                        <td>{{ is_numeric($campo) ? ucfirst(str_replace('_', ' ', $nombre)) . ' ' . $loop->iteration : ($etiquetasCampos[$campo] ?? ucfirst(str_replace('_', ' ', $campo))) }}</td>
+                                                        <td>{{ $formatearDato($dato, $campo) }}</td>
+                                                    </tr>
+                                                @endif
+                                            @endforeach
+                                        @else
+                                            <tr>
+                                                <td>{{ $etiquetasCampos[$nombre] ?? ucfirst(str_replace('_', ' ', $nombre)) }}</td>
+                                                <td>{{ $formatearDato($valor, $nombre) }}</td>
+                                            </tr>
+                                        @endif
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+
+                    @if (!empty($cambios))
+                        <h3 class="h6 mt-3">Cambios realizados</h3>
+                        <div class="table-responsive detalle-campo-historial">
+                            <table class="table table-bordered table-sm align-middle mb-0">
+                                <thead class="table-light"><tr><th>Dato</th><th>Antes</th><th>Ahora</th></tr></thead>
+                                <tbody>
+                                    @foreach ($cambios as $campo => $valorNuevo)
+                                        <tr>
+                                            <td>{{ is_numeric($campo) ? ucfirst(str_replace('_', ' ', $nombre)) . ' ' . $loop->iteration : ($etiquetasCampos[$campo] ?? ucfirst(str_replace('_', ' ', $campo))) }}</td>
+                                            <td>{{ $formatearDato($antes[$campo] ?? null, $campo) }}</td>
+                                            <td>{{ $formatearDato($valorNuevo, $campo) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+
+                    @if (!empty($movimientos))
+                        <h3 class="h6 mt-3">Tandeos afectados</h3>
+                        <div class="table-responsive detalle-campo-historial">
+                            <table class="table table-bordered table-sm align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr><th>Circuito</th><th>Tandeo</th><th>Horario anterior</th><th>Horario nuevo</th><th>Motivo</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($movimientos as $movimiento)
+                                        <tr>
+                                            <td>{{ $movimiento['circuito'] ?? 'Sin dato' }}</td>
+                                            <td>{{ $movimiento['tandeo_id'] ?? 'Sin dato' }}</td>
+                                            <td>{{ $movimiento['horario_anterior'] ?? 'Sin dato' }}</td>
+                                            <td>{{ $movimiento['horario_nuevo'] ?? 'Sin dato' }}</td>
+                                            <td>{{ $movimiento['motivo'] ?? 'Sin dato' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+
+                    @if (!empty($registrosCambios))
+                        <h3 class="h6 mt-3">Cambios en cumplimientos</h3>
+                        <div class="table-responsive detalle-campo-historial">
+                            <table class="table table-bordered table-sm align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr><th>Circuito</th><th>Tandeo</th><th>Dato</th><th>Antes</th><th>Ahora</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($registrosCambios as $fila)
+                                        <tr>
+                                            <td>{{ $fila['circuito'] }}</td>
+                                            <td>{{ $fila['tandeo'] }}</td>
+                                            <td>{{ $etiquetasCampos[$fila['campo']] ?? ucfirst(str_replace('_', ' ', $fila['campo'])) }}</td>
+                                            <td>{{ $formatearDato($fila['antes'], $fila['campo']) }}</td>
+                                            <td>{{ $formatearDato($fila['despues'], $fila['campo']) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
                     <div class="d-flex justify-content-center mt-4">
                         <button type="button" class="btn btn-primary" onclick="document.getElementById('detalle-historial-{{ $registro->id }}').close()">Cerrar</button>
                     </div>

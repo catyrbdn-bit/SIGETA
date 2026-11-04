@@ -25,7 +25,8 @@ class HistorialActividadService
         string $descripcion,
         array $detalles = [],
         ?int $usuarioId = null,
-        ?string $usuarioNombre = null
+        ?string $usuarioNombre = null,
+        ?int $respaldoId = null
         //despues de los parametros opcionales, 
         // se puede agregar un parametro para el id del usuario y 
         // el nombre del usuario, si no se proporciona, se obtiene del usuario 
@@ -53,6 +54,7 @@ class HistorialActividadService
             'descripcion' => $descripcion,
             'detalles' => $detalles ?: null,
             'ip' => request()->ip(),
+            'respaldo_id' => $respaldoId,
         ]);
     }
 }

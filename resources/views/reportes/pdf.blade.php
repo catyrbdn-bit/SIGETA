@@ -20,6 +20,14 @@
         .leyenda { margin-top: 8px; text-align: center; }
         .punto { display: inline-block; width: 9px; height: 9px; margin-left: 14px; }
         .vacio { text-align: center; padding: 16px; color: #666; }
+        .firma { width: 44%; display: inline-block; margin: 38px 2% 18px; text-align: center; vertical-align: top; }
+        .firma-linea { border-top: 1px solid #333; padding-top: 7px; }
+        .nota-horarios { margin-top: 18px; text-align: center; font-size: 10px; }
+        .tandeador { margin-top: 22px; page-break-inside: avoid; }
+        .tabla-semanal { table-layout: fixed; font-size: 8px; }
+        .tabla-semanal th, .tabla-semanal td { padding: 4px 3px; text-align: center; }
+        .tabla-semanal .descripcion { text-align: left; }
+        .semana-titulo { text-align: center; font-size: 14px; margin: 8px 0 14px; }
     </style>
 </head>
 <body>
@@ -70,6 +78,40 @@
             <span class="punto" style="background:#c94c4c;"></span> No cumplido
         </div>
         <p>La efectividad se calcula como tandeos cumplidos entre el total de cumplimientos registrados.</p>
+    @elseif ($tipo === 'atrasos-colonia')
+        <table>
+            <thead><tr><th>Colonia</th><th>Tandeo y calles</th><th>Días de atraso</th><th>Motivo</th></tr></thead>
+            <tbody>
+                @forelse ($filas as $fila)
+                    <tr><td>{{ $fila['colonia'] }}</td><td>{{ $fila['tandeo'] }}</td><td class="centro">{{ $fila['dias'] }}</td><td>{{ $fila['motivo'] }}</td></tr>
+                @empty
+                    <tr><td class="vacio" colspan="4">No hay atrasos para los filtros seleccionados.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    @elseif ($tipo === 'resumen-semanal-tandeador')
+        <h2>Tandeador: {{ $tandeadorReporte->nombre }} {{ $tandeadorReporte->apellido_paterno }} {{ $tandeadorReporte->apellido_materno }}</h2>
+        <div class="semana-titulo">Semana del {{ $periodo }}</div>
+        <table class="tabla-semanal">
+            <thead>
+                <tr><th>Colonia</th><th>Descripción</th>@foreach ($diasSemana as $dia)<th>{{ $dia['titulo'] }}</th>@endforeach</tr>
+            </thead>
+            <tbody>
+                @forelse ($filas as $fila)
+                    <tr>
+                        <td>{{ $fila['colonia'] }}</td><td class="descripcion">{{ $fila['calle'] }}</td>
+                        @foreach ($diasSemana as $dia)
+                            <td>@foreach (($fila['horarios'][$dia['fecha']] ?? []) as $horario)<div>{{ $horario }}</div>@endforeach</td>
+                        @endforeach
+                    </tr>
+                @empty
+                    <tr><td class="vacio" colspan="{{ 2 + count($diasSemana) }}">Este tandeador no tiene tandeos asignados esta semana.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+        <div class="firma"><div class="firma-linea">Despachador</div></div>
+        <div class="firma"><div class="firma-linea">Trabajador</div></div>
+        <p class="nota-horarios">Los cambios en los horarios dependerán de circunstancias ajenas (fallas de luz, fugas, apagones, etc.).</p>
     @elseif ($tipo === 'reprogramaciones-motivo')
         <table>
             <thead><tr><th>Motivo</th><th>Reprogramaciones</th></tr></thead>

@@ -43,10 +43,12 @@ class CircuitosController extends Controller
     {
         $request->validate([
             'zona_id' => 'required|exists:zonas,id',
-            'descripcion' => 'nullable|string|max:255',
+            'descripcion' => ['nullable', 'string', 'max:255', Rule::unique('circuitos', 'descripcion')->where('zona_id', $request->zona_id)],
             'duracion' => 'required|numeric|min:1',
             'punto_abastecimiento_id' => 'nullable|exists:puntos_abastecimiento,id',
             'activo' => 'required|boolean',
+        ], [
+            'descripcion.unique' => 'Ya existe un circuito con estas calles en la colonia seleccionada.',
         ]);
 
         $circuito = CircuitosModel::create([
@@ -92,10 +94,12 @@ class CircuitosController extends Controller
 
         $request->validate([
             'zona_id' => 'required|exists:zonas,id',
-            'descripcion' => 'nullable|string|max:255',
+            'descripcion' => ['nullable', 'string', 'max:255', Rule::unique('circuitos', 'descripcion')->where('zona_id', $request->zona_id)->ignore($circuito->id)],
             'duracion' => 'required|integer|min:1',
             'punto_abastecimiento_id' => 'nullable|exists:puntos_abastecimiento,id',
             'activo' => 'required|boolean',
+        ], [
+            'descripcion.unique' => 'Ya existe un circuito con estas calles en la colonia seleccionada.',
         ]);
 
         // Si cambia de zona, el código se regenera para que las iniciales coincidan

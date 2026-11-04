@@ -276,7 +276,7 @@
                                         </dialog>
                                     @else
                                         <form action="{{ route('deleteZona', $zona->id) }}" method="POST"
-                                              onsubmit="return confirm('¿Eliminar definitivamente esta colonia?');">
+                                              data-confirmacion-titulo="Eliminar colonia" data-confirmacion-mensaje="¿Eliminar definitivamente esta colonia?">
                                             @csrf
                                             @method('DELETE')
                                             <input type="hidden" name="confirmar_eliminacion" value="1">

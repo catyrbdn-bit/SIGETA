@@ -11,6 +11,14 @@
         <p class="text-muted mb-0">Selecciona un reporte, revisa su contenido y luego decide si deseas descargarlo.</p>
     </div>
 
+    @if ($errors->any())
+        <div class="alert alert-danger" role="alert">
+            @foreach ($errors->all() as $error)
+                <div>{{ $error }}</div>
+            @endforeach
+        </div>
+    @endif
+
     <form method="GET" id="formulario-reportes">
         <div class="card mb-4">
             <div class="card-body">
@@ -31,6 +39,17 @@
                             <option value="">Todos los circuitos</option>
                             @foreach ($circuitos as $circuito)
                                 <option value="{{ $circuito->id }}" @selected((string) $circuitoSeleccionado === (string) $circuito->id)>{{ $circuito->nombre }} ({{ $circuito->zona->nombre }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-2">
+                        <label class="form-label" for="tandeador_id">Tandeador</label>
+                        <select class="form-select" id="tandeador_id" name="tandeador_id">
+                            <option value="">Selecciona un tandeador</option>
+                            @foreach ($tandeadores as $tandeador)
+                                <option value="{{ $tandeador->id }}" @selected((string) $tandeadorSeleccionado === (string) $tandeador->id)>
+                                    {{ $tandeador->nombre }} {{ $tandeador->apellido_paterno }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
@@ -57,6 +76,8 @@
                     'reprogramaciones-motivo' => ['Reprogramaciones por motivo', 'Resume las causas registradas en el periodo.'],
                     'cumplimiento-circuito' => ['Cumplimiento detallado por circuito', 'Muestra tandeos programados, ejecutados y con desfase.'],
                     'pendientes' => ['Tandeos pendientes de registrar', 'Muestra tandeos terminados que aún no tienen cumplimiento.'],
+                    'atrasos-colonia' => ['Atrasos por colonia', 'Ordena los tandeos por días de atraso y muestra el motivo.'],
+                    'resumen-semanal-tandeador' => ['Resumen semanal por tandeador', 'Selecciona un tandeador para revisar e imprimir únicamente sus horarios de esta semana en PDF.'],
                 ];
             @endphp
             @foreach ($opcionesReportes as $valorTipo => $opcion)
@@ -86,11 +107,11 @@
                     </div>
                     @if ($tipoReporte === 'cumplimiento-circuito')
                         <a class="btn btn-primary descargar-reporte"
-                            href="{{ route('reportes.cumplimiento.circuito.excel', request()->only(['zona_id', 'circuito_id', 'desde', 'hasta'])) }}"
+                            href="{{ route('reportes.cumplimiento.circuito.excel', request()->only(['zona_id', 'circuito_id', 'desde', 'hasta', 'tandeador_id'])) }}"
                             data-nombre="cumplimiento-por-circuito.xlsx">Descargar Excel</a>
                     @else
                         <a class="btn btn-primary descargar-reporte"
-                            href="{{ route('reportes.pdf', array_merge(['tipo' => $tipoReporte], request()->only(['zona_id', 'circuito_id', 'desde', 'hasta']))) }}"
+                            href="{{ route('reportes.pdf', array_merge(['tipo' => $tipoReporte], request()->only(['zona_id', 'circuito_id', 'desde', 'hasta', 'tandeador_id']))) }}"
                             data-nombre="reporte-{{ $tipoReporte }}.pdf">Descargar PDF</a>
                     @endif
                 </div>
@@ -137,6 +158,35 @@
                                 <tr><td>{{ $fila['motivo'] }}</td><td class="text-center">{{ $fila['cantidad'] }}</td></tr>
                             @empty
                                 <tr><td colspan="2" class="text-center">No hay reprogramaciones para los filtros seleccionados.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table></div>
+                @elseif ($tipoReporte === 'atrasos-colonia')
+                    <div class="table-responsive"><table class="table table-bordered table-striped align-middle">
+                        <thead><tr><th>Colonia</th><th>Tandeo y calles</th><th>Días de atraso</th><th>Motivo</th></tr></thead>
+                        <tbody>
+                            @forelse ($filasPreview as $fila)
+                                <tr><td>{{ $fila['colonia'] }}</td><td>{{ $fila['tandeo'] }}</td><td class="text-center">{{ $fila['dias'] }}</td><td>{{ $fila['motivo'] }}</td></tr>
+                            @empty
+                                <tr><td colspan="4" class="text-center">No hay atrasos para los filtros seleccionados.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table></div>
+                @elseif ($tipoReporte === 'resumen-semanal-tandeador')
+                    <h4 class="h5">Tandeador: {{ $tandeadorReporte->nombre }} {{ $tandeadorReporte->apellido_paterno }} {{ $tandeadorReporte->apellido_materno }}</h4>
+                    <p class="text-muted">El PDF contiene únicamente los tandeos de esta persona.</p>
+                    <div class="table-responsive"><table class="table table-bordered table-striped align-middle text-center">
+                        <thead><tr><th>Colonia</th><th>Descripción</th>@foreach ($diasSemana as $dia)<th>{{ $dia['titulo'] }}</th>@endforeach</tr></thead>
+                        <tbody>
+                            @forelse ($filasPreview as $fila)
+                                <tr>
+                                    <td>{{ $fila['colonia'] }}</td><td>{{ $fila['calle'] }}</td>
+                                    @foreach ($diasSemana as $dia)
+                                        <td>@foreach (($fila['horarios'][$dia['fecha']] ?? []) as $horario)<div>{{ $horario }}</div>@endforeach</td>
+                                    @endforeach
+                                </tr>
+                            @empty
+                                <tr><td colspan="{{ 2 + count($diasSemana) }}" class="text-center">Este tandeador no tiene tandeos asignados esta semana.</td></tr>
                             @endforelse
                         </tbody>
                     </table></div>

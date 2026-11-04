@@ -402,6 +402,8 @@ class ReprogramacionService
             ],
             $usuarioId
         );
+
+        app(AvisosService::class)->avisarCambiosHorario($resultado['movimientos'], 'reprogramacion');
         return $cadena;
     }
     // guarda los horarios afectados por el apagon
@@ -500,6 +502,8 @@ class ReprogramacionService
             ],
             $usuarioId
         );
+
+        app(AvisosService::class)->avisarCambiosHorario($resultado['movimientos'], $tipoOrigen);
         return $cadena;
     }
 

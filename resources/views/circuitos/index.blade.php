@@ -72,12 +72,12 @@
                                     action="{{ route('deleteCircuito', $circuito->id) }}"
                                     method="POST"
                                     class="d-inline"
-                                    onsubmit="return confirm('¿Desactivar este circuito?');"
+                                    data-confirmacion-titulo="Eliminar circuito" data-confirmacion-mensaje="¿Deseas continuar? Si no tiene tandeos asociados, se eliminará definitivamente. Si tiene tandeos asociados, podrás desactivarlo."
                                 >
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        Desactivar
+                                        Eliminar
                                     </button>
                                 </form>
                             </td>

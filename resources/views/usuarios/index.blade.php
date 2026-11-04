@@ -37,7 +37,7 @@
                         <td>
                             <div class="d-flex flex-wrap gap-2">
                                 <a href="{{ route('usuarios.edit', $usuario->id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
-                                <form action="{{ route('usuarios.destroy', $usuario->id) }}" method="POST" onsubmit="return confirm('¿Eliminar a este usuario? Sus registros de historial se conservarán, pero ya no mostrarán quién los realizó.');">
+                                <form action="{{ route('usuarios.destroy', $usuario->id) }}" method="POST" data-confirmacion-titulo="Eliminar usuario" data-confirmacion-mensaje="¿Eliminar a este usuario? Sus registros del historial se conservarán, pero ya no mostrarán quién los realizó.">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>

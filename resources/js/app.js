@@ -15,6 +15,65 @@ import 'fullcalendar/skeleton.css';
 import 'fullcalendar/themes/monarch/theme.css';
 import 'fullcalendar/themes/monarch/palettes/blue.css';
 
+// Muestra confirmaciones y avisos con el diseño de SIGETA
+// descripcion: abre una ventana centrada para confirmar una acción o mostrar un mensaje
+// entradas: formulario que se enviará, o mensaje y título para un aviso sencillo
+// salida: confirma el envío o informa al usuario
+ document.addEventListener('DOMContentLoaded', function () {
+    const dialogo = document.getElementById('aviso-sigeta');
+    if (!dialogo) return;
+
+    const texto = dialogo.querySelector('[data-aviso-sigeta-mensaje]');
+    const titulo = dialogo.querySelector('#aviso-sigeta-titulo');
+    const cancelar = dialogo.querySelector('[data-aviso-sigeta-cancelar]');
+    const aceptar = dialogo.querySelector('[data-aviso-sigeta-aceptar]');
+    let formularioPendiente = null;
+
+    document.addEventListener('submit', function (evento) {
+        const formulario = evento.target.closest('form[data-confirmacion-mensaje]');
+        if (!formulario) return;
+
+        if (formulario.dataset.confirmacionAceptada === 'si') {
+            delete formulario.dataset.confirmacionAceptada;
+            return;
+        }
+
+        evento.preventDefault();
+        formularioPendiente = formulario;
+        titulo.textContent = formulario.dataset.confirmacionTitulo || 'Confirmar acción';
+        texto.textContent = formulario.dataset.confirmacionMensaje;
+        cancelar.hidden = false;
+        aceptar.textContent = 'Continuar';
+        dialogo.showModal();
+    });
+
+    cancelar.addEventListener('click', function () {
+        formularioPendiente = null;
+        dialogo.close();
+    });
+
+    aceptar.addEventListener('click', function () {
+        const formulario = formularioPendiente;
+        formularioPendiente = null;
+        dialogo.close();
+
+        if (formulario) {
+            formulario.dataset.confirmacionAceptada = 'si';
+            const campoConfirmacion = formulario.querySelector('[name="confirmar"]');
+            if (campoConfirmacion) campoConfirmacion.value = '1';
+            formulario.requestSubmit();
+        }
+    });
+
+    window.mostrarAvisoSigeta = function (mensaje, encabezado) {
+        formularioPendiente = null;
+        titulo.textContent = encabezado || 'Aviso';
+        texto.textContent = mensaje;
+        cancelar.hidden = true;
+        aceptar.textContent = 'Cerrar';
+        dialogo.showModal();
+    };
+});
 // Inicia las funciones de la pantalla cuando termina de cargar.
 // descripcion: inicia las funciones de la pantalla cuando termina de cargar.
 // entradas: aviso del navegador de que la página terminó de cargar
@@ -237,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function () {
             dialogoMovimiento.close();
             cambioPendiente = null;
             calendario.refetchEvents();
-            alert(datos.mensaje);
+            window.mostrarAvisoSigeta(datos.mensaje, 'Cambio guardado');
         } catch (error) {
             mostrarError('No se pudo conectar con el sistema. Revisa tu conexión e inténtalo de nuevo.');
         } finally {
@@ -273,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // entradas: error ocurrido al consultar el calendario
             // salida: informa al usuario que ocurrió un problema
             failure: function () {
-                alert('No se pudieron cargar los tandeos. Actualiza la página e inténtalo de nuevo.');
+                window.mostrarAvisoSigeta('No se pudieron cargar los tandeos. Actualiza la página e inténtalo de nuevo.', 'Error al cargar');
             },
         },
         eventDrop: abrirConfirmacion,
