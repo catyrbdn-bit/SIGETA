@@ -79,7 +79,33 @@
         tr[hidden] {
             display: none;
         }
+        .tabla-circuitos th:nth-child(1),
+        .tabla-circuitos td:nth-child(1) {
+            width: 8%;
+            text-align: center;
+        }
 
+        .tabla-circuitos th:nth-child(2),
+        .tabla-circuitos td:nth-child(2) {
+            width: 14%;
+            text-align: left;
+        }
+
+        .tabla-circuitos th:nth-child(3),
+        .tabla-circuitos td:nth-child(3) {
+            width: 64%;
+            text-align: left;
+        }
+
+        .tabla-circuitos th:nth-child(4),
+        .tabla-circuitos td:nth-child(4) {
+            width: 14%;
+            text-align: center;
+        }
+
+        .tabla-circuitos th {
+            vertical-align: middle;
+        }
         .codigo {
             font-weight: bold;
             white-space: nowrap;
