@@ -127,6 +127,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!espacioCalendario) return;
 
     const filtroColonia = document.getElementById('filtro-colonia');
+    const claveVistaCalendario = 'sigeta_vista_calendario_' + espacioCalendario.dataset.usuarioId;
+    let vistaCalendarioGuardada = {};
+    try {
+        vistaCalendarioGuardada = JSON.parse(localStorage.getItem(claveVistaCalendario) || '{}');
+    } catch (error) {
+        vistaCalendarioGuardada = {};
+    }
+    const vistasPermitidas = ['dayGridMonth', 'timeGridWeek', 'timeGridDay'];
     const puedeMover = espacioCalendario.dataset.puedeMover === '1';
     const dialogoDetalle = document.getElementById('detalle-tandeo');
     const dialogoMovimiento = document.getElementById('confirmar-movimiento');
@@ -193,8 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // entradas: no requiere datos externos
     // salida: devuelve el rango de horario como texto
     function rango(inicio, fin) {
-        return fechaCorta(inicio) + ' · ' + hora(inicio) + '–' + hora(fin)
-            + (inicio.toDateString() !== fin.toDateString() ? ' (+1 día)' : '');
+        return fechaCorta(inicio) + ' · ' + hora(inicio) + '–' + hora(fin);
     }
 
     // prepara los datos para actualizarhorapropuesta
@@ -308,7 +315,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const calendario = new Calendar(espacioCalendario, {
         plugins: [themePlugin, dayGridPlugin, timeGridPlugin, interactionPlugin],
         locale: esLocale,
-        initialView: 'dayGridMonth',
+        initialView: vistasPermitidas.includes(vistaCalendarioGuardada.vista) ? vistaCalendarioGuardada.vista : 'dayGridMonth',
+        initialDate: vistaCalendarioGuardada.fecha || undefined,
         nextDayThreshold: '23:59:59',
         headerToolbar: {
             left: 'prev,next today',
@@ -316,6 +324,12 @@ document.addEventListener('DOMContentLoaded', function () {
             right: 'dayGridMonth,timeGridWeek,timeGridDay',
         },
         buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana', day: 'Día' },
+        datesSet: function (info) {
+            localStorage.setItem(claveVistaCalendario, JSON.stringify({
+                vista: info.view.type,
+                fecha: info.view.calendar.getDate().toISOString().slice(0, 10),
+            }));
+        },
         editable: puedeMover,
         eventDurationEditable: false,
         events: {
@@ -356,8 +370,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const horario = document.createElement('span');
             horario.className = 'cal-evento-horario';
-            horario.textContent = hora(info.event.start) + ' – ' + hora(info.event.end)
-                + (info.event.start.toDateString() !== info.event.end.toDateString() ? ' (+1 día)' : '');
+            horario.textContent = hora(info.event.start) + ' – ' + hora(info.event.end);
 
             tarjeta.append(cabecera, calle, horario);
             return { domNodes: [tarjeta] };
@@ -372,8 +385,7 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('detalle-colonia').textContent = datos.colonia;
             document.getElementById('detalle-calles').textContent = datos.calles;
             document.getElementById('detalle-fecha').textContent = fechaHora(info.event.start);
-            document.getElementById('detalle-horario').textContent = hora(info.event.start) + ' – ' + hora(info.event.end)
-                + (info.event.start.toDateString() !== info.event.end.toDateString() ? ' (+1 día)' : '');
+            document.getElementById('detalle-horario').textContent = hora(info.event.start) + ' – ' + hora(info.event.end);
             document.getElementById('detalle-estado').textContent = datos.estadoTexto;
             document.getElementById('detalle-tandeadores').textContent = datos.tandeadores;
             dialogoDetalle.showModal();
@@ -428,7 +440,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // entradas: acción del usuario en el control
         // salida: actualiza la pantalla o ejecuta la acción relacionada
         limpiarFiltroCalendario.addEventListener('click', function () {
+            localStorage.removeItem(claveVistaCalendario);
             filtroColonia.value = '';
+            calendario.changeView('dayGridMonth');
+            calendario.today();
             filtroColonia.dispatchEvent(new Event('change'));
         });
     }

@@ -7,7 +7,7 @@
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
-        <h1 class="h3 mb-0">Gestión de usuarios</h1>
+        <h1 class="h3 mb-0">Usuarios</h1>
         <a href="{{ route('usuarios.create') }}" class="btn btn-primary">+ Nuevo Usuario</a>
     </div>
 

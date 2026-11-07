@@ -70,27 +70,31 @@ Route::post('/logout', [LoginController::class, 'cerrarSesion'])
 Route::get('/dashboard', function () {
     app(\App\Services\RepeticionTandeoService::class)->crearSiguientes();
 
-    $mesNumero = request('mes_num');
-    $anioSeleccionado = request('anio');
-
-    //su funcion de este if es validar que el año y el mes sean correctos, 
-    // si no lo son, se asigna el mes actual
-    if (preg_match('/^\d{4}$/', (string) $anioSeleccionado)
-        && preg_match('/^(0?[1-9]|1[0-2])$/', (string) $mesNumero)) {
-        $mesActual = sprintf('%04d-%02d', (int) $anioSeleccionado, (int) $mesNumero);
-    } else {
-        $mesActual = request('mes', now()->format('Y-m'));
+    $periodo = request('periodo', 'semana');
+    if (!in_array($periodo, ['mes', 'semana', 'dia'], true)) {
+        $periodo = 'semana';
     }
 
-    if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mesActual)) {
-        $mesActual = now()->format('Y-m');
+    $fechaConsulta = request('fecha', now()->toDateString());
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $fechaConsulta)
+        || !\Carbon\Carbon::hasFormat($fechaConsulta, 'Y-m-d')) {
+        $fechaConsulta = now()->toDateString();
     }
 
-    $mesNumero = (int) substr($mesActual, 5, 2);
-    $anioSeleccionado = (int) substr($mesActual, 0, 4);
-    $fechaMes = \Carbon\Carbon::createFromFormat('!Y-m', $mesActual);
-    $inicioMes = $fechaMes->copy()->startOfMonth()->toDateString();
-    $finMes = $fechaMes->copy()->endOfMonth()->toDateString();
+    $fechaReferencia = \Carbon\Carbon::createFromFormat('!Y-m-d', $fechaConsulta);
+    $inicioPeriodo = $fechaReferencia->copy();
+    $finPeriodo = $fechaReferencia->copy();
+
+    if ($periodo === 'mes') {
+        $inicioPeriodo->startOfMonth();
+        $finPeriodo->endOfMonth();
+    } elseif ($periodo === 'semana') {
+        $inicioPeriodo->startOfWeek(\Carbon\Carbon::MONDAY);
+        $finPeriodo->endOfWeek(\Carbon\Carbon::SUNDAY);
+    }
+
+    $fechaInicio = $inicioPeriodo->toDateString();
+    $fechaFin = $finPeriodo->toDateString();
 
     $busqueda = trim((string) request('buscar', ''));
 
@@ -120,8 +124,8 @@ Route::get('/dashboard', function () {
         // descripcion: define la respuesta que entrega esta ruta al usuario.
         // entradas: solicitud que llega a la ruta
         // salida: muestra la pantalla o respuesta asignada a la ruta
-        ->when($busqueda === '', function ($consulta) use ($inicioMes, $finMes) {
-            $consulta->whereBetween('fecha', [$inicioMes, $finMes]);
+        ->when($busqueda === '', function ($consulta) use ($fechaInicio, $fechaFin) {
+            $consulta->whereBetween('fecha', [$fechaInicio, $fechaFin]);
         })
         // Define la respuesta que entrega esta ruta al usuario.
         // descripcion: define la respuesta que entrega esta ruta al usuario.
@@ -159,7 +163,7 @@ Route::get('/dashboard', function () {
         ->orderBy('hora_inicio_programada')
         ->get();
 
-    return view('dashboard', compact('tandeosMes', 'mesActual', 'mesNumero', 'anioSeleccionado', 'fechaMes', 'busqueda'));
+    return view('dashboard', compact('tandeosMes', 'periodo', 'fechaConsulta', 'fechaReferencia', 'inicioPeriodo', 'finPeriodo', 'busqueda'));
 })->name('dashboard');
 
 Route::get('/calendario', [CalendarioController::class, 'index'])

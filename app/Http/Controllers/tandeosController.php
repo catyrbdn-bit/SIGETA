@@ -229,13 +229,25 @@ class TandeosController extends Controller
     // descripcion: busca el registro y prepara el formulario para modificarlo.
     // entradas: identificador del registro relacionado
     // salida: muestra el formulario con los datos actuales
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
         $tandeo = TandeoProgramado::with('circuito')->findOrFail($id);
 
         $circuitos = CircuitosModel::with('zona')->where('activo', true)->get();
 
-        return view('tandeos.edit', compact('tandeo', 'circuitos'));
+        $returnTo = $request->input('return_to', 'tandeos.index');
+        if (!in_array($returnTo, ['dashboard', 'tandeos.index', 'cumplimiento.index'], true)) {
+            $returnTo = 'tandeos.index';
+        }
+        $parametrosRegreso = $returnTo === 'cumplimiento.index'
+            ? [
+                'periodo' => $request->input('periodo', 'semana'),
+                'fecha' => $request->input('fecha', now()->toDateString()),
+            ]
+            : [];
+        $urlRegreso = route($returnTo, $parametrosRegreso);
+
+        return view('tandeos.edit', compact('tandeo', 'circuitos', 'returnTo', 'urlRegreso'));
     }
 
     // elimina el registro seleccionado

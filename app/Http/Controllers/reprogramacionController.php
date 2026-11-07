@@ -35,8 +35,12 @@ class ReprogramacionController extends Controller
         $origenCumplimiento = $request->boolean('origen_cumplimiento');
         $cumplimientoId = $request->input('cumplimiento_id');
         $cumplimientoObservaciones = $request->input('cumplimiento_observaciones', '');
+        $periodo = $request->input('periodo', 'semana');
+        $fechaConsulta = $request->input('fecha_consulta', now()->toDateString());
+        $returnTo = $this->destinoRegreso($request->input('return_to', 'tandeos.index'));
+        $urlRegreso = $this->urlRegreso($returnTo, $periodo, $fechaConsulta);
         $tandeoId = $id;
-        return view('reprogramaciones.previa', compact('desde', 'resultado', 'modo', 'tandeoId', 'circuitoId', 'tandeadorId', 'duracionManual', 'horasAtraso', 'origenCumplimiento', 'cumplimientoId', 'cumplimientoObservaciones'));
+        return view('reprogramaciones.previa', compact('desde', 'resultado', 'modo', 'tandeoId', 'circuitoId', 'tandeadorId', 'duracionManual', 'horasAtraso', 'origenCumplimiento', 'cumplimientoId', 'cumplimientoObservaciones', 'periodo', 'fechaConsulta', 'returnTo', 'urlRegreso'));
     }
 
     // valida y guarda la reprogramacion manual
@@ -59,9 +63,12 @@ class ReprogramacionController extends Controller
             ? 'Reprogramación confirmada y atraso guardado en Cumplimiento.'
             : 'Horario reprogramado y tandeos afectados recorridos correctamente.';
 
-        $destino = $origenCumplimiento
-            ? route('cumplimiento.index')
-            : route('tandeos.index');
+        $returnTo = $this->destinoRegreso($request->input('return_to', $origenCumplimiento ? 'cumplimiento.index' : 'tandeos.index'));
+        $destino = $this->urlRegreso(
+            $returnTo,
+            $request->input('periodo', 'semana'),
+            $request->input('fecha_consulta', now()->toDateString())
+        );
 
         return redirect($destino)->with('success', $mensaje);
     }
@@ -147,6 +154,38 @@ class ReprogramacionController extends Controller
 
         return [$id, Carbon::parse($inicioTexto), $ajustes, $motivos, $motivo ?: 'Reprogramación manual', $circuitoId, $tandeadorId, $duracionManual !== null ? (int) $duracionManual : null, $horasAtraso];
     }
+
+    // limita el regreso a una de las pantallas permitidas
+    // descripcion: evita regresar a una direccion externa o no reconocida
+    // entradas: nombre de la pantalla a la que se debe regresar
+    // salida: nombre de ruta permitido
+    private function destinoRegreso(?string $destino): string
+    {
+        return in_array($destino, ['dashboard', 'tandeos.index', 'cumplimiento.index'], true)
+            ? $destino
+            : 'tandeos.index';
+    }
+
+    // prepara la direccion para regresar a la pantalla de origen
+    // descripcion: agrega los datos del periodo cuando el origen es cumplimiento
+    // entradas: pantalla de origen y periodo que se estaba consultando
+    // salida: direccion segura de regreso
+    private function urlRegreso(string $destino, string $periodo, string $fecha): string
+    {
+        if ($destino === 'cumplimiento.index') {
+            if (!in_array($periodo, ['mes', 'semana', 'dia'], true)) {
+                $periodo = 'semana';
+            }
+
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+                $fecha = now()->toDateString();
+            }
+
+            return route($destino, ['periodo' => $periodo, 'fecha' => $fecha]);
+        }
+
+        return route($destino);
+    }
     // Vista previa: calcula los movimientos pero NO guarda nada.
     // También se usa para "Recalcular" con los ajustes escritos a mano.
     // Calcula los tandeos afectados por un apagón y prepara la vista previa.
@@ -171,7 +210,11 @@ class ReprogramacionController extends Controller
 
         $modo = 'apagon';
         $tandeoId = null;
-        return view('reprogramaciones.previa', compact('desde', 'resultado', 'modo', 'tandeoId'));
+        $periodo = $request->input('periodo', 'semana');
+        $fechaConsulta = $request->input('fecha_consulta', now()->toDateString());
+        $returnTo = 'cumplimiento.index';
+        $urlRegreso = $this->urlRegreso($returnTo, $periodo, $fechaConsulta);
+        return view('reprogramaciones.previa', compact('desde', 'resultado', 'modo', 'tandeoId', 'periodo', 'fechaConsulta', 'returnTo', 'urlRegreso'));
     }
 
     // Confirmación: aplica los movimientos y guarda el historial
@@ -193,7 +236,10 @@ class ReprogramacionController extends Controller
 
         $this->servicio->aplicarApagon($desde, (int) auth()->user()->id, $ajustes, $motivos);
 
-        return redirect()->route('cumplimiento.index')
+        return redirect()->route('cumplimiento.index', [
+            'periodo' => $request->input('periodo', 'semana'),
+            'fecha' => $request->input('fecha_consulta', now()->toDateString()),
+        ])
             ->with('success', 'Apagón general registrado y tandeos reprogramados.');
     }
 
@@ -229,8 +275,12 @@ class ReprogramacionController extends Controller
 
         $modo = 'fuga';
         $tandeoId = null;
+        $periodo = $request->input('periodo', 'semana');
+        $fechaConsulta = $request->input('fecha_consulta', now()->toDateString());
+        $returnTo = 'cumplimiento.index';
+        $urlRegreso = $this->urlRegreso($returnTo, $periodo, $fechaConsulta);
 
-        return view('reprogramaciones.previa', compact('desde', 'resultado', 'modo', 'tandeoId', 'tipoFuga', 'horasAtraso'));
+        return view('reprogramaciones.previa', compact('desde', 'resultado', 'modo', 'tandeoId', 'tipoFuga', 'horasAtraso', 'periodo', 'fechaConsulta', 'returnTo', 'urlRegreso'));
     }
 
     // valida y guarda la reprogramacion por fuga
@@ -261,7 +311,10 @@ class ReprogramacionController extends Controller
 
         $nombre = $datos['tipo_fuga'] === 'laguna' ? 'Laguna' : 'Pozo';
 
-        return redirect()->route('cumplimiento.index')
+        return redirect()->route('cumplimiento.index', [
+            'periodo' => $request->input('periodo', 'semana'),
+            'fecha' => $request->input('fecha_consulta', now()->toDateString()),
+        ])
             ->with('success', "Fuga en {$nombre} registrada y tandeos afectados reprogramados.");
     }
 

@@ -7,8 +7,7 @@
 @section('content')
 <div class="contenido-vista">
     <div class="mb-4">
-        <h2>Generación de reportes</h2>
-        <p class="text-muted mb-0">Selecciona un reporte, revisa su contenido y luego decide si deseas descargarlo.</p>
+        <h1 class="titulo-vista">Reportes</h1>
     </div>
 
     @if ($errors->any())
@@ -19,7 +18,7 @@
         </div>
     @endif
 
-    <form method="GET" id="formulario-reportes">
+    <form method="GET" id="formulario-reportes" data-filtros-persistentes="reportes">
         <div class="card mb-4">
             <div class="card-body">
                 <h3 class="h5 mb-3">Filtros de consulta</h3>
@@ -62,7 +61,7 @@
                         <input class="form-control" type="date" id="hasta" name="hasta" value="{{ $hasta }}">
                     </div>
                     <div class="col-12 col-xl-2 d-flex gap-2">
-                        <a href="{{ route('reportes.index', ['limpiar' => 1]) }}" class="btn btn-outline-primary">Limpiar filtros</a>
+                        <a href="{{ route('reportes.index', ['limpiar' => 1]) }}" class="btn btn-outline-primary" data-quitar-filtros="reportes">Quitar filtros</a>
                     </div>
                 </div>
             </div>

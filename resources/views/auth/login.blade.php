@@ -24,6 +24,9 @@
         }
 
         .contenedor { width: 100%; max-width: 440px; }
+        .marca-login { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 22px; color: #24527a; font-size: 1.45rem; font-weight: 800; letter-spacing: .14em; }
+        .marca-login .gota { width: 17px; height: 17px; border-radius: 70% 30% 65% 35%; background: #5b9bd5; transform: rotate(45deg); }
+        .marca-login small { display: block; margin-top: 2px; color: #5d6b78; font-size: .68rem; font-weight: 500; letter-spacing: .02em; }
         h1 { margin: 4px 0 24px; color: #24527a; font-size: 1.9rem; font-weight: 700; text-align: center; }
         h2 { margin-top: 0; margin-bottom: 22px; }
 
@@ -103,6 +106,7 @@
     <main class="contenedor">
         
         <section class="panel">
+            <div class="marca-login"><span class="gota" aria-hidden="true"></span><span>SIGETA<small>Gestión de tandeos de agua</small></span></div>
             <h1>Inicio de sesión</h1>
 
             @if ($errors->any())
@@ -148,7 +152,7 @@
                 <p><a href="{{ route('password.request') }}">¿Olvidaste tu contraseña?</a></p>
 
                 <div class="botones">
-                    <button type="submit" class="boton">Iniciar sesión</button>
+                    <button type="submit" id="boton-iniciar-sesion" class="boton">Iniciar sesión</button>
                 </div>
             </form>
         </section>
@@ -159,8 +163,31 @@
     const campoUsuario = document.getElementById('usuario');
     const campoContrasena = document.getElementById('password');
     const mensajeValidacion = document.getElementById('error-validacion-login');
+    const botonIniciarSesion = document.getElementById('boton-iniciar-sesion');
+
+    formularioLogin.addEventListener('keydown', function (evento) {
+        if (evento.key !== 'Enter') return;
+
+        if (evento.target === campoUsuario) {
+            evento.preventDefault();
+            campoContrasena.focus();
+            return;
+        }
+
+        if (evento.target === campoContrasena) {
+            evento.preventDefault();
+            if (campoUsuario.value.trim() !== '' && campoContrasena.value !== '') {
+                formularioLogin.requestSubmit(botonIniciarSesion);
+            }
+        }
+    });
 
     formularioLogin.addEventListener('submit', function (evento) {
+        if (evento.submitter !== botonIniciarSesion) {
+            evento.preventDefault();
+            return;
+        }
+
         const faltaUsuario = campoUsuario.value.trim() === '';
         const faltaContrasena = campoContrasena.value === '';
 

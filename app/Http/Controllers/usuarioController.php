@@ -47,6 +47,20 @@ class UsuarioController extends Controller
             'email' => ['required', 'email', 'max:150', 'unique:usuarios,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'rol' => ['required', Rule::in(['administrador', 'tandeador', 'capturista'])],
+        ], [
+            'nombre.required' => 'Escribe el nombre.',
+            'apellido_paterno.required' => 'Escribe el apellido paterno.',
+            'apellido_materno.required' => 'Escribe el apellido materno.',
+            'usuario.required' => 'Escribe el nombre de usuario.',
+            'usuario.unique' => 'Ese nombre de usuario ya está registrado.',
+            'email.required' => 'Escribe el correo electrónico.',
+            'email.email' => 'Escribe un correo electrónico válido.',
+            'email.unique' => 'Ese correo electrónico ya está registrado.',
+            'password.required' => 'Escribe una contraseña.',
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+            'rol.required' => 'Selecciona un rol.',
+            'rol.in' => 'Selecciona un rol válido.',
         ]);
 
         $datos['password'] = Hash::make($datos['password']);
@@ -93,6 +107,20 @@ class UsuarioController extends Controller
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'rol' => ['required', Rule::in(['administrador', 'tandeador', 'capturista'])],
             'activo' => ['required', 'boolean'],
+        ], [
+            'nombre.required' => 'Escribe el nombre.',
+            'apellido_paterno.required' => 'Escribe el apellido paterno.',
+            'apellido_materno.required' => 'Escribe el apellido materno.',
+            'usuario.required' => 'Escribe el nombre de usuario.',
+            'usuario.unique' => 'Ese nombre de usuario ya está registrado.',
+            'email.required' => 'Escribe el correo electrónico.',
+            'email.email' => 'Escribe un correo electrónico válido.',
+            'email.unique' => 'Ese correo electrónico ya está registrado.',
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+            'rol.required' => 'Selecciona un rol.',
+            'rol.in' => 'Selecciona un rol válido.',
+            'activo.required' => 'Selecciona el estado del usuario.',
         ]);
 
         if (!empty($datos['password'])) {

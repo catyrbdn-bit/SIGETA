@@ -20,29 +20,54 @@
         </div>
     @endif
 
-
- 
+    <form action="{{ route('cumplimiento.index') }}" method="GET" class="row g-2 align-items-end mb-3" data-filtros-persistentes="cumplimiento">
+        <div class="col-12 col-sm-4 col-lg-2">
+            <label for="periodo" class="form-label">Mostrar por</label>
+            <select id="periodo" name="periodo" class="form-select">
+                <option value="mes" @selected($periodo === 'mes')>Mes</option>
+                <option value="semana" @selected($periodo === 'semana')>Semana</option>
+                <option value="dia" @selected($periodo === 'dia')>Día</option>
+            </select>
+        </div>
+        <div class="col-12 col-sm-4 col-lg-2">
+            <label for="fecha-consulta" class="form-label">Fecha de referencia</label>
+            <input type="date" lang="es-MX" id="fecha-consulta" name="fecha" class="form-control" value="{{ $fechaConsulta }}">
+        </div>
+        <div class="col-12 col-sm-4 col-lg-2">
+            <button type="submit" class="btn btn-outline-primary w-100">Consultar periodo</button>
+        </div>
+        <div class="col-12 col-lg-4">
+            <label for="buscar-tandeo" class="form-label">Buscar circuito, colonia o calle</label>
+            <div class="input-group">
+                <input type="search" id="buscar-tandeo" name="buscar" class="form-control" value="{{ $busqueda }}" placeholder="Buscar por circuito, colonia o calle..." aria-label="Buscar por circuito, colonia o calle">
+            </div>
+        </div>
+        <div class="col-12 col-lg-2">
+            <a href="{{ route('cumplimiento.index') }}" class="btn btn-outline-secondary w-100" data-quitar-filtros="cumplimiento">Quitar filtros</a>
+        </div>
+    </form>
 
     <div class="cumplimiento-barra mb-3">
-        <div class="cumplimiento-busqueda">
-            <input type="search" id="buscar-tandeo" class="form-control" placeholder="Buscar por circuito, colonia o calle..." aria-label="Buscar por circuito, colonia o calle">
-            <button type="button" id="limpiar-busqueda-cumplimiento" class="btn btn-outline-secondary text-nowrap">Quitar filtro</button>
-        </div>
-
         <div class="cumplimiento-acciones-superiores">
           <div class="d-flex flex-wrap align-items-center gap-2">
             <form action="{{ route('reprogramaciones.apagon.previa') }}" method="POST" class="m-0">
                 @csrf
+                <input type="hidden" name="periodo" value="{{ $periodo }}">
+                <input type="hidden" name="fecha_consulta" value="{{ $fechaConsulta }}">
                 <button type="submit" class="btn btn-outline-warning">Apagon general</button>
             </form>
             <form action="{{ route('reprogramaciones.fuga.previa') }}" method="POST" class="m-0">
                 @csrf
+                <input type="hidden" name="periodo" value="{{ $periodo }}">
+                <input type="hidden" name="fecha_consulta" value="{{ $fechaConsulta }}">
                 <input type="hidden" name="tipo_fuga" value="laguna">
                 <input type="hidden" name="horas_atraso" value="6">
                 <button type="submit" class="btn btn-outline-info">Fuga laguna</button>
             </form>
             <form action="{{ route('reprogramaciones.fuga.previa') }}" method="POST" class="m-0">
                 @csrf
+                <input type="hidden" name="periodo" value="{{ $periodo }}">
+                <input type="hidden" name="fecha_consulta" value="{{ $fechaConsulta }}">
                 <input type="hidden" name="tipo_fuga" value="pozo">
                 <input type="hidden" name="horas_atraso" value="4">
                 <button type="submit" class="btn btn-outline-info">Fuga pozo</button>
@@ -54,6 +79,8 @@
 
     <form id="form-cumplimientos" action="{{ route('storeCumplimiento') }}" method="POST">
         @csrf
+        <input type="hidden" name="periodo" value="{{ $periodo }}">
+        <input type="hidden" name="fecha" value="{{ $fechaConsulta }}">
 <div class="table-responsive">
             <table class="table table-bordered table-hover align-middle tabla-cumplimientos" id="tabla-cumplimientos">
                 <thead class="table-light">
@@ -142,7 +169,7 @@
                             <td><input class="form-control" type="text" maxlength="1000" name="cumplimientos[{{ $tandeo->id }}][observaciones]" value="{{ old("cumplimientos.{$tandeo->id}.observaciones", $registro->observaciones ?? '') }}" placeholder="Agregar observación..."></td>
                                                         <td>
                                 <div class="d-flex flex-column gap-2 align-items-center">
-                                    <a class="btn btn-sm btn-outline-primary" href="{{ route('editTandeo', $tandeo->id) }}">Editar tandeo</a>
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ route('editTandeo', ['id' => $tandeo->id, 'return_to' => 'cumplimiento.index', 'periodo' => $periodo, 'fecha' => $fechaConsulta]) }}">Editar tandeo</a>
                                     @if ($registro)
                                         <button type="submit" form="eliminar-cumplimiento-{{ $registro->id }}" class="btn btn-sm btn-outline-danger">Eliminar registro</button>
                                     @endif
@@ -169,6 +196,8 @@
                   data-confirmacion-mensaje="Solo se eliminará la captura guardada de este tandeo. El tandeo y su horario permanecerán. Los demás cambios pendientes de esta pantalla no se guardarán. La eliminación quedará registrada en el historial.">
                 @csrf
                 @method('DELETE')
+                <input type="hidden" name="periodo" value="{{ $periodo }}">
+                <input type="hidden" name="fecha" value="{{ $fechaConsulta }}">
             </form>
         @endif
     @endforeach
@@ -235,9 +264,5 @@
         document.getElementById('sin-resultados').classList.toggle('d-none', visibles > 0 || texto === '');
     });
 
-    document.getElementById('limpiar-busqueda-cumplimiento').addEventListener('click', function () {
-        buscador.value = '';
-        buscador.dispatchEvent(new Event('input'));
-    });
 </script>
 @endsection

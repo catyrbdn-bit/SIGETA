@@ -7,17 +7,17 @@
 @section('content')
     <h1>Calendario de tandeos</h1>
 
-    <div class="d-flex flex-wrap align-items-end gap-2 mb-3">
+    <div class="d-flex flex-wrap align-items-end gap-2 mb-3" data-filtros-persistentes="calendario">
         <div style="max-width: 360px; flex: 1;">
             <label for="filtro-colonia" class="form-label">Filtrar por colonia</label>
-            <select id="filtro-colonia" class="form-select">
+            <select id="filtro-colonia" name="colonia" class="form-select">
                 <option value="">Todas las colonias</option>
                 @foreach ($colonias as $colonia)
                     <option value="{{ $colonia->id }}">{{ $colonia->nombre }}</option>
                 @endforeach
             </select>
         </div>
-        <button type="button" id="limpiar-filtro-calendario" class="btn btn-outline-secondary">Quitar filtro</button>
+        <button type="button" id="limpiar-filtro-calendario" data-quitar-filtros="calendario" class="btn btn-outline-secondary">Quitar filtros</button>
     </div>
 
     <div class="d-flex flex-wrap gap-2 mb-3" aria-label="Estados de los tandeos">
@@ -33,6 +33,7 @@
          class="mt-3"
          data-eventos-url="{{ route('calendario.eventos') }}"
          data-mover-url="{{ route('calendario.mover') }}"
+         data-usuario-id="{{ auth()->id() }}"
          data-csrf="{{ csrf_token() }}"
          data-puede-mover="{{ in_array(auth()->user()->rol, ['administrador', 'capturista']) ? '1' : '0' }}">
     </div>

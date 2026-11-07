@@ -92,6 +92,48 @@
         }
 
         .contenido-principal > * { max-width: 100%; }
+        .contenido-principal h1,
+        .contenido-principal .titulo-vista {
+            margin: 0 0 1.25rem;
+            color: #243447;
+            font-size: 2rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        .contenido-principal .contenido-vista {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            font-family: inherit;
+        }
+        .contenido-principal label,
+        .contenido-principal .form-label { font-weight: 600; }
+        .contenido-principal .btn,
+        .contenido-principal .boton { border-radius: 6px; font-weight: 600; }
+        .contenido-principal .form-control,
+        .contenido-principal .form-select { border-color: #b9c9d8; border-radius: 6px; }
+        .contenido-principal .btn-primary,
+        .contenido-principal .boton:not(.boton-secundario):not(.boton-peligro) {
+            border-color: #1f4e79;
+            color: #fff;
+            background: #1f4e79;
+        }
+        .contenido-principal .btn-primary:hover,
+        .contenido-principal .boton:not(.boton-secundario):not(.boton-peligro):hover {
+            border-color: #173b5c;
+            background: #173b5c;
+        }
+        .contenido-principal .btn-outline-primary { color: #1f4e79; border-color: #1f4e79; }
+        .contenido-principal .btn-outline-primary:hover { color: #fff; background: #1f4e79; border-color: #1f4e79; }
+        .contenido-principal .boton-secundario { color: #243447; background: #e1e7ed; }
+        .contenido-principal .boton-peligro,
+        .contenido-principal .btn-danger { color: #fff; background: #a83232; border-color: #a83232; }
+        .encabezado-vista { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+        .encabezado-vista h1 { margin: 0; }
+        .marca-sigeta { display: flex; align-items: center; gap: 10px; color: #fff; font-size: 1.55rem; font-weight: 800; letter-spacing: .12em; }
+        .marca-gota { display: inline-block; width: 17px; height: 17px; border-radius: 70% 30% 65% 35%; background: #fff; transform: rotate(45deg); }
         .contenido-principal table thead th { text-align: center; vertical-align: middle; }
         .contenido-principal .container { width: 100%; max-width: 100%; }
         .contenido-principal img,
@@ -175,10 +217,9 @@
             @auth
                 <aside class="menu-lateral col-12 col-md-3 col-lg-2 border-end p-3 d-flex flex-column">
                     <div class="mb-4">
-                        <h1 class="h4 mb-3">SIGETA</h1>
+                        <h1 class="marca-sigeta mb-3"><span class="marca-gota" aria-hidden="true"></span>SIGETA</h1>
                         <p class="mb-1"><strong>{{ Auth::user()->nombre }}</strong></p>
                         <p class="small mb-1 texto-menu-secundario">Usuario: {{ Auth::user()->usuario }}</p>
-                        <p class="small mb-0 texto-menu-secundario">Rol: {{ Auth::user()->rol }}</p>
                     </div>
 
                     <nav class="menu-navegacion">
@@ -188,19 +229,19 @@
                             <a href="{{ route('calendario.index') }}" class="btn btn-outline-secondary text-start">Calendario</a>
                         @else
                             <a href="{{ route('dashboard') }}" class="btn btn-outline-primary text-start">Panel principal</a>
-                            <a href="{{ route('cumplimiento.index') }}" class="btn btn-outline-secondary text-start">Registrar cumplimiento de un tandeo</a>
+                            <a href="{{ route('zonas.index') }}" class="btn btn-outline-secondary text-start">Colonias</a>
+                            <a href="{{ route('circuitos.index') }}" class="btn btn-outline-secondary text-start">Circuitos</a>
                             <a href="{{ route('tandeos.index') }}" class="btn btn-outline-secondary text-start">Programar un tandeo</a>
-                            <a href="{{ route('circuitos.index') }}" class="btn btn-outline-secondary text-start">Ver Circuitos</a>
-                            <a href="{{ route('zonas.index') }}" class="btn btn-outline-secondary text-start">Ver Colonias</a>
+                            <a href="{{ route('cumplimiento.index') }}" class="btn btn-outline-secondary text-start">Registrar cumplimiento</a>
+                            <a href="{{ route('reportes.index') }}" class="btn btn-outline-secondary text-start">Reportes</a>
+                            <a href="{{ route('calendario.index') }}" class="btn btn-outline-secondary text-start">Calendario</a>
 
                             @if (Auth::user()->rol === 'administrador')
-                                <a href="{{ route('usuarios.index') }}" class="btn btn-outline-secondary text-start">Gestión de usuarios</a>
+                                <a href="{{ route('usuarios.index') }}" class="btn btn-outline-secondary text-start">Usuarios</a>
                                 <a href="{{ route('historial.index') }}" class="btn btn-outline-secondary text-start">Historial de actividad</a>
                                 <a href="{{ route('respaldos.index') }}" class="btn btn-outline-secondary text-start">Respaldos de base de datos</a>
                             @endif
 
-                            <a href="{{ route('calendario.index') }}" class="btn btn-outline-secondary text-start">Calendario</a>
-                            <a href="{{ route('reportes.index') }}" class="btn btn-outline-secondary text-start">Reportes</a>
                         @endif
                     </nav>
 
@@ -224,6 +265,60 @@
             <button type="button" class="btn btn-primary" data-aviso-sigeta-aceptar>Continuar</button>
         </div>
     </dialog>
+    <script>
+        const prefijoFiltrosSigeta = 'sigeta_filtros_' + @json(Auth::id() ?? 'invitado') + '_';
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-filtros-persistentes]').forEach(function (grupo) {
+                const nombre = grupo.dataset.filtrosPersistentes;
+                const clave = prefijoFiltrosSigeta + nombre;
+                const controles = Array.from(grupo.querySelectorAll('input[name], select[name]'));
+                let guardados = {};
+
+                try { guardados = JSON.parse(localStorage.getItem(clave) || '{}'); } catch (error) { guardados = {}; }
+
+                const direccion = new URL(window.location.href);
+                let faltaAplicar = false;
+
+                controles.forEach(function (control) {
+                    if (direccion.searchParams.has(control.name)) {
+                        control.value = direccion.searchParams.get(control.name);
+                    } else if (Object.prototype.hasOwnProperty.call(guardados, control.name)) {
+                        control.value = guardados[control.name];
+                        if (grupo.tagName === 'FORM' && grupo.method.toLowerCase() === 'get') {
+                            faltaAplicar = true;
+                        }
+                    }
+                });
+
+                function guardarFiltros() {
+                    const datos = {};
+                    controles.forEach(function (control) { datos[control.name] = control.value; });
+                    localStorage.setItem(clave, JSON.stringify(datos));
+                }
+
+                controles.forEach(function (control) {
+                    control.addEventListener('input', guardarFiltros);
+                    control.addEventListener('change', guardarFiltros);
+                    control.dispatchEvent(new Event('input', { bubbles: true }));
+                    control.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+
+                if (faltaAplicar && Object.keys(guardados).length > 0) {
+                    const destino = new URL(grupo.action || window.location.href, window.location.href);
+                    Object.entries(guardados).forEach(function ([campo, valor]) {
+                        if (valor !== '') destino.searchParams.set(campo, valor);
+                    });
+                    window.location.replace(destino.toString());
+                }
+            });
+
+            document.querySelectorAll('[data-quitar-filtros]').forEach(function (boton) {
+                boton.addEventListener('click', function () {
+                    localStorage.removeItem(prefijoFiltrosSigeta + boton.dataset.quitarFiltros);
+                });
+            });
+        });
+    </script>
 </body>
 </html>
 

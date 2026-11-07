@@ -7,7 +7,6 @@
 @section('content')
 <div class="contenido-vista historial-vista">
     <h1>Historial de actividad</h1>
-    <p>Consulta quién realizó cada acción y cuándo ocurrió.</p>
 
     @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -21,7 +20,7 @@
         </div>
     @endif
 
-    <form method="GET" action="{{ route('historial.index') }}" class="card card-body mb-4 historial-filtros">
+    <form method="GET" action="{{ route('historial.index') }}" class="card card-body mb-4 historial-filtros" data-filtros-persistentes="historial">
         <div class="row g-3 align-items-end justify-content-center">
             <div class="col-12 col-md-3">
                 <label class="form-label" for="usuario">Usuario</label>
@@ -51,7 +50,7 @@
             </div>
             <div class="col-12 col-md-2 d-flex gap-2 justify-content-center">
                 <button class="btn btn-primary" type="submit">Buscar</button>
-                <a class="btn btn-outline-secondary" href="{{ route('historial.index') }}">Limpiar</a>
+                <a class="btn btn-outline-secondary" href="{{ route('historial.index') }}" data-quitar-filtros="historial">Quitar filtros</a>
             </div>
         </div>
     </form>

@@ -22,15 +22,38 @@ class CumplimientoController extends Controller
      * @param RepeticionTandeoService $repeticiones Servicio que completa la lista de tandeos repetidos.
      * @return \Illuminate\Contracts\View\View Muestra la tabla de cumplimiento.
      */
-    public function index(RepeticionTandeoService $repeticiones)
+    public function index(Request $request, RepeticionTandeoService $repeticiones)
     {
         $repeticiones->crearSiguientes();
 
-        $inicioSemana = now()->startOfWeek()->toDateString();
-        $finSemana = now()->endOfWeek()->toDateString();
+        $periodo = $request->input('periodo', 'semana');
+        if (!in_array($periodo, ['mes', 'semana', 'dia'], true)) {
+            $periodo = 'semana';
+        }
 
-        $tandeos = TandeoProgramado::whereDate('fecha', '>=', $inicioSemana)
-            ->whereDate('fecha', '<=', $finSemana)
+        $fechaConsulta = $request->input('fecha', now()->toDateString());
+        if (!is_string($fechaConsulta) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaConsulta)
+            || !Carbon::hasFormat($fechaConsulta, 'Y-m-d')) {
+            $fechaConsulta = now()->toDateString();
+        }
+
+        $fechaReferencia = Carbon::createFromFormat('!Y-m-d', $fechaConsulta);
+        $inicioPeriodo = $fechaReferencia->copy();
+        $finPeriodo = $fechaReferencia->copy();
+
+        if ($periodo === 'mes') {
+            $inicioPeriodo->startOfMonth();
+            $finPeriodo->endOfMonth();
+        } elseif ($periodo === 'semana') {
+            $inicioPeriodo->startOfWeek(Carbon::MONDAY);
+            $finPeriodo->endOfWeek(Carbon::SUNDAY);
+        }
+
+        $fechaInicio = $inicioPeriodo->toDateString();
+        $fechaFin = $finPeriodo->toDateString();
+        $busqueda = trim((string) $request->input('buscar', ''));
+
+        $tandeos = TandeoProgramado::whereBetween('fecha', [$fechaInicio, $fechaFin])
             ->with('circuito.zona')
             ->orderBy('fecha')
             ->orderBy('hora_inicio_programada')
@@ -45,7 +68,10 @@ class CumplimientoController extends Controller
 
         $zonas = ZonasModel::where('activo', true)->get();
 
-        return view('cumplimiento.index', compact('tandeos', 'zonas', 'cumplimientos'));
+        return view('cumplimiento.index', compact(
+            'tandeos', 'zonas', 'cumplimientos', 'periodo', 'fechaConsulta',
+            'fechaReferencia', 'inicioPeriodo', 'finPeriodo', 'busqueda'
+        ));
     }
 
     /**
@@ -63,12 +89,30 @@ class CumplimientoController extends Controller
             'cumplimientos.*.resultado' => ['nullable', 'in:cumplido,atraso,no_cumplido'],
             'cumplimientos.*.horas_atraso' => ['nullable', 'integer', 'min:1', 'max:24'],
             'cumplimientos.*.observaciones' => ['nullable', 'string', 'max:1000'],
+            'periodo' => ['nullable', 'in:mes,semana,dia'],
+            'fecha' => ['nullable', 'date_format:Y-m-d'],
         ]);
 
+        $periodo = $datos['periodo'] ?? 'semana';
+        $fechaConsulta = $datos['fecha'] ?? now()->toDateString();
+        $fechaReferencia = Carbon::createFromFormat('!Y-m-d', $fechaConsulta);
+        $inicioPeriodo = $fechaReferencia->copy();
+        $finPeriodo = $fechaReferencia->copy();
+
+        if ($periodo === 'mes') {
+            $inicioPeriodo->startOfMonth();
+            $finPeriodo->endOfMonth();
+        } elseif ($periodo === 'semana') {
+            $inicioPeriodo->startOfWeek(Carbon::MONDAY);
+            $finPeriodo->endOfWeek(Carbon::SUNDAY);
+        }
+
         $ids = array_keys($datos['cumplimientos']);
+        $inicioConsulta = $inicioPeriodo->toDateString();
+        $finConsulta = $finPeriodo->toDateString();
         $tandeosValidos = TandeoProgramado::with('circuito')
             ->whereIn('id', $ids)
-            ->whereBetween('fecha', [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()])
+            ->whereBetween('fecha', [$inicioConsulta, $finConsulta])
             ->get()
             ->keyBy('id');
 
@@ -191,7 +235,7 @@ class CumplimientoController extends Controller
             return view('reprogramaciones.previa', compact(
                 'desde', 'resultado', 'modo', 'tandeoId', 'circuitoId', 'tandeadorId',
                 'duracionManual', 'horasAtraso', 'origenCumplimiento',
-                'cumplimientoId', 'cumplimientoObservaciones'
+                'cumplimientoId', 'cumplimientoObservaciones', 'periodo', 'fechaConsulta'
             ));
         }
 
@@ -313,14 +357,15 @@ class CumplimientoController extends Controller
         }
         
         if (!$cambios) {
-            return redirect()->route('cumplimiento.index')
+            return redirect()->route('cumplimiento.index', ['periodo' => $periodo, 'fecha' => $fechaConsulta])
                 ->with('warning', 'No se guardaron cambios. Selecciona un estado disponible y vuelve a intentarlo.');
         }
 
-        return redirect()->route('cumplimiento.index')->with('success', 'Cambios de cumplimiento guardados correctamente.');
+        return redirect()->route('cumplimiento.index', ['periodo' => $periodo, 'fecha' => $fechaConsulta])
+            ->with('success', 'Cambios de cumplimiento guardados correctamente.');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $registro = CumplimientoTandeo::with('tandeo.circuito')->findOrFail($id);
         $tandeo = $registro->tandeo;
@@ -345,7 +390,12 @@ class CumplimientoController extends Controller
             );
         });
 
-        return redirect()->route('cumplimiento.index')
+        $periodo = in_array($request->input('periodo'), ['mes', 'semana', 'dia'], true)
+            ? $request->input('periodo')
+            : 'semana';
+        $fecha = $request->input('fecha', now()->toDateString());
+
+        return redirect()->route('cumplimiento.index', ['periodo' => $periodo, 'fecha' => $fecha])
             ->with('success', 'Se eliminó la captura de cumplimiento. El tandeo y su horario permanecen.');
     }
     // revisa si el tandeo ya tiene un atraso registrado

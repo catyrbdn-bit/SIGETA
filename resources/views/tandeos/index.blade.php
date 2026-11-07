@@ -21,14 +21,14 @@
     </div>
 @endif
 
-<div class="row g-2 align-items-end mb-3">
+<div class="row g-2 align-items-end mb-3" data-filtros-persistentes="tandeos">
     <div class="col-md-4">
         <label for="buscar-tandeo" class="form-label">Circuito, colonia o calle</label>
-        <input type="search" id="buscar-tandeo" class="form-control" placeholder="Escribe para buscar circuito, colonia o calle">
+        <input type="search" id="buscar-tandeo" name="buscar" class="form-control" placeholder="Escribe para buscar circuito, colonia o calle">
     </div>
     <div class="col-md-3">
         <label for="filtro-zona" class="form-label">Colonia</label>
-        <select id="filtro-zona" class="form-select">
+        <select id="filtro-zona" name="zona" class="form-select">
             <option value="todas">Todas las colonias</option>
             @foreach ($zonas as $zona)
                 <option value="{{ $zona->id }}">{{ $zona->nombre }}</option>
@@ -36,16 +36,20 @@
         </select>
     </div>
     <div class="col-md-2">
-        <label for="fecha-desde" class="form-label">Desde</label>
-        <input type="date" lang="es-MX" id="fecha-desde" class="form-control">
+        <label for="filtro-periodo" class="form-label">Mostrar por</label>
+        <select id="filtro-periodo" name="periodo" class="form-select">
+            <option value="mes">Mes</option>
+            <option value="semana" selected>Semana</option>
+            <option value="dia">Día</option>
+        </select>
     </div>
     <div class="col-md-2">
-        <label for="fecha-hasta" class="form-label">Hasta</label>
-        <input type="date" lang="es-MX" id="fecha-hasta" class="form-control">
+        <label for="fecha-referencia" class="form-label">Fecha de referencia</label>
+        <input type="date" lang="es-MX" id="fecha-referencia" name="fecha" class="form-control" value="{{ now()->toDateString() }}">
     </div>
     <div class="col-md-3">
         <label for="filtro-estado" class="form-label">Estado</label>
-        <select id="filtro-estado" class="form-select">
+        <select id="filtro-estado" name="estado" class="form-select">
             <option value="todos">Todos los estados</option>
             <option value="programado">Programado</option>
             <option value="en_curso">En curso</option>
@@ -56,7 +60,7 @@
         </select>
     </div>
     <div class="col-12">
-        <button type="button" id="limpiar-filtros-tandeos" class="btn btn-outline-secondary">Quitar filtros</button>
+        <button type="button" id="limpiar-filtros-tandeos" data-quitar-filtros="tandeos" class="btn btn-outline-secondary">Quitar filtros</button>
     </div>
 </div>
 
@@ -119,7 +123,7 @@
                     @if (Auth::user()->rol !== 'tandeador')
                         <td>{{ $tandeo->tandeadores->pluck('nombre')->implode(', ') ?: ($tandeo->tandeador->nombre ?? 'Sin asignar') }}</td>
                     <td class="text-nowrap">
-                        <a href="{{ route('editTandeo', $tandeo->id) }}" class="btn btn-sm btn-outline-primary">Reprogramar horario</a>
+                        <a href="{{ route('editTandeo', ['id' => $tandeo->id, 'return_to' => 'tandeos.index']) }}" class="btn btn-sm btn-outline-primary">Reprogramar horario</a>
                         
                         <form action="{{ route('deleteTandeo', $tandeo->id) }}" method="POST" class="d-inline" data-confirmacion-titulo="Eliminar tandeo" data-confirmacion-mensaje="{{ $tandeo->repeticion_uuid ? 'Se eliminarán todos los tandeos de esta repetición y su historial. Si solo quieres cambiar fechas, usa Editar. ¿Continuar?' : '¿Estás seguro de eliminar este tandeo? Esta acción no se puede deshacer.' }}">
                             @csrf
@@ -141,21 +145,47 @@
 
 {{-- interacciones de la pantalla --}}
 <script>
+    const filtroPeriodo = document.getElementById('filtro-periodo');
+    const fechaReferencia = document.getElementById('fecha-referencia');
+
+    function fechaComoTexto(fecha) {
+        const anio = fecha.getFullYear();
+        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+        const dia = String(fecha.getDate()).padStart(2, '0');
+        return anio + '-' + mes + '-' + dia;
+    }
+
+    function obtenerRango() {
+        const partes = fechaReferencia.value.split('-').map(Number);
+        const referencia = new Date(partes[0], partes[1] - 1, partes[2]);
+        let inicio = new Date(referencia);
+        let fin = new Date(referencia);
+
+        if (filtroPeriodo.value === 'mes') {
+            inicio = new Date(referencia.getFullYear(), referencia.getMonth(), 1);
+            fin = new Date(referencia.getFullYear(), referencia.getMonth() + 1, 0);
+        } else if (filtroPeriodo.value === 'semana') {
+            const diasDesdeLunes = (referencia.getDay() + 6) % 7;
+            inicio.setDate(referencia.getDate() - diasDesdeLunes);
+            fin.setDate(inicio.getDate() + 6);
+        }
+
+        return { inicio: fechaComoTexto(inicio), fin: fechaComoTexto(fin) };
+    }
+
     function filtrarTandeos() {
         const texto = document.getElementById('buscar-tandeo').value.trim().toLocaleLowerCase('es');
         const zona = document.getElementById('filtro-zona').value;
         const estado = document.getElementById('filtro-estado').value;
-        const desde = document.getElementById('fecha-desde').value;
-        const hasta = document.getElementById('fecha-hasta').value;
+        const rango = obtenerRango();
         let visibles = 0;
 
         document.querySelectorAll('.fila-tandeo').forEach(function (fila) {
             const coincideTexto = fila.dataset.busqueda.includes(texto);
             const coincideZona = zona === 'todas' || fila.dataset.zona === zona;
             const coincideEstado = estado === 'todos' || fila.dataset.estado === estado;
-            const coincideDesde = desde === '' || fila.dataset.fecha >= desde;
-            const coincideHasta = hasta === '' || fila.dataset.fecha <= hasta;
-            const mostrar = coincideTexto && coincideZona && coincideEstado && coincideDesde && coincideHasta;
+            const coincidePeriodo = fila.dataset.fecha >= rango.inicio && fila.dataset.fecha <= rango.fin;
+            const mostrar = coincideTexto && coincideZona && coincideEstado && coincidePeriodo;
 
             fila.classList.toggle('d-none', !mostrar);
             if (mostrar) visibles++;
@@ -164,7 +194,7 @@
         document.getElementById('sin-resultados').classList.toggle('d-none', visibles > 0);
     }
 
-    document.querySelectorAll('#buscar-tandeo, #filtro-zona, #filtro-estado, #fecha-desde, #fecha-hasta').forEach(function (filtro) {
+    document.querySelectorAll('#buscar-tandeo, #filtro-zona, #filtro-estado, #filtro-periodo, #fecha-referencia').forEach(function (filtro) {
         filtro.addEventListener('input', filtrarTandeos);
         filtro.addEventListener('change', filtrarTandeos);
     });
@@ -173,10 +203,12 @@
         document.getElementById('buscar-tandeo').value = '';
         document.getElementById('filtro-zona').value = 'todas';
         document.getElementById('filtro-estado').value = 'todos';
-        document.getElementById('fecha-desde').value = '';
-        document.getElementById('fecha-hasta').value = '';
+        document.getElementById('filtro-periodo').value = 'semana';
+        document.getElementById('fecha-referencia').value = '{{ now()->toDateString() }}';
         filtrarTandeos();
     });
+
+    filtrarTandeos();
 </script>
 @endsection
 

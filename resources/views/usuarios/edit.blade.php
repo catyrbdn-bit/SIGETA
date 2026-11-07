@@ -10,10 +10,10 @@
     <p class="text-muted">Si no quieres cambiar la contraseña, deja esos campos vacíos.</p>
 
     @if ($errors->any())
-        <div class="alert alert-danger"><ul class="mb-0">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
+        <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
     @endif
 
-    <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="card card-body">
+    <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="card card-body" novalidate>
         @csrf
         @method('PUT')
         <div class="row g-3">

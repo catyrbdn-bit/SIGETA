@@ -42,12 +42,10 @@
 @section('content')
 <div class="contenido-vista">
 @php
-    $urlCancelar = ($modo === 'apagon' || $modo === 'fuga' || !empty($origenCumplimiento))
-        ? route('cumplimiento.index')
-        : route('editTandeo', $tandeoId);
+    $urlCancelar = $urlRegreso ?? route('tandeos.index');
 @endphp
 @php
-        $hora = fn ($i, $f) => $i->format('G:i') . ' - ' . $f->format('G:i') . ($f->isSameDay($i) ? '' : ' (+1 día)');
+        $hora = fn ($i, $f) => $i->format('G:i') . ' - ' . $f->format('G:i');
 
 
         $fecha = fn ($c) => $c->copy()->locale('es')->translatedFormat('l d/M/Y');
@@ -58,7 +56,7 @@
             ->sortBy(fn ($m) => $m['inicio_anterior']->timestamp);
     @endphp
 
-    <h2>{{ $modo === 'manual' ? 'Vista previa de los cambios al tandeo' : ($modo === 'fuga' ? 'Vista previa de fuga en ' . ($tipoFuga === 'laguna' ? 'laguna' : 'pozo') : 'Vista previa del apagón general') }}</h2>
+    <h1 class="titulo-vista">{{ $modo === 'manual' ? 'Vista previa de los cambios al tandeo' : ($modo === 'fuga' ? 'Vista previa de fuga en ' . ($tipoFuga === 'laguna' ? 'laguna' : 'pozo') : 'Vista previa del apagón general') }}</h1>
     <p class="sub">{{ $fechaTitulo }} &middot; {{ $desde->format('H:i') }}</p>
 
     @if ($errors->any())
@@ -81,6 +79,11 @@
         <form action="{{ $modo === 'manual' ? route('reprogramaciones.manual.store') : ($modo === 'fuga' ? route('reprogramaciones.fuga.store') : route('reprogramaciones.apagon.store')) }}" method="POST">
             @csrf
             <input type="hidden" name="desde" value="{{ $desde->format('Y-m-d\TH:i') }}">
+            @if ($modo === 'apagon' || $modo === 'fuga' || !empty($origenCumplimiento))
+                <input type="hidden" name="periodo" value="{{ $periodo ?? 'semana' }}">
+                <input type="hidden" name="fecha_consulta" value="{{ $fechaConsulta ?? now()->toDateString() }}">
+            @endif
+            <input type="hidden" name="return_to" value="{{ $returnTo ?? 'tandeos.index' }}">
             @if ($modo === 'fuga')
                 <input type="hidden" name="tipo_fuga" value="{{ $tipoFuga }}">
                 <input type="hidden" name="horas_atraso" value="{{ $horasAtraso }}">
@@ -151,7 +154,7 @@
                                 <input type="date" lang="es-MX" class="fecha-nueva-input" value="{{ $m['inicio_nuevo']->format('Y-m-d') }}">
                                 <input type="time" lang="es-MX" class="hora-nueva-input" value="{{ $m['inicio_nuevo']->format('H:i') }}">
                                 <div class="fin">
-                                    Termina: {{ $m['fin_nuevo']->format('H:i') }}{{ $m['fin_nuevo']->isSameDay($m['inicio_nuevo']) ? '' : ' (+1 día)' }}
+                                    Termina: {{ $m['fin_nuevo']->format('H:i') }}
                                 </div>
                                 <input type="hidden" name="propuesto[{{ $id }}]" value="{{ $propuesto }}">
                                 <input type="hidden" name="manual_prev[{{ $id }}]" value="{{ $m['manual'] ? 1 : 0 }}">
@@ -222,8 +225,7 @@
                     if (!nuevo.value) return;
                     const ini = new Date(nuevo.value);
                     const f = new Date(ini.getTime() + dur * 60000);
-                    fin.textContent = 'Termina: ' + hhmm(f)
-                        + (f.toDateString() === ini.toDateString() ? '' : ' (+1 día)');
+                    fin.textContent = 'Termina: ' + hhmm(f);
                 }
 
                 function actualizarHorario() {

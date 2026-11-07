@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('titulo', 'Colonias atendidas por SAPUA - SIGETA')
+@section('titulo', 'Colonias - SIGETA')
 
 @section('estilos')
 
@@ -146,8 +146,8 @@
     
         main.contenido-principal .contenido-vista {
             width: 100%;
-            max-width: 1100px;
-            margin: 32px auto;
+            max-width: 100%;
+            margin: 0;
         }
 
         main.contenido-principal .contenido-vista table {
@@ -197,7 +197,10 @@
 
 @section('content')
 <div class="contenido-vista">
-<h1>Colonias atendidas por SAPUA</h1>
+<div class="encabezado-vista">
+    <h1>Colonias</h1>
+    <a href="{{ route('createZona') }}" class="btn btn-primary">+ Nueva Colonia</a>
+</div>
  
 
     @if (session('success'))
@@ -214,11 +217,6 @@
     @endif
 
     <section class="panel">
-        <div class="barra-acciones">
-        
-            <a href="{{ route('createZona') }}" class="btn btn-primary">+ Nueva Colonia</a>
-        </div>
-
         <div class="tabla-contenedor">
             <table>
                 <thead>

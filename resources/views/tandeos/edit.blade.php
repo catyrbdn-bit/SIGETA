@@ -119,6 +119,11 @@
 >
         @csrf
         <input type="hidden" name="tandeo_id" value="{{ $tandeo->id }}">
+        <input type="hidden" name="return_to" value="{{ $returnTo ?? 'tandeos.index' }}">
+        @if (($returnTo ?? '') === 'cumplimiento.index')
+            <input type="hidden" name="periodo" value="{{ request('periodo', 'semana') }}">
+            <input type="hidden" name="fecha_consulta" value="{{ request('fecha', now()->toDateString()) }}">
+        @endif
 
         <section class="panel">
             <label for="circuito_id">Circuito:</label>
@@ -187,7 +192,7 @@
 
 
         <div class="botones">
-            <a href="{{ route('tandeos.index') }}" class="boton boton-secundario" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver</a>
+            <a href="{{ $urlRegreso ?? route('tandeos.index') }}" class="boton boton-secundario">Volver</a>
             <button type="submit" class="boton">Ver vista previa</button>
         </div>
     </form>

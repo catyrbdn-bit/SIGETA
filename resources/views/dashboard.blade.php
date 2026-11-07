@@ -15,61 +15,56 @@
     </div>
 </div>
 
-<div class="row g-3 align-items-end mb-4">
-    <form action="{{ route('dashboard') }}" method="GET" class="col-12 col-xl-5 d-flex flex-wrap align-items-end gap-2">
-        <div style="min-width: 155px; flex: 1;">
-            <label for="mes_num" class="form-label">Mes</label>
-            <select id="mes_num" name="mes_num" class="form-select">
-                @php
-                    $nombresMeses = [1 => 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-                @endphp
-                @foreach ($nombresMeses as $numero => $nombreMes)
-                    <option value="{{ $numero }}" @selected($mesNumero === $numero)>{{ $nombreMes }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div style="min-width: 105px;">
-            <label for="anio" class="form-label">Año</label>
-            <select id="anio" name="anio" class="form-select">
-                @for ($anio = $anioSeleccionado - 5; $anio <= $anioSeleccionado + 5; $anio++)
-                    <option value="{{ $anio }}" @selected($anioSeleccionado === $anio)>{{ $anio }}</option>
-                @endfor
-            </select>
-        </div>
-        <button type="submit" class="btn btn-outline-primary">Consultar</button>
-    </form>
-
-    <form action="{{ route('dashboard') }}" method="GET" class="col-12 col-md-7 col-xl-4">
+<form action="{{ route('dashboard') }}" method="GET" class="row g-3 align-items-end mb-4" data-filtros-persistentes="dashboard">
+    <div class="col-12 col-sm-4 col-lg-2">
+        <label for="periodo" class="form-label">Mostrar por</label>
+        <select id="periodo" name="periodo" class="form-select">
+            <option value="mes" @selected($periodo === 'mes')>Mes</option>
+            <option value="semana" @selected($periodo === 'semana')>Semana</option>
+            <option value="dia" @selected($periodo === 'dia')>Día</option>
+        </select>
+    </div>
+    <div class="col-12 col-sm-4 col-lg-2">
+        <label for="fecha-consulta" class="form-label">Fecha de referencia</label>
+        <input type="date" id="fecha-consulta" name="fecha" class="form-control" value="{{ $fechaConsulta }}">
+    </div>
+    <div class="col-12 col-sm-4 col-lg-2">
+        <button type="submit" class="btn btn-outline-primary w-100">Consultar periodo</button>
+    </div>
+    <div class="col-12 col-lg-4">
         <label for="buscar-tandeo" class="form-label">Buscar circuito, colonia o calle</label>
         <div class="input-group">
             <input type="search" id="buscar-tandeo" name="buscar" class="form-control"
                    value="{{ $busqueda }}" placeholder="Escribe para buscar...">
             <button type="submit" class="btn btn-outline-primary">Buscar</button>
         </div>
-     
-    </form>
+    </div>
     <div class="col-12 col-md-5 col-xl-3">
         <label for="filtro-estado" class="form-label">Filtrar por estado</label>
-        <select id="filtro-estado" class="form-select">
-            <option value="todos">Todos los estados</option>
-            <option value="programado">Programado</option>
-            <option value="en_curso">En curso</option>
-            <option value="pendiente">Pendiente de registrar</option>
-            <option value="cumplido">Cumplido</option>
-            <option value="atraso">Con atraso</option>
-            <option value="no_cumplido">No cumplido</option>
+        <select id="filtro-estado" name="estado" class="form-select">
+            <option value="todos" @selected(request('estado', 'todos') === 'todos')>Todos los estados</option>
+            <option value="programado" @selected(request('estado') === 'programado')>Programado</option>
+            <option value="en_curso" @selected(request('estado') === 'en_curso')>En curso</option>
+            <option value="pendiente" @selected(request('estado') === 'pendiente')>Pendiente de registrar</option>
+            <option value="cumplido" @selected(request('estado') === 'cumplido')>Cumplido</option>
+            <option value="atraso" @selected(request('estado') === 'atraso')>Con atraso</option>
+            <option value="no_cumplido" @selected(request('estado') === 'no_cumplido')>No cumplido</option>
         </select>
     </div>
     <div class="col-12">
-        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">Quitar filtros</a>
+        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary" data-quitar-filtros="dashboard">Quitar filtros</a>
     </div>
-</div>
+</form>
 
 <h2 class="h5 mb-3">
     @if ($busqueda !== '')
         Resultados para "{{ $busqueda }}" 
+    @elseif ($periodo === 'dia')
+        Tandeos del {{ $fechaReferencia->locale('es')->translatedFormat('l d/m/Y') }}
+    @elseif ($periodo === 'mes')
+        Tandeos de {{ $fechaReferencia->locale('es')->translatedFormat('F Y') }}
     @else
-        Tandeos de {{ $fechaMes->locale('es')->translatedFormat('F Y') }}
+        Tandeos de la semana del {{ $inicioPeriodo->format('d/m/Y') }} al {{ $finPeriodo->format('d/m/Y') }}
     @endif
 </h2>
 <div class="table-responsive">
@@ -129,13 +124,13 @@
                     @if (Auth::user()->rol !== 'tandeador')
                         <td>{{ $tandeo->tandeadores->pluck('nombre')->implode(', ') ?: 'Sin asignar' }}</td>
                         <td><div class="d-flex flex-wrap gap-2">
-                            <a href="{{ route('editTandeo', $tandeo->id) }}" class="btn btn-sm btn-outline-primary">Reprogramar horario</a>
+                            <a href="{{ route('editTandeo', ['id' => $tandeo->id, 'return_to' => 'dashboard']) }}" class="btn btn-sm btn-outline-primary">Reprogramar horario</a>
                             <a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id]) }}" class="btn btn-sm btn-outline-secondary">Registrar cumplimiento</a></div>
                         </td>
                     @endif
                 </tr>
             @empty
-                <tr><td colspan="{{ Auth::user()->rol === 'tandeador' ? 5 : 7 }}" class="text-center text-muted">{{ $busqueda !== '' ? 'No se encontraron tandeos para esta busqueda.' : (Auth::user()->rol === 'tandeador' ? 'No tienes tandeos asignados este mes.' : 'No hay tandeos programados este mes.') }}</td></tr>
+                <tr><td colspan="{{ Auth::user()->rol === 'tandeador' ? 5 : 7 }}" class="text-center text-muted">{{ $busqueda !== '' ? 'No se encontraron tandeos para esta búsqueda.' : 'No hay tandeos para el periodo seleccionado.' }}</td></tr>
             @endforelse
             <tr id="sin-tandeos-filtrados" class="d-none"><td colspan="{{ Auth::user()->rol === 'tandeador' ? 5 : 7 }}" class="text-center text-muted">No hay tandeos con esos filtros.</td></tr>
         </tbody>

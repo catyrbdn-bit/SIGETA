@@ -10,10 +10,10 @@
     <p class="text-muted">Completa los datos de acceso y asigna un rol.</p>
 
     @if ($errors->any())
-        <div class="alert alert-danger"><ul class="mb-0">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
+        <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
     @endif
 
-    <form action="{{ route('usuarios.store') }}" method="POST" class="card card-body">
+    <form action="{{ route('usuarios.store') }}" method="POST" class="card card-body" novalidate>
         @csrf
         <div class="row g-3">
             <div class="col-md-4"><label class="form-label" for="nombre">Nombre</label><input class="form-control" id="nombre" name="nombre" value="{{ old('nombre') }}" required></div>
