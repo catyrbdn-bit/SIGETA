@@ -5,9 +5,9 @@
 @section('titulo', 'Panel principal - SIGETA')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+<div class="encabezado-panel mb-4">
     <h1 class="mb-0">Panel principal</h1>
-    <div class="d-flex flex-wrap gap-2">
+    <div class="acciones-panel-encabezado">
         @if (Auth::user()->rol !== 'tandeador')
             <a href="{{ route('createTandeo') }}" class="btn btn-primary">+ Nuevo Tandeo</a>
         @endif
@@ -15,7 +15,13 @@
     </div>
 </div>
 
-<form action="{{ route('dashboard') }}" method="GET" class="row g-3 align-items-end mb-4" data-filtros-persistentes="dashboard">
+@if (session('success'))
+    <div class="alert alert-success" role="alert">{{ session('success') }}</div>
+@endif
+
+<form action="{{ route('dashboard') }}" method="GET" class="filtros-panel-principal mb-4" data-filtros-persistentes="dashboard">
+    <h2 class="h6 mb-3">Búsqueda y filtros</h2>
+    <div class="row g-3 align-items-end">
     <div class="col-12 col-sm-4 col-lg-2">
         <label for="periodo" class="form-label">Mostrar por</label>
         <select id="periodo" name="periodo" class="form-select">
@@ -51,12 +57,14 @@
             <option value="no_cumplido" @selected(request('estado') === 'no_cumplido')>No cumplido</option>
         </select>
     </div>
-    <div class="col-12">
-        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary" data-quitar-filtros="dashboard">Quitar filtros</a>
+    <div class="col-12 col-md-auto ms-md-auto">
+        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary w-100" data-quitar-filtros="dashboard">Quitar filtros</a>
+    </div>
     </div>
 </form>
 
-<h2 class="h5 mb-3">
+<div class="encabezado-tabla-panel">
+<h2 class="h5 mb-0">
     @if ($busqueda !== '')
         Resultados para "{{ $busqueda }}" 
     @elseif ($periodo === 'dia')
@@ -67,6 +75,45 @@
         Tandeos de la semana del {{ $inicioPeriodo->format('d/m/Y') }} al {{ $finPeriodo->format('d/m/Y') }}
     @endif
 </h2>
+@if (Auth::user()->rol !== 'tandeador')
+    <div class="botones-incidencia-panel">
+        <div class="grupo-eventos-panel">
+            <strong class="titulo-eventos-panel">Eventos especiales</strong>
+        <form action="{{ route('reprogramaciones.apagon.previa') }}" method="POST" class="m-0 form-incidencia-panel">
+            @csrf
+            <input type="hidden" name="return_to" value="dashboard">
+            <input type="hidden" name="periodo" value="{{ $periodo }}">
+            <input type="hidden" name="fecha_consulta" value="{{ $fechaConsulta }}">
+            <input type="hidden" name="buscar" value="{{ $busqueda }}">
+            <input type="hidden" name="estado" value="{{ request('estado', 'todos') }}">
+            <button type="submit" class="btn btn-outline-warning">Apagón general</button>
+        </form>
+        <form action="{{ route('reprogramaciones.fuga.previa') }}" method="POST" class="m-0 form-incidencia-panel">
+            @csrf
+            <input type="hidden" name="return_to" value="dashboard">
+            <input type="hidden" name="periodo" value="{{ $periodo }}">
+            <input type="hidden" name="fecha_consulta" value="{{ $fechaConsulta }}">
+            <input type="hidden" name="buscar" value="{{ $busqueda }}">
+            <input type="hidden" name="estado" value="{{ request('estado', 'todos') }}">
+            <input type="hidden" name="tipo_fuga" value="laguna">
+            <input type="hidden" name="horas_atraso" value="6">
+            <button type="submit" class="btn btn-outline-info">Fuga laguna</button>
+        </form>
+        <form action="{{ route('reprogramaciones.fuga.previa') }}" method="POST" class="m-0 form-incidencia-panel">
+            @csrf
+            <input type="hidden" name="return_to" value="dashboard">
+            <input type="hidden" name="periodo" value="{{ $periodo }}">
+            <input type="hidden" name="fecha_consulta" value="{{ $fechaConsulta }}">
+            <input type="hidden" name="buscar" value="{{ $busqueda }}">
+            <input type="hidden" name="estado" value="{{ request('estado', 'todos') }}">
+            <input type="hidden" name="tipo_fuga" value="pozo">
+            <input type="hidden" name="horas_atraso" value="4">
+            <button type="submit" class="btn btn-outline-info">Fuga pozo</button>
+        </form>
+        </div>
+    </div>
+@endif
+</div>
 <div class="table-responsive">
     <table class="table table-bordered table-hover align-middle" id="tabla-tandeos">
         <thead class="table-light">
@@ -123,9 +170,10 @@
                     <td><span class="estado-badge estado-{{ $estado }}">{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</span></td>
                     @if (Auth::user()->rol !== 'tandeador')
                         <td>{{ $tandeo->tandeadores->pluck('nombre')->implode(', ') ?: 'Sin asignar' }}</td>
-                        <td><div class="d-flex flex-wrap gap-2">
+                        <td><div class="acciones-tandeo-panel">
                             <a href="{{ route('editTandeo', ['id' => $tandeo->id, 'return_to' => 'dashboard']) }}" class="btn btn-sm btn-outline-primary">Reprogramar horario</a>
-                            <a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id]) }}" class="btn btn-sm btn-outline-secondary">Registrar cumplimiento</a></div>
+                            <a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id]) }}" class="btn btn-sm btn-outline-secondary">Registrar cumplimiento</a>
+                        </div>
                         </td>
                     @endif
                 </tr>
@@ -170,6 +218,15 @@
 
     filtroEstado.addEventListener('change', filtrarTandeos);
     buscarTandeo.addEventListener('input', filtrarTandeos);
+
+    document.querySelectorAll('.form-incidencia-panel').forEach(function (formulario) {
+        formulario.addEventListener('submit', function () {
+            formulario.querySelector('[name="periodo"]').value = document.getElementById('periodo').value;
+            formulario.querySelector('[name="fecha_consulta"]').value = document.getElementById('fecha-consulta').value;
+            formulario.querySelector('[name="buscar"]').value = buscarTandeo.value;
+            formulario.querySelector('[name="estado"]').value = filtroEstado.value;
+        });
+    });
 </script>
 @endsection
 

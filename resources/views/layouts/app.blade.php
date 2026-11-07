@@ -74,11 +74,21 @@
         .menu-navegacion {
             display: grid;
             grid-template-columns: 1fr;
+            grid-auto-rows: max-content;
+            align-content: start;
             gap: 8px;
             flex: 1 1 auto;
             min-height: 0;
             overflow-y: auto;
             scrollbar-width: none;
+        }
+
+        .menu-navegacion > a {
+            display: flex;
+            align-items: center;
+            min-height: 44px;
+            padding: 8px 12px;
+            line-height: 1.25;
         }
 
         .menu-navegacion::-webkit-scrollbar {
@@ -132,6 +142,19 @@
         .contenido-principal .btn-danger { color: #fff; background: #a83232; border-color: #a83232; }
         .encabezado-vista { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
         .encabezado-vista h1 { margin: 0; }
+        .encabezado-panel { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+        .acciones-panel-encabezado { display: flex; flex-wrap: wrap; gap: 8px; }
+        .acciones-panel-encabezado .btn { min-width: 160px; min-height: 40px; }
+        .filtros-panel-principal { padding: 14px 16px; border: 1px solid #d7e0e8; border-radius: 8px; background: #fff; }
+        .encabezado-tabla-panel { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+        .encabezado-tabla-panel h2 { flex: 1 1 320px; margin: 0 !important; }
+        .botones-incidencia-panel { display: flex; flex: 0 1 auto; flex-wrap: wrap; justify-content: flex-end; margin-bottom: 0; }
+        .grupo-eventos-panel { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+        .titulo-eventos-panel { flex: 0 0 100%; text-align: right; color: #243447; }
+        .botones-incidencia-panel form { flex: 0 1 150px; max-width: 170px; }
+        .botones-incidencia-panel .btn { width: 100%; min-height: 42px; }
+        .acciones-tandeo-panel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+        .acciones-tandeo-panel .btn { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 40px; padding: 6px 8px; white-space: normal; text-align: center; }
         .marca-sigeta { display: flex; align-items: center; gap: 10px; color: #fff; font-size: 1.55rem; font-weight: 800; letter-spacing: .12em; }
         .marca-gota { display: inline-block; width: 17px; height: 17px; border-radius: 70% 30% 65% 35%; background: #fff; transform: rotate(45deg); }
         .contenido-principal table thead th { text-align: center; vertical-align: middle; }
@@ -203,6 +226,12 @@
             }
             .contenido-principal .d-flex { flex-wrap: wrap; }
             .contenido-principal .d-flex > * { min-width: 0; max-width: 100%; }
+            .acciones-panel-encabezado { width: 100%; }
+            .acciones-panel-encabezado .btn { flex: 1 1 145px; }
+            .botones-incidencia-panel form { max-width: none; }
+            .grupo-eventos-panel { width: 100%; justify-content: flex-start; }
+            .titulo-eventos-panel { text-align: left; }
+            .acciones-tandeo-panel { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 420px) {
@@ -217,7 +246,7 @@
             @auth
                 <aside class="menu-lateral col-12 col-md-3 col-lg-2 border-end p-3 d-flex flex-column">
                     <div class="mb-4">
-                        <h1 class="marca-sigeta mb-3"><span class="marca-gota" aria-hidden="true"></span>SIGETA</h1>
+                        <h1 class="marca-sigeta mb-3"><span class="" aria-hidden="true"></span>SIGETA</h1>
                         <p class="mb-1"><strong>{{ Auth::user()->nombre }}</strong></p>
                         <p class="small mb-1 texto-menu-secundario">Usuario: {{ Auth::user()->usuario }}</p>
                     </div>
@@ -232,7 +261,6 @@
                             <a href="{{ route('zonas.index') }}" class="btn btn-outline-secondary text-start">Colonias</a>
                             <a href="{{ route('circuitos.index') }}" class="btn btn-outline-secondary text-start">Circuitos</a>
                             <a href="{{ route('tandeos.index') }}" class="btn btn-outline-secondary text-start">Programar un tandeo</a>
-                            <a href="{{ route('cumplimiento.index') }}" class="btn btn-outline-secondary text-start">Registrar cumplimiento</a>
                             <a href="{{ route('reportes.index') }}" class="btn btn-outline-secondary text-start">Reportes</a>
                             <a href="{{ route('calendario.index') }}" class="btn btn-outline-secondary text-start">Calendario</a>
 
@@ -284,7 +312,7 @@
                         control.value = direccion.searchParams.get(control.name);
                     } else if (Object.prototype.hasOwnProperty.call(guardados, control.name)) {
                         control.value = guardados[control.name];
-                        if (grupo.tagName === 'FORM' && grupo.method.toLowerCase() === 'get') {
+                        if (control.value !== '' && grupo.tagName === 'FORM' && grupo.method.toLowerCase() === 'get') {
                             faltaAplicar = true;
                         }
                     }

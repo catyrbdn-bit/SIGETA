@@ -49,30 +49,6 @@
 
     <div class="cumplimiento-barra mb-3">
         <div class="cumplimiento-acciones-superiores">
-          <div class="d-flex flex-wrap align-items-center gap-2">
-            <form action="{{ route('reprogramaciones.apagon.previa') }}" method="POST" class="m-0">
-                @csrf
-                <input type="hidden" name="periodo" value="{{ $periodo }}">
-                <input type="hidden" name="fecha_consulta" value="{{ $fechaConsulta }}">
-                <button type="submit" class="btn btn-outline-warning">Apagon general</button>
-            </form>
-            <form action="{{ route('reprogramaciones.fuga.previa') }}" method="POST" class="m-0">
-                @csrf
-                <input type="hidden" name="periodo" value="{{ $periodo }}">
-                <input type="hidden" name="fecha_consulta" value="{{ $fechaConsulta }}">
-                <input type="hidden" name="tipo_fuga" value="laguna">
-                <input type="hidden" name="horas_atraso" value="6">
-                <button type="submit" class="btn btn-outline-info">Fuga laguna</button>
-            </form>
-            <form action="{{ route('reprogramaciones.fuga.previa') }}" method="POST" class="m-0">
-                @csrf
-                <input type="hidden" name="periodo" value="{{ $periodo }}">
-                <input type="hidden" name="fecha_consulta" value="{{ $fechaConsulta }}">
-                <input type="hidden" name="tipo_fuga" value="pozo">
-                <input type="hidden" name="horas_atraso" value="4">
-                <button type="submit" class="btn btn-outline-info">Fuga pozo</button>
-            </form>
-          </div>
           <button type="submit" form="form-cumplimientos" class="btn btn-primary text-nowrap">Guardar cambios</button>
         </div>
     </div>

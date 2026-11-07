@@ -53,7 +53,21 @@ class CumplimientoController extends Controller
         $fechaFin = $finPeriodo->toDateString();
         $busqueda = trim((string) $request->input('buscar', ''));
 
-        $tandeos = TandeoProgramado::whereBetween('fecha', [$fechaInicio, $fechaFin])
+        $consultaTandeos = TandeoProgramado::query();
+        if ($periodo === 'dia') {
+            $fechaAnterior = $fechaReferencia->copy()->subDay()->toDateString();
+            $consultaTandeos->where(function ($consulta) use ($fechaInicio, $fechaAnterior) {
+                $consulta->whereDate('fecha', $fechaInicio)
+                    ->orWhere(function ($tandeosNocturnos) use ($fechaAnterior) {
+                        $tandeosNocturnos->whereDate('fecha', $fechaAnterior)
+                            ->whereColumn('hora_fin_programada', '<=', 'hora_inicio_programada');
+                    });
+            });
+        } else {
+            $consultaTandeos->whereBetween('fecha', [$fechaInicio, $fechaFin]);
+        }
+
+        $tandeos = $consultaTandeos
             ->with('circuito.zona')
             ->orderBy('fecha')
             ->orderBy('hora_inicio_programada')
@@ -110,11 +124,23 @@ class CumplimientoController extends Controller
         $ids = array_keys($datos['cumplimientos']);
         $inicioConsulta = $inicioPeriodo->toDateString();
         $finConsulta = $finPeriodo->toDateString();
-        $tandeosValidos = TandeoProgramado::with('circuito')
-            ->whereIn('id', $ids)
-            ->whereBetween('fecha', [$inicioConsulta, $finConsulta])
-            ->get()
-            ->keyBy('id');
+        $consultaTandeosValidos = TandeoProgramado::with('circuito')
+            ->whereIn('id', $ids);
+
+        if ($periodo === 'dia') {
+            $fechaAnterior = $fechaReferencia->copy()->subDay()->toDateString();
+            $consultaTandeosValidos->where(function ($consulta) use ($inicioConsulta, $fechaAnterior) {
+                $consulta->whereDate('fecha', $inicioConsulta)
+                    ->orWhere(function ($tandeosNocturnos) use ($fechaAnterior) {
+                        $tandeosNocturnos->whereDate('fecha', $fechaAnterior)
+                            ->whereColumn('hora_fin_programada', '<=', 'hora_inicio_programada');
+                    });
+            });
+        } else {
+            $consultaTandeosValidos->whereBetween('fecha', [$inicioConsulta, $finConsulta]);
+        }
+
+        $tandeosValidos = $consultaTandeosValidos->get()->keyBy('id');
 
         $registros = CumplimientoTandeo::whereIn('tandeo_id', $ids)
             ->orderByDesc('fecha_captura')

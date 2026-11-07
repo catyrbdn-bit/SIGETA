@@ -113,6 +113,7 @@
                     data-busqueda="{{ $textoBusqueda }}"
                     data-zona="{{ $tandeo->circuito->zona_id }}"
                     data-fecha="{{ $tandeo->fecha->format('Y-m-d') }}"
+                    data-nocturno="{{ $tandeo->hora_fin_programada <= $tandeo->hora_inicio_programada ? '1' : '0' }}"
                     data-estado="{{ $estado }}">
                     <td>{{ $tandeo->circuito->nombre }}</td>
                     <td>{{ $tandeo->circuito->zona->nombre }}</td>
@@ -170,7 +171,14 @@
             fin.setDate(inicio.getDate() + 6);
         }
 
-        return { inicio: fechaComoTexto(inicio), fin: fechaComoTexto(fin) };
+        const diaAnterior = new Date(referencia);
+        diaAnterior.setDate(referencia.getDate() - 1);
+
+        return {
+            inicio: fechaComoTexto(inicio),
+            fin: fechaComoTexto(fin),
+            diaAnterior: fechaComoTexto(diaAnterior),
+        };
     }
 
     function filtrarTandeos() {
@@ -184,7 +192,11 @@
             const coincideTexto = fila.dataset.busqueda.includes(texto);
             const coincideZona = zona === 'todas' || fila.dataset.zona === zona;
             const coincideEstado = estado === 'todos' || fila.dataset.estado === estado;
-            const coincidePeriodo = fila.dataset.fecha >= rango.inicio && fila.dataset.fecha <= rango.fin;
+            const estaEnRango = fila.dataset.fecha >= rango.inicio && fila.dataset.fecha <= rango.fin;
+            const sigueDeLaNocheAnterior = filtroPeriodo.value === 'dia'
+                && fila.dataset.fecha === rango.diaAnterior
+                && fila.dataset.nocturno === '1';
+            const coincidePeriodo = estaEnRango || sigueDeLaNocheAnterior;
             const mostrar = coincideTexto && coincideZona && coincideEstado && coincidePeriodo;
 
             fila.classList.toggle('d-none', !mostrar);

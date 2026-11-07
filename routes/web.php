@@ -124,8 +124,19 @@ Route::get('/dashboard', function () {
         // descripcion: define la respuesta que entrega esta ruta al usuario.
         // entradas: solicitud que llega a la ruta
         // salida: muestra la pantalla o respuesta asignada a la ruta
-        ->when($busqueda === '', function ($consulta) use ($fechaInicio, $fechaFin) {
-            $consulta->whereBetween('fecha', [$fechaInicio, $fechaFin]);
+        ->when($busqueda === '', function ($consulta) use ($fechaInicio, $fechaFin, $periodo, $fechaReferencia) {
+            if ($periodo === 'dia') {
+                $fechaAnterior = $fechaReferencia->copy()->subDay()->toDateString();
+                $consulta->where(function ($rango) use ($fechaInicio, $fechaAnterior) {
+                    $rango->whereDate('fecha', $fechaInicio)
+                        ->orWhere(function ($tandeosNocturnos) use ($fechaAnterior) {
+                            $tandeosNocturnos->whereDate('fecha', $fechaAnterior)
+                                ->whereColumn('hora_fin_programada', '<=', 'hora_inicio_programada');
+                        });
+                });
+            } else {
+                $consulta->whereBetween('fecha', [$fechaInicio, $fechaFin]);
+            }
         })
         // Define la respuesta que entrega esta ruta al usuario.
         // descripcion: define la respuesta que entrega esta ruta al usuario.

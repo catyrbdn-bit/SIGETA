@@ -106,7 +106,7 @@
     <main class="contenedor">
         
         <section class="panel">
-            <div class="marca-login"><span class="gota" aria-hidden="true"></span><span>SIGETA<small>Gestión de tandeos de agua</small></span></div>
+            <div class="marca-login"><span class="" aria-hidden="true"></span><span>SIGETA<small>Gestión de tandeos de agua</small></span></div>
             <h1>Inicio de sesión</h1>
 
             @if ($errors->any())

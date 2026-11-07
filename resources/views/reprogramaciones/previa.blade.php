@@ -84,6 +84,10 @@
                 <input type="hidden" name="fecha_consulta" value="{{ $fechaConsulta ?? now()->toDateString() }}">
             @endif
             <input type="hidden" name="return_to" value="{{ $returnTo ?? 'tandeos.index' }}">
+            @if (($returnTo ?? '') === 'dashboard')
+                <input type="hidden" name="buscar" value="{{ $busqueda ?? '' }}">
+                <input type="hidden" name="estado" value="{{ $estado ?? 'todos' }}">
+            @endif
             @if ($modo === 'fuga')
                 <input type="hidden" name="tipo_fuga" value="{{ $tipoFuga }}">
                 <input type="hidden" name="horas_atraso" value="{{ $horasAtraso }}">
