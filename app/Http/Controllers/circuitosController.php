@@ -5,9 +5,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 use App\Models\CircuitosModel;
 use App\Models\ZonasModel;
 use App\Models\PuntoAbastecimiento;
+use App\Models\TandeoRepeticion;
+use App\Models\TandeoProgramado;
+use App\Models\CumplimientoTandeo;
 
 class CircuitosController extends Controller
 {
@@ -133,9 +137,47 @@ class CircuitosController extends Controller
     // descripcion: elimina el registro seleccionado y atiende sus datos relacionados.
     // entradas: identificador del registro relacionado
     // salida: elimina el registro y regresa al listado con un mensaje
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $circuito = CircuitosModel::findOrFail($id);
+
+        if ($request->boolean('eliminar_definitivamente')) {
+            $request->validate([
+                'confirmar' => ['required', 'accepted'],
+            ], [
+                'confirmar.accepted' => 'Confirma la eliminación definitiva para continuar.',
+            ]);
+
+            $datosCircuito = $circuito->only(['zona_id', 'nombre', 'descripcion', 'duracion']);
+            $tandeoIds = $circuito->tandeos()->pluck('id');
+            $cantidadTandeos = $tandeoIds->count();
+            $cantidadCumplimientos = CumplimientoTandeo::whereIn('tandeo_id', $tandeoIds)->count();
+            $cantidadRepeticiones = TandeoRepeticion::where('circuito_id', $circuito->id)->count();
+
+            DB::transaction(function () use ($circuito, $tandeoIds) {
+                CumplimientoTandeo::whereIn('tandeo_id', $tandeoIds)->delete();
+                TandeoRepeticion::where('circuito_id', $circuito->id)->delete();
+                TandeoProgramado::whereIn('id', $tandeoIds)->delete();
+                $circuito->delete();
+            });
+
+            app(\App\Services\HistorialActividadService::class)->registrar(
+                'circuitos',
+                'eliminacion',
+                'Se eliminó definitivamente un circuito y sus datos asociados.',
+                [
+                    'circuito_eliminado' => $datosCircuito,
+                    'tandeos_eliminados' => $cantidadTandeos,
+                    'cumplimientos_eliminados' => $cantidadCumplimientos,
+                    'repeticiones_eliminadas' => $cantidadRepeticiones,
+                ]
+            );
+
+            return redirect()->route('circuitos.index')->with(
+                'success',
+                "Circuito eliminado junto con {$cantidadTandeos} tandeos, {$cantidadCumplimientos} cumplimientos y {$cantidadRepeticiones} repeticiones."
+            );
+        }
 
         $tandeosAsociados = $circuito->tandeos()
             // Ordena los cumplimientos para consultar primero el registro más reciente.
@@ -148,11 +190,11 @@ class CircuitosController extends Controller
             ->orderBy('fecha')
             ->orderBy('hora_inicio_programada')
             ->get();
+        $repeticionesAsociadas = TandeoRepeticion::where('circuito_id', $circuito->id)->get();
 
-        if ($tandeosAsociados->count() > 0) {
-            // si tiene historial: no se puede borrar, se muestra la lista de asociados
-            // y se ofrece la opción de desactivar
-            return view('circuitos.tandeosAsociados', compact('circuito', 'tandeosAsociados'));
+        if ($tandeosAsociados->count() > 0 || $repeticionesAsociadas->count() > 0) {
+            // si tiene tandeos o repeticiones se muestran antes de ofrecer la desactivacion
+            return view('circuitos.tandeosAsociados', compact('circuito', 'tandeosAsociados', 'repeticionesAsociadas'));
         }
 
         // si no hay tandeos asociados: se puede eliminar de forma segura

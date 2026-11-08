@@ -36,11 +36,11 @@
                         <td><span class="estado-badge estado-{{ $usuario->activo ? 'activo' : 'inactivo' }}">{{ $usuario->activo ? 'Activo' : 'Inactivo' }}</span></td>
                         <td>
                             <div class="d-flex flex-wrap gap-2">
-                                <a href="{{ route('usuarios.edit', $usuario->id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                                <a href="{{ route('usuarios.edit', $usuario->id) }}" class="btn btn-sm btn-outline-warning"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-editar"/></svg></span>Editar</a>
                                 <form action="{{ route('usuarios.destroy', $usuario->id) }}" method="POST" data-confirmacion-titulo="Eliminar usuario" data-confirmacion-mensaje="¿Eliminar a este usuario? Sus registros del historial se conservarán, pero ya no mostrarán quién los realizó.">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-eliminar"/></svg></span>Eliminar</button>
                                 </form>
                             </div>
                         </td>

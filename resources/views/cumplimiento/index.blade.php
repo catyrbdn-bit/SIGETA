@@ -145,9 +145,9 @@
                             <td><input class="form-control" type="text" maxlength="1000" name="cumplimientos[{{ $tandeo->id }}][observaciones]" value="{{ old("cumplimientos.{$tandeo->id}.observaciones", $registro->observaciones ?? '') }}" placeholder="Agregar observación..."></td>
                                                         <td>
                                 <div class="d-flex flex-column gap-2 align-items-center">
-                                    <a class="btn btn-sm btn-outline-primary" href="{{ route('editTandeo', ['id' => $tandeo->id, 'return_to' => 'cumplimiento.index', 'periodo' => $periodo, 'fecha' => $fechaConsulta]) }}">Editar tandeo</a>
+                                    <a class="btn btn-sm btn-outline-warning" href="{{ route('editTandeo', ['id' => $tandeo->id, 'return_to' => 'cumplimiento.index', 'periodo' => $periodo, 'fecha' => $fechaConsulta]) }}"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-editar"/></svg></span>Editar tandeo</a>
                                     @if ($registro)
-                                        <button type="submit" form="eliminar-cumplimiento-{{ $registro->id }}" class="btn btn-sm btn-outline-danger">Eliminar registro</button>
+                                        <button type="submit" form="eliminar-cumplimiento-{{ $registro->id }}" class="btn btn-sm btn-outline-danger"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-eliminar"/></svg></span>Eliminar registro</button>
                                     @endif
                                 </div>
                             </td>

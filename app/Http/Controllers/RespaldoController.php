@@ -6,6 +6,7 @@ use App\Models\RespaldoBd;
 use App\Services\HistorialActividadService;
 use App\Services\RespaldoBaseDatosService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class RespaldoController extends Controller
@@ -48,9 +49,14 @@ class RespaldoController extends Controller
 
             return redirect()->route('respaldos.index')->with('success', 'La base de datos se restauró correctamente. Se creó una copia de la información anterior.');
         } catch (Throwable $error) {
+            Log::error('Falló la restauración de un respaldo.', [
+                'respaldo_id' => $respaldo->id,
+                'error' => $error->getMessage(),
+            ]);
+
             $mensaje = $error instanceof \RuntimeException
                 ? $error->getMessage()
-                : 'No se pudo restaurar el respaldo. La base de datos actual se conservó; inténtalo de nuevo.';
+                : 'No se pudo completar la restauración. Revisa el registro de errores antes de intentarlo de nuevo.';
             return redirect()->route('respaldos.index')->with('error', $mensaje);
         }
     }

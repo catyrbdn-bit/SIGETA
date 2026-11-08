@@ -48,9 +48,9 @@
                 <label class="form-label" for="hasta">Hasta</label>
                 <input class="form-control" id="hasta" name="hasta" type="date" value="{{ $filtros['hasta'] ?? '' }}">
             </div>
-            <div class="col-12 col-md-2 d-flex gap-2 justify-content-center">
-                <button class="btn btn-primary" type="submit">Buscar</button>
-                <a class="btn btn-outline-secondary" href="{{ route('historial.index') }}" data-quitar-filtros="historial">Quitar filtros</a>
+            <div class="col-12 col-md-auto d-flex gap-2 justify-content-center">
+                <button class="btn btn-sm btn-primary" type="submit">Buscar</button>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ route('historial.index') }}" data-quitar-filtros="historial">Quitar filtros</a>
             </div>
         </div>
     </form>

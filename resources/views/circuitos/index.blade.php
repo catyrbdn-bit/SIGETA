@@ -16,17 +16,6 @@
         <div class="alert alert-success" id="mensaje-exito">
             {{ session('success') }}
         </div>
-        <!-- js -->
-        {{-- interacciones de la pantalla --}}
-        <script>
-            setTimeout(function () {
-                const mensaje = document.getElementById('mensaje-exito');
-
-                if (mensaje) {
-                    mensaje.style.display = 'none';
-                }
-            }, 3000);
-        </script>
     @endif
 
     @if ($circuitos->isEmpty())
@@ -41,7 +30,7 @@
                         <th>Circuito</th>
                         <th>Colonia</th>
                         <th>Punto de abastecimiento</th>
-                        <th>Calles</th>
+                        <th>Lugar / tandeos</th>
                         <th>Duración (horas)</th>
                         <th>Estado</th>
                         <th>Acciones</th>
@@ -63,9 +52,9 @@
                             <td class="text-nowrap">
                                 <a
                                     href="{{ route('editCircuito', $circuito->id) }}"
-                                    class="btn btn-sm btn-outline-primary"
+                                    class="btn btn-sm btn-outline-warning"
                                 >
-                                    Editar
+                                    <span class="icono-boton" aria-hidden="true"><svg><use href="#icono-editar"/></svg></span>Editar
                                 </a>
 
                                 <form
@@ -77,7 +66,7 @@
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        Eliminar
+                                        <span class="icono-boton" aria-hidden="true"><svg><use href="#icono-eliminar"/></svg></span>Eliminar
                                     </button>
                                 </form>
                             </td>

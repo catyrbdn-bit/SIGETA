@@ -20,7 +20,6 @@
 @endif
 
 <form action="{{ route('dashboard') }}" method="GET" class="filtros-panel-principal mb-4" data-filtros-persistentes="dashboard">
-    <h2 class="h6 mb-3">Búsqueda y filtros</h2>
     <div class="row g-3 align-items-end">
     <div class="col-12 col-sm-4 col-lg-2">
         <label for="periodo" class="form-label">Mostrar por</label>
@@ -38,12 +37,9 @@
         <button type="submit" class="btn btn-outline-primary w-100">Consultar periodo</button>
     </div>
     <div class="col-12 col-lg-4">
-        <label for="buscar-tandeo" class="form-label">Buscar circuito, colonia o calle</label>
-        <div class="input-group">
-            <input type="search" id="buscar-tandeo" name="buscar" class="form-control"
-                   value="{{ $busqueda }}" placeholder="Escribe para buscar...">
-            <button type="submit" class="btn btn-outline-primary">Buscar</button>
-        </div>
+        <label for="buscar-tandeo" class="form-label">Buscar circuito, colonia o lugar</label>
+        <input type="search" id="buscar-tandeo" name="buscar" class="form-control"
+               value="{{ $busqueda }}" placeholder="Escribe para buscar...">
     </div>
     <div class="col-12 col-md-5 col-xl-3">
         <label for="filtro-estado" class="form-label">Filtrar por estado</label>
@@ -78,7 +74,6 @@
 @if (Auth::user()->rol !== 'tandeador')
     <div class="botones-incidencia-panel">
         <div class="grupo-eventos-panel">
-            <strong class="titulo-eventos-panel">Eventos especiales</strong>
         <form action="{{ route('reprogramaciones.apagon.previa') }}" method="POST" class="m-0 form-incidencia-panel">
             @csrf
             <input type="hidden" name="return_to" value="dashboard">
@@ -86,7 +81,7 @@
             <input type="hidden" name="fecha_consulta" value="{{ $fechaConsulta }}">
             <input type="hidden" name="buscar" value="{{ $busqueda }}">
             <input type="hidden" name="estado" value="{{ request('estado', 'todos') }}">
-            <button type="submit" class="btn btn-outline-warning">Apagón general</button>
+            <button type="submit" class="btn btn-evento-apagon"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-apagon"/></svg></span>Apagón general</button>
         </form>
         <form action="{{ route('reprogramaciones.fuga.previa') }}" method="POST" class="m-0 form-incidencia-panel">
             @csrf
@@ -97,7 +92,7 @@
             <input type="hidden" name="estado" value="{{ request('estado', 'todos') }}">
             <input type="hidden" name="tipo_fuga" value="laguna">
             <input type="hidden" name="horas_atraso" value="6">
-            <button type="submit" class="btn btn-outline-info">Fuga laguna</button>
+            <button type="submit" class="btn btn-evento-laguna"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-laguna"/></svg></span>Fuga laguna</button>
         </form>
         <form action="{{ route('reprogramaciones.fuga.previa') }}" method="POST" class="m-0 form-incidencia-panel">
             @csrf
@@ -108,7 +103,7 @@
             <input type="hidden" name="estado" value="{{ request('estado', 'todos') }}">
             <input type="hidden" name="tipo_fuga" value="pozo">
             <input type="hidden" name="horas_atraso" value="4">
-            <button type="submit" class="btn btn-outline-info">Fuga pozo</button>
+            <button type="submit" class="btn btn-evento-pozo"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-pozo"/></svg></span>Fuga pozo</button>
         </form>
         </div>
     </div>
@@ -119,7 +114,7 @@
         <thead class="table-light">
             <tr>
                 <th>Circuito / Colonia</th>
-                <th>Calles</th>
+                <th>Lugar / tandeos</th>
                 <th>Fecha</th>
                 <th>Horario</th>
                 <th>Estado</th>
@@ -171,8 +166,8 @@
                     @if (Auth::user()->rol !== 'tandeador')
                         <td>{{ $tandeo->tandeadores->pluck('nombre')->implode(', ') ?: 'Sin asignar' }}</td>
                         <td><div class="acciones-tandeo-panel">
-                            <a href="{{ route('editTandeo', ['id' => $tandeo->id, 'return_to' => 'dashboard']) }}" class="btn btn-sm btn-outline-primary">Reprogramar horario</a>
-                            <a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id]) }}" class="btn btn-sm btn-outline-secondary">Registrar cumplimiento</a>
+                            <a href="{{ route('editTandeo', ['id' => $tandeo->id, 'return_to' => 'dashboard']) }}" class="btn btn-sm btn-outline-warning"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-editar"/></svg></span>Editar tandeo</a>
+                            <a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id]) }}" class="btn btn-sm btn-outline-secondary"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-completar"/></svg></span>Registrar cumplimiento</a>
                         </div>
                         </td>
                     @endif
@@ -218,6 +213,16 @@
 
     filtroEstado.addEventListener('change', filtrarTandeos);
     buscarTandeo.addEventListener('input', filtrarTandeos);
+
+    let esperaBusqueda;
+    buscarTandeo.addEventListener('input', function (evento) {
+        if (!evento.isTrusted) return;
+
+        clearTimeout(esperaBusqueda);
+        esperaBusqueda = setTimeout(function () {
+            buscarTandeo.form.requestSubmit();
+        }, 500);
+    });
 
     document.querySelectorAll('.form-incidencia-panel').forEach(function (formulario) {
         formulario.addEventListener('submit', function () {

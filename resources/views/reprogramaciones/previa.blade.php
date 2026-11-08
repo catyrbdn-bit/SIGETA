@@ -74,7 +74,7 @@
     @if ($filas->count())
 
         <input type="text" id="buscar" placeholder="Buscar circuito, colonia o calle…">
-        <button type="button" id="limpiar-busqueda-previa" class="secundario">Quitar filtro</button>
+        <button type="button" id="limpiar-busqueda-previa" class="btn btn-outline-secondary">Quitar filtro</button>
 
         <form action="{{ $modo === 'manual' ? route('reprogramaciones.manual.store') : ($modo === 'fuga' ? route('reprogramaciones.fuga.store') : route('reprogramaciones.apagon.store')) }}" method="POST">
             @csrf

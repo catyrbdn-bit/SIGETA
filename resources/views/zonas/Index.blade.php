@@ -102,6 +102,7 @@
             border: 1px solid #cbd5df;
             border-radius: 12px;
             color: #243447;
+            font-family: inherit;
             box-shadow: 0 18px 50px rgba(20, 40, 60, 0.25);
         }
 
@@ -204,16 +205,17 @@
  
 
     @if (session('success'))
-        <p id="mensaje-exito" class="mensaje-exito">{{ session('success') }}</p>
-        {{-- interacciones de la pantalla --}}
-        <script>
-            setTimeout(function () {
-                const mensaje = document.getElementById('mensaje-exito');
-                if (mensaje) {
-                    mensaje.style.display = 'none';
-                }
-            }, 3000);
-        </script>
+        <div id="mensaje-exito" class="alert alert-success" role="alert">{{ session('success') }}</div>
+    @endif
+
+    @if ($errors->any())
+        <div class="alert alert-danger" role="alert">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
     @endif
 
     <section class="panel">
@@ -235,12 +237,12 @@
                             <td><span class="estado-badge estado-{{ $zona->activo ? 'activo' : 'inactivo' }}">{{ $zona->activo ? 'Activa' : 'Inactiva' }}</span></td>
                             <td>
                                 <div class="acciones">
-                                    <a href="{{ route('editZona', $zona->id) }}" class="boton boton-secundario">Editar</a>
+                                    <a href="{{ route('editZona', $zona->id) }}" class="btn btn-sm btn-outline-warning"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-editar"/></svg></span>Editar</a>
 
                                     @if ($zona->circuitos_count > 0 || $zona->tandeos_count > 0)
-                                        <button type="button" class="boton boton-peligro"
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
                                                 data-abrir-aviso="aviso-colonia-{{ $zona->id }}">
-                                            Eliminar
+                                            <span class="icono-boton" aria-hidden="true"><svg><use href="#icono-eliminar"/></svg></span>Eliminar
                                         </button>
 
                                         <dialog id="aviso-colonia-{{ $zona->id }}" class="aviso-colonia">
@@ -260,31 +262,32 @@
                                                 relacionadas. Esta acción no se puede deshacer.
                                             </p>
                                             <div class="acciones-aviso">
-                                                <button type="button" class="boton boton-secundario" data-cerrar-aviso>
+                                                <button type="button" class="btn btn-outline-secondary" data-cerrar-aviso>
                                                     Cancelar
                                                 </button>
                                                 <form action="{{ route('desactivarZona', $zona->id) }}" method="POST">
                                                     @csrf
                                                     @method('PUT')
-                                                    <button type="submit" class="boton">Desactivar colonia</button>
+                                                    <button type="submit" class="btn btn-primary">Desactivar colonia</button>
                                                 </form>
                                                 <form action="{{ route('deleteZona', $zona->id) }}" method="POST">
                                                     @csrf
                                                     @method('DELETE')
                                                     <input type="hidden" name="confirmar_eliminacion" value="1">
-                                                    <button type="submit" class="boton boton-peligro">
-                                                        Eliminar definitivamente
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <span class="icono-boton" aria-hidden="true"><svg><use href="#icono-eliminar"/></svg></span>Eliminar definitivamente
                                                     </button>
                                                 </form>
                                             </div>
                                         </dialog>
                                     @else
                                         <form action="{{ route('deleteZona', $zona->id) }}" method="POST"
-                                              onsubmit="return confirm('¿Eliminar definitivamente esta colonia?');">
+                                              data-confirmacion-titulo="Eliminar colonia"
+                                              data-confirmacion-mensaje="¿Eliminar definitivamente esta colonia? Esta acción no se puede deshacer.">
                                             @csrf
                                             @method('DELETE')
                                             <input type="hidden" name="confirmar_eliminacion" value="1">
-                                            <button type="submit" class="boton boton-peligro">Eliminar</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-eliminar"/></svg></span>Eliminar</button>
                                         </form>
                                     @endif
                                 </div>

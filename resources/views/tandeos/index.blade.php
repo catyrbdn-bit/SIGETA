@@ -21,7 +21,7 @@
     </div>
 @endif
 
-<div class="row g-2 align-items-end mb-3" data-filtros-persistentes="tandeos">
+<div class="filtros-panel-principal row g-2 align-items-end mb-3" data-filtros-persistentes="tandeos">
     <div class="col-md-4">
         <label for="buscar-tandeo" class="form-label">Circuito, colonia o calle</label>
         <input type="search" id="buscar-tandeo" name="buscar" class="form-control" placeholder="Escribe para buscar circuito, colonia o calle">
@@ -59,7 +59,7 @@
             <option value="no_cumplido">No cumplido</option>
         </select>
     </div>
-    <div class="col-12">
+    <div class="col-12 d-flex justify-content-end">
         <button type="button" id="limpiar-filtros-tandeos" data-quitar-filtros="tandeos" class="btn btn-outline-secondary">Quitar filtros</button>
     </div>
 </div>
@@ -70,7 +70,7 @@
             <tr>
                 <th>Circuito</th>
                 <th>Colonia</th>
-                <th>Calles</th>
+                <th>Lugar / tandeos</th>
                 <th>Fecha</th>
                 <th>Horario</th>
                 <th>Estado</th>
@@ -124,12 +124,12 @@
                     @if (Auth::user()->rol !== 'tandeador')
                         <td>{{ $tandeo->tandeadores->pluck('nombre')->implode(', ') ?: ($tandeo->tandeador->nombre ?? 'Sin asignar') }}</td>
                     <td class="text-nowrap">
-                        <a href="{{ route('editTandeo', ['id' => $tandeo->id, 'return_to' => 'tandeos.index']) }}" class="btn btn-sm btn-outline-primary">Editar tandeo</a>
+                        <a href="{{ route('editTandeo', ['id' => $tandeo->id, 'return_to' => 'tandeos.index']) }}" class="btn btn-sm btn-outline-warning"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-editar"/></svg></span>Editar tandeo</a>
                         
                         <form action="{{ route('deleteTandeo', $tandeo->id) }}" method="POST" class="d-inline" data-confirmacion-titulo="Eliminar tandeo" data-confirmacion-mensaje="{{ $tandeo->repeticion_uuid ? 'Se eliminarán todos los tandeos de esta repetición y su historial. Si solo quieres cambiar fechas, usa Editar. ¿Continuar?' : '¿Estás seguro de eliminar este tandeo? Esta acción no se puede deshacer.' }}">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-eliminar"/></svg></span>Eliminar</button>
                         </form>
                     </td>
                     @endif

@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
-@section('titulo', 'Respaldos de base de datos - SIGETA')
+@section('titulo', 'Respaldos y restauración - SIGETA')
 
 @section('content')
     <div class="container-fluid">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
             <div>
-                <h1 class="titulo-vista">Respaldos de base de datos</h1>
+                <h1 class="titulo-vista">Respaldos y restauración</h1>
                 <p class="text-muted mb-0">Crea copias y restaura una copia anterior si es necesario</p>
             </div>
             <form action="{{ route('respaldos.store') }}" method="POST">
                 @csrf
-                <button type="submit" class="btn btn-primary">Generar respaldo</button>
+                <button type="submit" class="btn btn-primary"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-crear"/></svg></span>Generar respaldo</button>
             </form>
         </div>
 
@@ -56,7 +56,7 @@
                                     data-confirmacion-mensaje="Se reemplazará la información actual por la de este respaldo. Antes se guardará automáticamente una copia de la base actual. ¿Deseas continuar?">
                                     @csrf
                                     <input type="hidden" name="confirmar" value="0">
-                                    <button type="submit" class="btn btn-outline-primary">Restaurar</button>
+                                    <button type="submit" class="btn btn-outline-primary"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-restaurar"/></svg></span>Restaurar</button>
                                 </form>
                             </td>
                         </tr>

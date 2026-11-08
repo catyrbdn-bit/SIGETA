@@ -55,39 +55,67 @@ class RespaldoBaseDatosService
 
         $temporal = $baseActual . '.nuevo';
         $anterior = $baseActual . '.anterior';
+
+        if (File::exists($anterior)) {
+            throw new RuntimeException('Hay una copia anterior pendiente de revisar. No se modificó la base de datos.');
+        }
+
         File::copy($rutaRespaldo, $temporal);
         $this->revisarIntegridad($temporal);
         DB::connection()->getPdo()->exec('PRAGMA wal_checkpoint(TRUNCATE)');
-        DB::purge();
+        $conexionNombre = DB::getDefaultConnection();
+        DB::disconnect($conexionNombre);
+        DB::purge($conexionNombre);
+        gc_collect_cycles();
+
+        $baseMovida = false;
 
         try {
-            if (File::exists($anterior)) File::delete($anterior);
             File::move($baseActual, $anterior);
-            File::move($temporal, $baseActual);
+            $baseMovida = true;
+
             foreach ([$baseActual . '-wal', $baseActual . '-shm'] as $archivoAuxiliar) {
                 if (File::exists($archivoAuxiliar)) File::delete($archivoAuxiliar);
             }
+
+            File::move($temporal, $baseActual);
+
             DB::purge();
             DB::connection()->getPdo();
-            if (File::exists($anterior)) File::delete($anterior);
-        } catch (\Throwable $error) {
-            if (!File::exists($baseActual) && File::exists($anterior)) File::move($anterior, $baseActual);
-            DB::purge();
-            throw $error;
-        }
 
-        $registrosPrevios[] = $copiaActual->only(['usuario_id', 'nombre_archivo', 'ruta_archivo', 'tamano_bytes', 'estado']);
-        foreach ($registrosPrevios as $datos) {
-            if (!RespaldoBd::where('ruta_archivo', $datos['ruta_archivo'])->exists()) {
-                if (!UsuarioModel::whereKey($datos['usuario_id'])->exists()) $datos['usuario_id'] = null;
-                RespaldoBd::create($datos);
+            $registrosPrevios[] = $copiaActual->only(['usuario_id', 'nombre_archivo', 'ruta_archivo', 'tamano_bytes', 'estado']);
+            foreach ($registrosPrevios as $datos) {
+                if (!RespaldoBd::where('ruta_archivo', $datos['ruta_archivo'])->exists()) {
+                    if (!UsuarioModel::whereKey($datos['usuario_id'])->exists()) $datos['usuario_id'] = null;
+                    RespaldoBd::create($datos);
+                }
             }
-        }
 
-        return [
-            'respaldo_actual' => RespaldoBd::where('ruta_archivo', $copiaActual->ruta_archivo)->firstOrFail(),
-            'respaldo_restaurado' => RespaldoBd::where('ruta_archivo', $respaldo->ruta_archivo)->firstOrFail(),
-        ];
+            $resultado = [
+                'respaldo_actual' => RespaldoBd::where('ruta_archivo', $copiaActual->ruta_archivo)->firstOrFail(),
+                'respaldo_restaurado' => RespaldoBd::where('ruta_archivo', $respaldo->ruta_archivo)->firstOrFail(),
+            ];
+
+            File::delete($anterior);
+            return $resultado;
+        } catch (\Throwable $error) {
+            DB::purge();
+
+            if ($baseMovida && File::exists($anterior)) {
+                if (File::exists($baseActual)) File::delete($baseActual);
+                foreach ([$baseActual . '-wal', $baseActual . '-shm'] as $archivoAuxiliar) {
+                    if (File::exists($archivoAuxiliar)) File::delete($archivoAuxiliar);
+                }
+
+                File::move($anterior, $baseActual);
+                DB::purge();
+                DB::connection()->getPdo();
+            }
+
+            throw $error;
+        } finally {
+            if (File::exists($temporal)) File::delete($temporal);
+        }
     }
 
     private function revisarMotor(): void

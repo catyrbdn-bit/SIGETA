@@ -62,24 +62,27 @@
 
 @section('content')
 <div class="contenido-vista">
-<h1>No se puede eliminar este circuito</h1>
+<h1>¡Cuidado!</h1>
 
     <section class="panel">
-        <p>El circuito <strong>{{ $circuito->nombre }}</strong> tiene tandeos asociados y no puede eliminarse de forma definitiva.</p>
+        <p>El circuito <strong>{{ $circuito->nombre }}</strong> tiene tandeos o repeticiones asociados. Si lo desactivas, esos datos se conservarán y no se podrán programar nuevos tandeos. Si lo eliminas definitivamente, se borrarán el circuito y los tandeos, cumplimientos, reprogramaciones y repeticiones relacionados. Esta acción no se puede deshacer.</p>
 
         <h3>Tandeos asociados</h3>
-        <div class="tabla-contenedor">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Calles</th>
-                        <th>Fecha</th>
-                        <th>Horario</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($tandeosAsociados as $tandeo)
+        @if ($tandeosAsociados->isEmpty())
+            <p>No hay tandeos generados para este circuito.</p>
+        @else
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Lugar / tandeos</th>
+                            <th>Fecha</th>
+                            <th>Horario</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($tandeosAsociados as $tandeo)
                         @php
                             $cumplimiento = $tandeo->cumplimientos->first();
                             if ($cumplimiento && $cumplimiento->fecha_captura && \Carbon\Carbon::parse($cumplimiento->fecha_captura)->lt($tandeo->inicio)) {
@@ -113,20 +116,59 @@
                             <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                             <td><span class="estado-badge estado-{{ $estado }}">{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</span></td>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+
+        @if ($repeticionesAsociadas->isNotEmpty())
+            <h3 class="mt-4">Repeticiones configuradas</h3>
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha inicial</th>
+                            <th>Se repite cada</th>
+                            <th>Hora de inicio</th>
+                            <th>Duración</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($repeticionesAsociadas as $repeticion)
+                            <tr>
+                                <td>{{ $repeticion->fecha_ancla->locale('es')->translatedFormat('l d/M/Y') }}</td>
+                                <td>{{ $repeticion->cada_dias }} días</td>
+                                <td>{{ \Carbon\Carbon::parse($repeticion->hora_inicio)->format('G:i') }}</td>
+                                <td>{{ $repeticion->duracion_minutos / 60 }} horas</td>
+                                <td>{{ $repeticion->activa ? 'Activa' : 'Pausada' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
 
         <div class="acciones">
             <a href="{{ route('circuitos.index') }}" class="boton boton-secundario" onclick="if (history.length > 1 && document.referrer && new URL(document.referrer).origin === location.origin) { history.back(); return false; }">Volver a circuitos</a>
-
-            <form action="{{ route('desactivarCircuito', $circuito->id) }}" method="POST"
-                  data-confirmacion-titulo="Desactivar circuito" data-confirmacion-mensaje="Al desactivarlo, se conservarán sus tandeos y no podrá usarse para programar nuevos.">
-                @csrf
-                @method('PUT')
-                <button type="submit" class="boton boton-peligro">Desactivar circuito</button>
-            </form>
+            <div class="d-flex flex-wrap gap-2">
+                <form action="{{ route('desactivarCircuito', $circuito->id) }}" method="POST"
+                      data-confirmacion-titulo="Desactivar circuito" data-confirmacion-mensaje="Se conservarán los tandeos y las repeticiones. El circuito ya no podrá usarse para programar nuevos.">
+                    @csrf
+                    @method('PUT')
+                    <button type="submit" class="btn btn-outline-secondary">Desactivar circuito</button>
+                </form>
+                <form action="{{ route('deleteCircuito', $circuito->id) }}" method="POST"
+                      data-confirmacion-titulo="Eliminar circuito definitivamente"
+                      data-confirmacion-mensaje="Se eliminarán el circuito, sus tandeos, cumplimientos, reprogramaciones y repeticiones. Las notificaciones se conservarán sin el tandeo relacionado. Esta acción no se puede deshacer.">
+                    @csrf
+                    @method('DELETE')
+                    <input type="hidden" name="eliminar_definitivamente" value="1">
+                    <input type="hidden" name="confirmar" value="0">
+                    <button type="submit" class="btn btn-danger"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-eliminar"/></svg></span>Eliminar definitivamente</button>
+                </form>
+            </div>
         </div>
     </section>
 </div>
