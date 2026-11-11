@@ -23,8 +23,8 @@
 
 <div class="filtros-panel-principal row g-2 align-items-end mb-3" data-filtros-persistentes="tandeos">
     <div class="col-md-4">
-        <label for="buscar-tandeo" class="form-label">Circuito, colonia o calle</label>
-        <input type="search" id="buscar-tandeo" name="buscar" class="form-control" placeholder="Escribe para buscar circuito, colonia o calle">
+        <label for="buscar-tandeo" class="form-label">Circuito, colonia o lugar/tandeo</label>
+        <input type="search" id="buscar-tandeo" name="buscar" class="form-control" placeholder="Escribe para buscar circuito, colonia o lugar/tandeo">
     </div>
     <div class="col-md-3">
         <label for="filtro-zona" class="form-label">Colonia</label>
@@ -45,7 +45,7 @@
     </div>
     <div class="col-md-2">
         <label for="fecha-referencia" class="form-label">Fecha de referencia</label>
-        <input type="date" lang="es-MX" id="fecha-referencia" name="fecha" class="form-control" value="{{ now()->toDateString() }}">
+        <input type="date" lang="es-MX" id="fecha-referencia" name="fecha" data-fecha-referencia="hoy" class="form-control" value="{{ now()->toDateString() }}">
     </div>
     <div class="col-md-3">
         <label for="filtro-estado" class="form-label">Estado</label>
@@ -117,7 +117,7 @@
                     data-estado="{{ $estado }}">
                     <td>{{ $tandeo->circuito->nombre }}</td>
                     <td>{{ $tandeo->circuito->zona->nombre }}</td>
-                    <td>{{ $tandeo->circuito->descripcion ?: 'Sin calles registradas' }}</td>
+                    <td>{{ $tandeo->circuito->descripcion ?: 'Sin lugar/tandeo registrado' }}</td>
                     <td>{{ $tandeo->fecha->locale('es')->translatedFormat('l d/M/Y') }}</td>
                     <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                     <td><span class="estado-badge estado-{{ $estado }}">{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</span></td>

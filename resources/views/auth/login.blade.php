@@ -121,10 +121,8 @@
                 </div>
             @endif
 
-            <form action="{{ route('iniciarSesion') }}" method="POST" novalidate>
+            <form action="{{ route('iniciarSesion') }}" method="POST">
                 @csrf
-
-                <div id="error-validacion-login" class="mensaje-error" role="alert" hidden></div>
 
                 <div class="campo">
                     <label for="usuario">Usuario:</label>
@@ -162,7 +160,6 @@
     const formularioLogin = document.querySelector('form');
     const campoUsuario = document.getElementById('usuario');
     const campoContrasena = document.getElementById('password');
-    const mensajeValidacion = document.getElementById('error-validacion-login');
     const botonIniciarSesion = document.getElementById('boton-iniciar-sesion');
 
     formularioLogin.addEventListener('keydown', function (evento) {
@@ -182,29 +179,26 @@
         }
     });
 
-    formularioLogin.addEventListener('submit', function (evento) {
-        if (evento.submitter !== botonIniciarSesion) {
-            evento.preventDefault();
-            return;
+    formularioLogin.addEventListener('invalid', function (evento) {
+        if (evento.target.validity.valueMissing) {
+            evento.target.setCustomValidity('Completa este campo.');
         }
-
-        const faltaUsuario = campoUsuario.value.trim() === '';
-        const faltaContrasena = campoContrasena.value === '';
-
-        if (faltaUsuario || faltaContrasena) {
-            evento.preventDefault();
-            mensajeValidacion.textContent = faltaUsuario && faltaContrasena
-                ? 'Escribe tu nombre de usuario y contraseña.'
-                : (faltaUsuario ? 'Escribe tu nombre de usuario.' : 'Escribe tu contraseña.');
-            mensajeValidacion.hidden = false;
-            (faltaUsuario ? campoUsuario : campoContrasena).focus();
-        }
-    });
+    }, true);
 
     [campoUsuario, campoContrasena].forEach(function (campo) {
         campo.addEventListener('input', function () {
-            mensajeValidacion.hidden = true;
+            campo.setCustomValidity('');
         });
+    });
+
+    document.querySelectorAll('.mensaje-error[role="alert"], .mensaje-error[role="status"]').forEach(function (aviso) {
+        if (aviso.hidden) return;
+
+        setTimeout(function () {
+            aviso.style.transition = 'opacity 0.4s ease';
+            aviso.style.opacity = '0';
+            setTimeout(function () { aviso.remove(); }, 400);
+        }, 5000);
     });
 </script>
 </body>

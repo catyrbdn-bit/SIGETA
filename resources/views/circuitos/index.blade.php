@@ -45,7 +45,7 @@
                                 {{ $circuito->puntoAbastecimiento->nombre ?? 'Sin punto fijo registrado' }}
                             </td>
                             <td>
-                                {{ $circuito->descripcion ?: 'Sin descripción registrada' }}
+                                {{ $circuito->descripcion ?: 'Sin lugar/tandeo registrado' }}
                             </td>
                             <td>{{ $circuito->duracion }}</td>
                             <td><span class="estado-badge estado-{{ $circuito->activo ? 'activo' : 'inactivo' }}">{{ $circuito->activo ? 'Activo' : 'Inactivo' }}</span></td>

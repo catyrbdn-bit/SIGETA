@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Auth;
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Http\Controllers\Controller;
+use App\Models\UsuarioModel;
 use App\Services\HistorialActividadService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class LoginController extends Controller
 {
@@ -56,6 +58,12 @@ class LoginController extends Controller
             return redirect()->intended(route('dashboard'));
         }
 
+        $usuarioInactivo = UsuarioModel::where('usuario', $credenciales['usuario'])->first();
+        $mensajeError = 'Alguna de las credenciales no son correctas';
+        if ($usuarioInactivo && ! $usuarioInactivo->activo && Hash::check($credenciales['password'], $usuarioInactivo->password)) {
+            $mensajeError = 'No tienes credenciales activas';
+        }
+
         // Si la autenticación falla, se registra el intento fallido en el historial de actividad
         app(HistorialActividadService::class)->registrar(
             'inicio_sesion', 'fallido', 'Intento de inicio de sesión fallido.',
@@ -65,7 +73,7 @@ class LoginController extends Controller
 
         // Se retorna al formulario de inicio de sesión con un mensaje de error
         return back()->withErrors([
-            'usuario' => 'Alguna de las credenciales no son correctas',
+            'usuario' => $mensajeError,
         ])->onlyInput('usuario');
     }
 

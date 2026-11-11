@@ -162,7 +162,7 @@
                     </table></div>
                 @elseif ($tipoReporte === 'atrasos-colonia')
                     <div class="table-responsive"><table class="table table-bordered table-striped align-middle">
-                        <thead><tr><th>Colonia</th><th>Tandeo y calles</th><th>Días de atraso</th><th>Motivo</th></tr></thead>
+                        <thead><tr><th>Colonia</th><th>Tandeo / lugar</th><th>Días de atraso</th><th>Motivo</th></tr></thead>
                         <tbody>
                             @forelse ($filasPreview as $fila)
                                 <tr><td>{{ $fila['colonia'] }}</td><td>{{ $fila['tandeo'] }}</td><td class="text-center">{{ $fila['dias'] }}</td><td>{{ $fila['motivo'] }}</td></tr>
@@ -191,7 +191,7 @@
                     </table></div>
                 @elseif ($tipoReporte === 'cumplimiento-circuito')
                     <div class="table-responsive"><table class="table table-bordered table-striped align-middle">
-                        <thead><tr><th>Circuito</th><th>Colonia</th><th>Calles</th><th>Programados</th><th>Ejecutados</th><th>Con desfase</th></tr></thead>
+                        <thead><tr><th>Circuito</th><th>Colonia</th><th>Lugar/tandeo</th><th>Programados</th><th>Ejecutados</th><th>Con desfase</th></tr></thead>
                         <tbody>
                             @forelse ($filasPreview as $fila)
                                 <tr><td>{{ $fila['circuito'] }}</td><td>{{ $fila['zona'] }}</td><td>{{ $fila['calle'] }}</td><td class="text-center">{{ $fila['programados'] }}</td><td class="text-center">{{ $fila['ejecutados'] }}</td><td class="text-center">{{ $fila['desfasados'] }}</td></tr>
@@ -202,7 +202,7 @@
                     </table></div>
                 @else
                     <div class="table-responsive"><table class="table table-bordered table-striped align-middle">
-                        <thead><tr><th>Circuito</th><th>Colonia</th><th>Calles</th><th>Fecha</th><th>Horario</th></tr></thead>
+                        <thead><tr><th>Circuito</th><th>Colonia</th><th>Lugar/tandeo</th><th>Fecha</th><th>Horario</th></tr></thead>
                         <tbody>
                             @forelse ($filasPreview as $fila)
                                 <tr><td>{{ $fila['circuito'] }}</td><td>{{ $fila['zona'] }}</td><td>{{ $fila['calle'] }}</td><td>{{ $fila['fecha'] }}</td><td>{{ $fila['horario'] }}</td></tr>

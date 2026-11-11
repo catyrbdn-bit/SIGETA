@@ -73,7 +73,7 @@
 
     @if ($filas->count())
 
-        <input type="text" id="buscar" placeholder="Buscar circuito, colonia o calle…">
+        <input type="text" id="buscar" placeholder="Buscar circuito, colonia o lugar/tandeo…">
         <button type="button" id="limpiar-busqueda-previa" class="btn btn-outline-secondary">Quitar filtro</button>
 
         <form action="{{ $modo === 'manual' ? route('reprogramaciones.manual.store') : ($modo === 'fuga' ? route('reprogramaciones.fuga.store') : route('reprogramaciones.apagon.store')) }}" method="POST">
@@ -109,7 +109,7 @@
                 <thead>
                     <tr>
                         <th>Circuito / Colonia</th>
-                        <th>Calles</th>
+                        <th>Lugar/tandeo</th>
                         <th>Fecha actual</th>
                         <th>Horario actual</th>
                         <th>Fecha nueva</th>
@@ -145,7 +145,7 @@
                                 </div>
                             </td>
 
-                            <td>{{ $m['tandeo']->circuito->descripcion ?: 'Sin calles registradas' }}</td>
+                            <td>{{ $m['tandeo']->circuito->descripcion ?: 'Sin lugar/tandeo registrado' }}</td>
 
                             <td class="dia">{{ $fecha($m['inicio_anterior']) }}</td>
 

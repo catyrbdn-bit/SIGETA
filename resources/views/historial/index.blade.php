@@ -122,7 +122,7 @@
                             'zona_id' => 'Colonia (identificador)',
                             'circuito_id' => 'Circuito (identificador)',
                             'circuito' => 'Circuito',
-                            'descripcion' => 'Calles',
+                            'descripcion' => 'Lugar/tandeo',
                             'duracion' => 'Duración (horas)',
                             'punto_abastecimiento_id' => 'Punto de abastecimiento (identificador)',
                             'cadena' => 'Cadena de cambios',

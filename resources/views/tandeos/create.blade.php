@@ -169,7 +169,7 @@
 @section('content')
 <div class="contenido-vista">
 <h1>Programar nuevo tandeo</h1>
-    <p class="subtitulo">Selecciona primero la colonia y después el circuito o las calles</p>
+    <p class="subtitulo">Selecciona primero la colonia y después el lugar/tandeo</p>
 
     @if ($errors->any())
         <div class="mensaje-error">
@@ -198,9 +198,9 @@
         </section>
 
         <section class="panel" id="seccion-circuitos" hidden>
-            <label>2. Selecciona las calles que vas a programar</label>
+            <label>2. Selecciona el lugar/tandeo que vas a programar</label>
             <p class="ayuda">
-                Aquí aparecen únicamente las calles de la colonia elegida. El código es una referencia interna.
+                Aquí aparecen únicamente los lugares/tandeos de la colonia elegida. El código es una referencia interna.
 
             </p>
 
@@ -210,7 +210,7 @@
                         <tr>
                             <th>Elegir</th>
                             <th>Referencia</th>
-                            <th>Calles de la colonia</th>
+                            <th>Lugar/tandeo</th>
                             <th>Duración</th>
                         </tr>
                     </thead>
@@ -228,7 +228,7 @@
                                 </td>
                                 <td class="codigo text-muted small">{{ $circuito->nombre }}</td>
                                 <td class="descripcion">
-                                    {{ $circuito->descripcion ?: 'Sin descripción registrada' }}
+                                    {{ $circuito->descripcion ?: 'Sin lugar/tandeo registrado' }}
                                 </td>
                                 <td>{{ $circuito->duracion }} horas</td>
                             </tr>

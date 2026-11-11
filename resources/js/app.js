@@ -15,6 +15,42 @@ import 'fullcalendar/skeleton.css';
 import 'fullcalendar/themes/monarch/theme.css';
 import 'fullcalendar/themes/monarch/palettes/blue.css';
 
+// Muestra los mensajes de validación en español aunque el navegador esté en otro idioma
+document.addEventListener('invalid', function (evento) {
+    const campo = evento.target;
+    const estado = campo.validity;
+    let mensaje = '';
+
+    if (estado.valueMissing) {
+        mensaje = 'Completa este campo.';
+    } else if (estado.typeMismatch) {
+        mensaje = campo.type === 'email'
+            ? 'Escribe un correo electrónico válido.'
+            : 'Revisa el formato de este campo.';
+    } else if (estado.rangeUnderflow) {
+        mensaje = 'El valor debe ser igual o mayor que ' + campo.min + '.';
+    } else if (estado.rangeOverflow) {
+        mensaje = 'El valor debe ser igual o menor que ' + campo.max + '.';
+    } else if (estado.tooShort) {
+        mensaje = 'Escribe al menos ' + campo.minLength + ' caracteres.';
+    } else if (estado.patternMismatch) {
+        mensaje = 'Revisa el formato de este campo.';
+    } else if (estado.badInput || estado.stepMismatch) {
+        mensaje = 'Escribe un valor válido.';
+    }
+
+    if (mensaje) campo.setCustomValidity(mensaje);
+}, true);
+
+document.addEventListener('input', function (evento) {
+    if (evento.target.setCustomValidity) evento.target.setCustomValidity('');
+});
+
+document.addEventListener('change', function (evento) {
+    if (evento.target.setCustomValidity) evento.target.setCustomValidity('');
+});
+
+
 // Muestra confirmaciones y avisos con el diseño de SIGETA
 // descripcion: abre una ventana centrada para confirmar una acción o mostrar un mensaje
 // entradas: formulario que se enviará, o mensaje y título para un aviso sencillo

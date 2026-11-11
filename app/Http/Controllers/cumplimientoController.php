@@ -106,9 +106,11 @@ class CumplimientoController extends Controller
             'cumplimientos' => ['required', 'array'],
             'cumplimientos.*.resultado' => ['nullable', 'in:cumplido,atraso,no_cumplido'],
             'cumplimientos.*.horas_atraso' => ['nullable', 'integer', 'min:1', 'max:24'],
-            'cumplimientos.*.observaciones' => ['nullable', 'string', 'max:1000'],
+            'cumplimientos.*.observaciones' => ['nullable', 'string', 'max:1000', 'not_regex:/<[^>]*>/'],
             'periodo' => ['nullable', 'in:mes,semana,dia'],
             'fecha' => ['nullable', 'date_format:Y-m-d'],
+        ], [
+            'cumplimientos.*.observaciones.not_regex' => 'Las observaciones no deben contener etiquetas o código HTML.',
         ]);
 
         $periodo = $datos['periodo'] ?? 'semana';

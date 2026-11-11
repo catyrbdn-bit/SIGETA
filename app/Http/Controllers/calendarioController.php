@@ -107,7 +107,7 @@ class CalendarioController extends Controller
         // salida: devuelve el registro con sus datos preparados
         $eventos = $tandeos->map(function ($tandeo) {
             $colonia = $tandeo->circuito->zona->nombre;
-            $calles = $tandeo->circuito->descripcion ?: 'Sin calles registradas';
+            $calles = $tandeo->circuito->descripcion ?: 'Sin lugar/tandeo registrado';
             $tandeadores = $tandeo->tandeadores->pluck('nombre')->implode(', ');
 
             if ($tandeadores === '') {

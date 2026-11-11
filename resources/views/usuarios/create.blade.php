@@ -13,7 +13,7 @@
         <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
     @endif
 
-    <form action="{{ route('usuarios.store') }}" method="POST" class="card card-body" novalidate>
+    <form action="{{ route('usuarios.store') }}" method="POST" class="card card-body">
         @csrf
         <div class="row g-3">
             <div class="col-md-4"><label class="form-label" for="nombre">Nombre</label><input class="form-control" id="nombre" name="nombre" value="{{ old('nombre') }}" required></div>

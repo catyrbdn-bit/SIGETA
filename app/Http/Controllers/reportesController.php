@@ -501,7 +501,7 @@ class ReportesController extends Controller
 
                 return [
                     'colonia' => $tandeo->circuito->zona->nombre ?? 'Sin colonia',
-                    'tandeo' => $tandeo->circuito->nombre.' · '.($tandeo->circuito->descripcion ?: 'Sin calles registradas'),
+                    'tandeo' => $tandeo->circuito->nombre.' · '.($tandeo->circuito->descripcion ?: 'Sin lugar/tandeo registrado'),
                     'dias' => $diasAtraso,
                     'motivo' => $this->motivoDelMovimiento($movimiento),
                 ];
@@ -562,7 +562,7 @@ class ReportesController extends Controller
                     'orden_fecha' => $tandeo->fecha->format('Y-m-d'),
                     'colonia' => $tandeo->circuito->zona->nombre,
                     'circuito' => $tandeo->circuito->nombre,
-                    'calle' => $tandeo->circuito->descripcion ?: 'Sin calles registradas',
+                    'calle' => $tandeo->circuito->descripcion ?: 'Sin lugar/tandeo registrado',
                     'horario' => $horario,
                     'orden_hora' => $horaInicio->format('H:i'),
                 ];

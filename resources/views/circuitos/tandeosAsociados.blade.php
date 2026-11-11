@@ -111,7 +111,7 @@
                             ];
                         @endphp
                         <tr>
-                            <td>{{ $circuito->descripcion ?: 'Sin calles registradas' }}</td>
+                            <td>{{ $circuito->descripcion ?: 'Sin lugar/tandeo registrado' }}</td>
                             <td>{{ \Carbon\Carbon::parse($tandeo->fecha)->locale('es')->translatedFormat('l d/M/Y') }}</td>
                             <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                             <td><span class="estado-badge estado-{{ $estado }}">{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</span></td>

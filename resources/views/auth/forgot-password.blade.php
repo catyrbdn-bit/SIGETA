@@ -13,6 +13,8 @@
 
     .contenido-principal {
         min-height: 100vh;
+        width: 100%;
+        min-width: 0;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -23,6 +25,8 @@
         overflow: hidden;
         width: 100%;
         max-width: 500px;
+        flex: 0 1 500px;
+        margin: auto;
         padding: 34px 30px 30px;
         border: 1px solid #d3e2ef;
         border-radius: 16px;
@@ -95,4 +99,19 @@
         </div>
     </form>
 </div>
+<script>
+    const correoRecuperacion = document.getElementById('email');
+
+    correoRecuperacion.addEventListener('invalid', function () {
+        if (this.validity.valueMissing) {
+            this.setCustomValidity('Completa este campo.');
+        } else if (this.validity.typeMismatch) {
+            this.setCustomValidity('Escribe un correo electrónico válido.');
+        }
+    });
+
+    correoRecuperacion.addEventListener('input', function () {
+        this.setCustomValidity('');
+    });
+</script>
 @endsection

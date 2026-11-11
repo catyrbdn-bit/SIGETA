@@ -104,7 +104,7 @@
             <h2>Detalle del tandeo</h2>
             <p><strong>Circuito:</strong> <span id="detalle-circuito"></span></p>
             <p><strong>Colonia:</strong> <span id="detalle-colonia"></span></p>
-            <p><strong>Calles:</strong> <span id="detalle-calles"></span></p>
+            <p><strong>Lugar/tandeo:</strong> <span id="detalle-calles"></span></p>
             <p><strong>Fecha:</strong> <span id="detalle-fecha"></span></p>
             <p><strong>Horario:</strong> <span id="detalle-horario"></span></p>
             <p><strong>Estado:</strong> <span id="detalle-estado"></span></p>
@@ -120,7 +120,7 @@
             <h2>Confirmar cambio de horario</h2>
             <p><strong>Circuito:</strong> <span id="cambio-circuito"></span></p>
             <p><strong>Colonia:</strong> <span id="cambio-colonia"></span></p>
-            <p><strong>Calles:</strong> <span id="cambio-calles"></span></p>
+            <p><strong>Lugar/tandeo:</strong> <span id="cambio-calles"></span></p>
             <p><strong>Horario actual:</strong> <span id="cambio-actual"></span></p>
             <p><strong>Horario propuesto:</strong> <span id="cambio-propuesto"></span></p>
             <div class="mb-3 text-start">

@@ -80,7 +80,7 @@
         <p>La efectividad se calcula como tandeos cumplidos entre el total de cumplimientos registrados.</p>
     @elseif ($tipo === 'atrasos-colonia')
         <table>
-            <thead><tr><th>Colonia</th><th>Tandeo y calles</th><th>Días de atraso</th><th>Motivo</th></tr></thead>
+            <thead><tr><th>Colonia</th><th>Tandeo / lugar</th><th>Días de atraso</th><th>Motivo</th></tr></thead>
             <tbody>
                 @forelse ($filas as $fila)
                     <tr><td>{{ $fila['colonia'] }}</td><td>{{ $fila['tandeo'] }}</td><td class="centro">{{ $fila['dias'] }}</td><td>{{ $fila['motivo'] }}</td></tr>
@@ -129,7 +129,7 @@
                 <tr>
                     <th>Circuito</th>
                     <th>Colonia</th>
-                    <th>Calles</th>
+                    <th>Lugar/tandeo</th>
                     <th>Fecha</th>
                     <th>Horario</th>
                 </tr>

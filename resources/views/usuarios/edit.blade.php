@@ -13,7 +13,7 @@
         <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
     @endif
 
-    <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="card card-body" novalidate>
+    <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="card card-body">
         @csrf
         @method('PUT')
         <div class="row g-3">
@@ -33,4 +33,14 @@
         </div>
     </form>
 </div>
+<script>
+    document.querySelector('form[action*="usuarios"]').addEventListener('keydown', function (evento) {
+        if (evento.key !== 'Enter' || evento.target.tagName !== 'INPUT') return;
+
+        evento.preventDefault();
+        const campos = Array.from(this.querySelectorAll('input:not([type="hidden"]), select, button[type="submit"]'));
+        const posicion = campos.indexOf(evento.target);
+        if (posicion >= 0 && campos[posicion + 1]) campos[posicion + 1].focus();
+    });
+</script>
 @endsection

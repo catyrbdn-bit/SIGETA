@@ -31,15 +31,15 @@
         </div>
         <div class="col-12 col-sm-4 col-lg-2">
             <label for="fecha-consulta" class="form-label">Fecha de referencia</label>
-            <input type="date" lang="es-MX" id="fecha-consulta" name="fecha" class="form-control" value="{{ $fechaConsulta }}">
+            <input type="date" lang="es-MX" id="fecha-consulta" name="fecha" data-fecha-referencia="hoy" class="form-control" value="{{ $fechaConsulta }}">
         </div>
         <div class="col-12 col-sm-4 col-lg-2">
             <button type="submit" class="btn btn-outline-primary w-100">Consultar periodo</button>
         </div>
         <div class="col-12 col-lg-4">
-            <label for="buscar-tandeo" class="form-label">Buscar circuito, colonia o calle</label>
+            <label for="buscar-tandeo" class="form-label">Buscar circuito, colonia o lugar/tandeo</label>
             <div class="input-group">
-                <input type="search" id="buscar-tandeo" name="buscar" class="form-control" value="{{ $busqueda }}" placeholder="Buscar por circuito, colonia o calle..." aria-label="Buscar por circuito, colonia o calle">
+                <input type="search" id="buscar-tandeo" name="buscar" class="form-control" value="{{ $busqueda }}" placeholder="Buscar por circuito, colonia o lugar/tandeo..." aria-label="Buscar por circuito, colonia o lugar/tandeo">
             </div>
         </div>
         <div class="col-12 col-lg-2">
@@ -62,7 +62,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>Circuito / Colonia</th>
-                        <th>Calles</th>
+                        <th>Lugar/tandeo</th>
                         <th>Fecha</th>
                         <th>Horario</th>
                         <th>Estado</th>
@@ -111,7 +111,7 @@
                                 <strong>{{ $tandeo->circuito->nombre }}</strong><br>
                                 <span class="text-muted">{{ $tandeo->circuito->zona->nombre }}</span>
                             </td>
-                            <td>{{ $tandeo->circuito->descripcion ?: 'Sin calles registradas' }}</td>
+                            <td>{{ $tandeo->circuito->descripcion ?: 'Sin lugar/tandeo registrado' }}</td>
                             <td>{{ $tandeo->fecha->locale('es')->translatedFormat('l d/M/Y') }}</td>
                             <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                             <td>

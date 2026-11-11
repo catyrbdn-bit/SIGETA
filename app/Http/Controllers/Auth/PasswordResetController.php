@@ -34,7 +34,7 @@ class PasswordResetController extends Controller
         $estado = Password::sendResetLink($request->only('email'));
 
         if ($estado === Password::RESET_LINK_SENT) {
-            return back()->with('status', 'Si el correo pertenece a una cuenta registrada, enviaremos un enlace temporal para cambiar la contraseña.');
+            return back()->with('status', 'Enviaremos un enlace de recuperación a tu correo.');
         }
 
         if ($estado === Password::RESET_THROTTLED) {

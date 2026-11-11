@@ -396,8 +396,8 @@
     <script>
         const prefijoFiltrosSigeta = 'sigeta_filtros_' + @json(Auth::id() ?? 'invitado') + '_';
         document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('.alert-success, .alert-warning, .alert-info, [role="status"]').forEach(function (aviso) {
-                if (aviso.classList.contains('d-none')) return;
+            document.querySelectorAll('.alert-success, .alert-warning, .alert-info, .alert-danger, [role="status"], [role="alert"]').forEach(function (aviso) {
+                if (aviso.classList.contains('d-none') || aviso.hidden) return;
 
                 setTimeout(function () {
                     aviso.style.transition = 'opacity 0.4s ease';
@@ -418,6 +418,13 @@
                 let faltaAplicar = false;
 
                 controles.forEach(function (control) {
+                    if (control.dataset.fechaReferencia === 'hoy') {
+                        if (direccion.searchParams.has(control.name)) {
+                            control.value = direccion.searchParams.get(control.name);
+                        }
+                        return;
+                    }
+
                     if (direccion.searchParams.has(control.name)) {
                         control.value = direccion.searchParams.get(control.name);
                     } else if (Object.prototype.hasOwnProperty.call(guardados, control.name)) {
@@ -430,7 +437,10 @@
 
                 function guardarFiltros() {
                     const datos = {};
-                    controles.forEach(function (control) { datos[control.name] = control.value; });
+                    controles.forEach(function (control) {
+                        if (control.dataset.fechaReferencia === 'hoy') return;
+                        datos[control.name] = control.value;
+                    });
                     localStorage.setItem(clave, JSON.stringify(datos));
                 }
 
@@ -444,7 +454,14 @@
                 if (faltaAplicar && Object.keys(guardados).length > 0) {
                     const destino = new URL(grupo.action || window.location.href, window.location.href);
                     Object.entries(guardados).forEach(function ([campo, valor]) {
+                        const control = controles.find(function (elemento) { return elemento.name === campo; });
+                        if (control && control.dataset.fechaReferencia === 'hoy') return;
                         if (valor !== '') destino.searchParams.set(campo, valor);
+                    });
+                    controles.forEach(function (control) {
+                        if (control.dataset.fechaReferencia === 'hoy' && direccion.searchParams.has(control.name)) {
+                            destino.searchParams.set(control.name, direccion.searchParams.get(control.name));
+                        }
                     });
                     window.location.replace(destino.toString());
                 }

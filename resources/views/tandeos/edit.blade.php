@@ -129,7 +129,7 @@
             <label for="circuito_id">Circuito:</label>
             <select id="circuito_id" name="circuito_id" required>
                 @foreach ($circuitos as $circuito)
-                    <option value="{{ $circuito->id }}" data-zona-id="{{ $circuito->zona_id }}" data-calles="{{ $circuito->descripcion ?: 'Sin calles registradas' }}" @selected(old('circuito_id', $tandeo->circuito_id) == $circuito->id)>
+                    <option value="{{ $circuito->id }}" data-zona-id="{{ $circuito->zona_id }}" data-calles="{{ $circuito->descripcion ?: 'Sin lugar/tandeo registrado' }}" @selected(old('circuito_id', $tandeo->circuito_id) == $circuito->id)>
                         {{ $circuito->nombre }} ({{ $circuito->zona->nombre }})
                     </option>
                 @endforeach
@@ -137,8 +137,8 @@
         </section>
 
         <section class="panel">
-            <label>Calles del circuito:</label>
-            <p id="calles_circuito" class="ayuda mb-0">{{ $tandeo->circuito->descripcion ?: 'Sin calles registradas' }}</p>
+            <label>Lugar/tandeo:</label>
+            <p id="calles_circuito" class="ayuda mb-0">{{ $tandeo->circuito->descripcion ?: 'Sin lugar/tandeo registrado' }}</p>
         </section>
 
         <section class="panel">

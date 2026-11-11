@@ -37,13 +37,14 @@
         </div>
 
         <div class="mb-3">
-            <label for="descripcion" class="form-label">Calles o descripción</label>
+            <label for="descripcion" class="form-label">Lugar/tandeo</label>
             <input
                 type="text"
                 id="descripcion"
                 name="descripcion"
                 class="form-control"
                 maxlength="255"
+                required
                 value="{{ old('descripcion') }}"
                 placeholder="Ej. Lauro Ortega y Pípila por las antenas"
             >

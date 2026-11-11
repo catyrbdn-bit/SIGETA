@@ -31,7 +31,7 @@
     </div>
     <div class="col-12 col-sm-4 col-lg-2">
         <label for="fecha-consulta" class="form-label">Fecha de referencia</label>
-        <input type="date" id="fecha-consulta" name="fecha" class="form-control" value="{{ $fechaConsulta }}">
+        <input type="date" id="fecha-consulta" name="fecha" data-fecha-referencia="hoy" class="form-control" value="{{ $fechaConsulta }}">
     </div>
     <div class="col-12 col-sm-4 col-lg-2">
         <button type="submit" class="btn btn-outline-primary w-100">Consultar periodo</button>
@@ -159,7 +159,7 @@
                         <strong>{{ $tandeo->circuito->nombre }}</strong><br>
                         <span class="text-muted">{{ $tandeo->circuito->zona->nombre }}</span>
                     </td>
-                    <td>{{ $tandeo->circuito->descripcion ?: 'Sin calles registradas' }}</td>
+                    <td>{{ $tandeo->circuito->descripcion ?: 'Sin lugar/tandeo registrado' }}</td>
                     <td>{{ $tandeo->fecha->locale('es')->translatedFormat('l d/M/Y') }}</td>
                     <td>{{ \Carbon\Carbon::parse($tandeo->hora_inicio_programada)->format('G:i') }} - {{ \Carbon\Carbon::parse($tandeo->hora_fin_programada)->format('G:i') }}</td>
                     <td><span class="estado-badge estado-{{ $estado }}">{{ $nombresEstados[$estado] ?? ucfirst(str_replace('_', ' ', $estado)) }}</span></td>
