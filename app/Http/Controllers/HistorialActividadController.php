@@ -1,10 +1,10 @@
 <?php
 
 namespace App\Http\Controllers;
+
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Models\HistorialActividad;
-use App\Models\UsuarioModel;
 use App\Services\HistorialActividadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

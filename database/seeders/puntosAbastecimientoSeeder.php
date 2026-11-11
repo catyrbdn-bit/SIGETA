@@ -1,15 +1,14 @@
 <?php
 
 namespace Database\Seeders;
+
 // archivo del sistema: archivo que carga datos iniciales de ejemplo
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class puntosAbastecimientoSeeder extends Seeder
 {
-    
     // carga los datos iniciales necesarios para el sistema
     // Carga los datos iniciales necesarios para el sistema.
     // descripcion: carga los datos iniciales necesarios para el sistema.
@@ -19,20 +18,20 @@ class puntosAbastecimientoSeeder extends Seeder
     {
         DB::table('puntos_abastecimiento')->insert([
             [
-                'nombre'              => 'Pozo Tetillas',
-                'tipo'                => 'pozo',
+                'nombre' => 'Pozo Tetillas',
+                'tipo' => 'pozo',
                 'horas_atraso_apagon' => 1,
-                'activo'              => true,
-                'created_at'          => now(),
-                'updated_at'          => now(),
+                'activo' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
-                'nombre'              => 'Laguna Hueyapan',
-                'tipo'                => 'laguna',
+                'nombre' => 'Laguna Hueyapan',
+                'tipo' => 'laguna',
                 'horas_atraso_apagon' => 4,
-                'activo'              => true,
-                'created_at'          => now(),
-                'updated_at'          => now(),
+                'activo' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         ]);
     }

@@ -16,16 +16,17 @@ class EnviarCorreoPendiente implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 5;
+
     public int $backoff = 300;
 
-    public function __construct(public int $notificacionId)
-    {
-    }
+    public function __construct(public int $notificacionId) {}
 
     public function handle(): void
     {
         $notificacion = Notificacion::find($this->notificacionId);
-        if (!$notificacion || $notificacion->estado === 'enviada') return;
+        if (! $notificacion || $notificacion->estado === 'enviada') {
+            return;
+        }
 
         if (config('mail.default') !== 'smtp') {
             throw new \RuntimeException('Configura el servidor SMTP para enviar correos.');
@@ -34,10 +35,18 @@ class EnviarCorreoPendiente implements ShouldQueue
         $notificacion->increment('intentos');
 
         try {
-            Mail::raw($notificacion->mensaje, function ($correo) use ($notificacion) {
-                $correo->to($notificacion->destinatario_email)
-                    ->subject($notificacion->asunto);
-            });
+            if (stripos($notificacion->mensaje, '<html') !== false) {
+                Mail::html($notificacion->mensaje, function ($correo) use ($notificacion) {
+                    $correo->to($notificacion->destinatario_email)
+                        ->subject($notificacion->asunto);
+                });
+            } else {
+                // Mantiene legibles los avisos antiguos que siguen pendientes.
+                Mail::raw($notificacion->mensaje, function ($correo) use ($notificacion) {
+                    $correo->to($notificacion->destinatario_email)
+                        ->subject($notificacion->asunto);
+                });
+            }
 
             $notificacion->update([
                 'estado' => 'enviada',
@@ -54,7 +63,9 @@ class EnviarCorreoPendiente implements ShouldQueue
     public function failed(?Throwable $error): void
     {
         $notificacion = Notificacion::find($this->notificacionId);
-        if (!$notificacion) return;
+        if (! $notificacion) {
+            return;
+        }
 
         $notificacion->update([
             'estado' => 'pendiente',

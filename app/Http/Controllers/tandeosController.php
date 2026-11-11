@@ -1,18 +1,20 @@
 <?php
 
 namespace App\Http\Controllers;
+
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
-use Illuminate\Http\Request;
-use App\Models\TandeoProgramado;
-use App\Models\TandeoRepeticion;
 use App\Models\CircuitosModel;
-use App\Models\UsuarioModel;
-use App\Models\ZonasModel;
 use App\Models\CumplimientoTandeo;
 use App\Models\Reprogramacion;
+use App\Models\TandeoProgramado;
+use App\Models\TandeoRepeticion;
+use App\Models\ZonasModel;
+use App\Services\HistorialActividadService;
 use App\Services\RepeticionTandeoService;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -91,8 +93,8 @@ class TandeosController extends Controller
     /**
      * Valida y registra el tandeo, junto con sus repeticiones cuando se solicitan.
      *
-     * @param Request $request Datos de colonia, circuito, fecha, horario y repetición.
-     * @return \Illuminate\Http\RedirectResponse Regresa al listado con el resultado del registro.
+     * @param  Request  $request  Datos de colonia, circuito, fecha, horario y repetición.
+     * @return RedirectResponse Regresa al listado con el resultado del registro.
      */
     public function store(Request $request)
     {
@@ -116,10 +118,10 @@ class TandeosController extends Controller
             ->where('zona_id', $datos['zona_id'])
             ->where('activo', true)
             ->first();
-        //Este if verifica si la zona y el circuito son válidos y activos. 
-        // Si no lo son, lanza una excepción de validación con un mensaje 
-        // de error específico para el campo 'circuito_id'. 
-        // Esto asegura que solo se puedan programar tandeos 
+        // Este if verifica si la zona y el circuito son válidos y activos.
+        // Si no lo son, lanza una excepción de validación con un mensaje
+        // de error específico para el campo 'circuito_id'.
+        // Esto asegura que solo se puedan programar tandeos
         // en circuitos activos que pertenezcan a la zona seleccionada
         if (! $zonaActiva || ! $circuito) {
             throw ValidationException::withMessages([
@@ -128,14 +130,14 @@ class TandeosController extends Controller
         }
 
         // Combina la fecha y la hora de inicio en un objeto Carbon
-        //el objeto Carbon es una biblioteca de PHP que facilita el manejo de fechas y horas
+        // el objeto Carbon es una biblioteca de PHP que facilita el manejo de fechas y horas
         $horaInicio = Carbon::parse(
-            $datos['fecha'] . ' ' . $datos['hora_inicio_programada']
+            $datos['fecha'].' '.$datos['hora_inicio_programada']
         );
         // Valida que no exista otro tandeo del mismo circuito con la misma fecha y hora de inicio
         $fechas = [$horaInicio->copy()];
         $serieId = null;
-        //este if verifica si el tandeo debe repetirse. Si es asi, calcula las fechas de los tandeos repetidos
+        // este if verifica si el tandeo debe repetirse. Si es asi, calcula las fechas de los tandeos repetidos
         if (! empty($datos['repetir'])) {
             $cadaDias = (int) $datos['cada_dias'];
             $serieId = (string) Str::uuid();
@@ -153,7 +155,7 @@ class TandeosController extends Controller
                 $fechas[] = $fechaSiguiente->copy();
             }
         }
-        // Calcula la duración en minutos del tandeo y obtiene los IDs 
+        // Calcula la duración en minutos del tandeo y obtiene los IDs
         // de los tandeadores activos de la zona del circuito
         $duracionMinutos = (int) round((float) $datos['duracion'] * 60);
         $tandeadoresIds = $circuito->zona->tandeadores()
@@ -201,10 +203,10 @@ class TandeosController extends Controller
             }
         });
         // Registra la acción en el historial de actividad del sistema
-        app(\App\Services\HistorialActividadService::class)->registrar(
+        app(HistorialActividadService::class)->registrar(
             'tandeos',
             'registro',
-            'Se programó un tandeo' . ($serieId ? ' con repetición.' : '.'),
+            'Se programó un tandeo'.($serieId ? ' con repetición.' : '.'),
             [
                 // Informacion sobre el tandeo registrado
                 'circuito' => $circuito->nombre,
@@ -215,10 +217,10 @@ class TandeosController extends Controller
                 'tandeos_creados_en_esta_accion' => count($fechas),
             ]
         );
-        // Prepara un mensaje de éxito para el usuario, indicando 
+        // Prepara un mensaje de éxito para el usuario, indicando
         // si se inició una repetición o si el tandeo fue programado exitosamente
         $mensaje = $serieId
-            ? '¡Se inició la repetición cada ' . (int) $datos['cada_dias'] . ' días! El sistema seguirá agregando los próximos tandeos.'
+            ? '¡Se inició la repetición cada '.(int) $datos['cada_dias'].' días! El sistema seguirá agregando los próximos tandeos.'
             : '¡Tandeo programado exitosamente!';
 
         return redirect()->route('tandeos.index')->with('success', $mensaje);
@@ -236,7 +238,7 @@ class TandeosController extends Controller
         $circuitos = CircuitosModel::with('zona')->where('activo', true)->get();
 
         $returnTo = $request->input('return_to', 'tandeos.index');
-        if (!in_array($returnTo, ['dashboard', 'tandeos.index', 'cumplimiento.index'], true)) {
+        if (! in_array($returnTo, ['dashboard', 'tandeos.index', 'cumplimiento.index'], true)) {
             $returnTo = 'tandeos.index';
         }
         $parametrosRegreso = $returnTo === 'cumplimiento.index'
@@ -296,7 +298,7 @@ class TandeosController extends Controller
             $tandeos->each(fn ($ocurrencia) => $ocurrencia->delete());
         });
 
-        app(\App\Services\HistorialActividadService::class)->registrar(
+        app(HistorialActividadService::class)->registrar(
             'tandeos',
             'eliminacion',
             'Se eliminó un tandeo y sus registros relacionados.',
@@ -332,9 +334,8 @@ class TandeosController extends Controller
         // descripcion: comprueba si algún tandeo de la lista cumple la condición indicada.
         // entradas: tandeo que se está comparando
         // salida: indica si se encontró un tandeo que cumple la condición
-        $duplicado = $tandeos->contains(fn ($tandeo) =>
-            Carbon::parse($tandeo->fecha->format('Y-m-d') . ' ' . $tandeo->hora_inicio_programada)
-                ->format('H:i') === $nuevoInicio->format('H:i')
+        $duplicado = $tandeos->contains(fn ($tandeo) => Carbon::parse($tandeo->fecha->format('Y-m-d').' '.$tandeo->hora_inicio_programada)
+            ->format('H:i') === $nuevoInicio->format('H:i')
         );
 
         if (! $duplicado) {
@@ -347,7 +348,7 @@ class TandeosController extends Controller
                 ->get();
 
             foreach ($series as $serie) {
-                $inicioAncla = Carbon::parse($serie->fecha_ancla->format('Y-m-d') . ' ' . $serie->hora_inicio);
+                $inicioAncla = Carbon::parse($serie->fecha_ancla->format('Y-m-d').' '.$serie->hora_inicio);
                 $intervalo = (int) $serie->cada_dias;
 
                 if ((int) $serie->circuito_id !== $circuitoId

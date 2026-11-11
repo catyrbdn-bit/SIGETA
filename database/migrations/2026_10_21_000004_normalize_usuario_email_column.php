@@ -1,4 +1,5 @@
 <?php
+
 // archivo del sistema: archivo que aplica cambios a la estructura de la base de datos
 
 use Illuminate\Database\Migrations\Migration;
@@ -14,7 +15,7 @@ return new class extends Migration
     // salida: actualiza la estructura de la base de datos
     public function up(): void
     {
-        if (Schema::hasColumn('usuarios', 'correo') && !Schema::hasColumn('usuarios', 'email')) {
+        if (Schema::hasColumn('usuarios', 'correo') && ! Schema::hasColumn('usuarios', 'email')) {
             // Define los campos y restricciones de la tabla.
             // descripcion: define los campos y restricciones de la tabla.
             // entradas: columnas de la tabla que se crea o modifica

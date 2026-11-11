@@ -1,4 +1,5 @@
 <?php
+
 // archivo del sistema: archivo que aplica cambios a la estructura de la base de datos
 
 use Illuminate\Database\Migrations\Migration;
@@ -10,11 +11,11 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-        // Aplica los cambios de esta migración a la base de datos.
-        // descripcion: aplica los cambios de esta migración a la base de datos.
-        // entradas: no recibe datos; utiliza la definición de esta migración
-        // salida: actualiza la estructura de la base de datos
-        public function up(): void
+    // Aplica los cambios de esta migración a la base de datos.
+    // descripcion: aplica los cambios de esta migración a la base de datos.
+    // entradas: no recibe datos; utiliza la definición de esta migración
+    // salida: actualiza la estructura de la base de datos
+    public function up(): void
     {
         // Define los campos y restricciones de la tabla.
         // descripcion: define los campos y restricciones de la tabla.

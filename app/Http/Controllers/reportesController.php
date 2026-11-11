@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Exports\CumplimientoCircuitoExport;
@@ -10,6 +11,7 @@ use App\Models\TandeoProgramado;
 use App\Models\UsuarioModel;
 use App\Models\ZonasModel;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -89,7 +91,7 @@ class ReportesController extends Controller
             $inicioSemana = now()->startOfWeek();
             $finSemana = now()->endOfWeek();
             $periodoReporte = $inicioSemana->locale('es')->translatedFormat('d/m/Y')
-                . ' a ' . $finSemana->locale('es')->translatedFormat('d/m/Y');
+                .' a '.$finSemana->locale('es')->translatedFormat('d/m/Y');
             $titulo = 'Resumen semanal por tandeador';
         } elseif ($tipo === 'cumplimiento-zona') {
             $registros = $this->tandeosFiltrados($filtros)->get()
@@ -174,14 +176,14 @@ class ReportesController extends Controller
                     'zona' => $tandeo->circuito->zona->nombre,
                     'calle' => $tandeo->circuito->descripcion,
                     'fecha' => $tandeo->fecha->format('d/m/Y'),
-                    'horario' => $tandeo->hora_inicio_programada . ' - ' . $tandeo->hora_fin_programada,
+                    'horario' => $tandeo->hora_inicio_programada.' - '.$tandeo->hora_fin_programada,
                 ])
                 ->values()
                 ->all();
             $titulo = 'Resumen de tandeos pendientes de registrar';
         }
 
-        $periodo = $periodoReporte ?? (($filtros['desde'] ?? 'Sin fecha inicial') . ' a ' . ($filtros['hasta'] ?? 'Sin fecha final'));
+        $periodo = $periodoReporte ?? (($filtros['desde'] ?? 'Sin fecha inicial').' a '.($filtros['hasta'] ?? 'Sin fecha final'));
         $zona = isset($filtros['zona_id']) ? ZonasModel::find($filtros['zona_id'])?->nombre : 'Todas las colonias';
         $circuito = isset($filtros['circuito_id']) ? CircuitosModel::find($filtros['circuito_id'])?->nombre : 'Todos los circuitos';
 
@@ -242,7 +244,7 @@ class ReportesController extends Controller
             $inicioSemana = now()->startOfWeek();
             $finSemana = now()->endOfWeek();
             $periodoReporte = $inicioSemana->locale('es')->translatedFormat('d/m/Y')
-                . ' a ' . $finSemana->locale('es')->translatedFormat('d/m/Y');
+                .' a '.$finSemana->locale('es')->translatedFormat('d/m/Y');
             $titulo = 'Resumen semanal por tandeador';
         } elseif ($tipo === 'cumplimiento-zona') {
             $tandeos = $this->tandeosFiltrados($filtros)->get();
@@ -363,7 +365,7 @@ class ReportesController extends Controller
                     'zona' => $tandeo->circuito->zona->nombre,
                     'calle' => $tandeo->circuito->descripcion,
                     'fecha' => $tandeo->fecha->format('d/m/Y'),
-                    'horario' => $tandeo->hora_inicio_programada . ' - ' . $tandeo->hora_fin_programada,
+                    'horario' => $tandeo->hora_inicio_programada.' - '.$tandeo->hora_fin_programada,
                 ])
                 ->values()
                 ->all();
@@ -373,8 +375,8 @@ class ReportesController extends Controller
         }
 
         $periodo = $periodoReporte ?? (($filtros['desde'] ?? 'Sin fecha inicial')
-            . ' a '
-            . ($filtros['hasta'] ?? 'Sin fecha final'));
+            .' a '
+            .($filtros['hasta'] ?? 'Sin fecha final'));
         $zona = isset($filtros['zona_id'])
             ? ZonasModel::find($filtros['zona_id'])?->nombre
             : 'Todas las colonias';
@@ -393,7 +395,7 @@ class ReportesController extends Controller
             'zona',
             'circuito'
         ))->setPaper('a4', 'landscape')
-            ->download('reporte-' . $tipo . '-' . now()->format('Ymd-His') . '.pdf');
+            ->download('reporte-'.$tipo.'-'.now()->format('Ymd-His').'.pdf');
     }
 
     // prepara y descarga el reporte de cumplimiento por circuito
@@ -467,7 +469,7 @@ class ReportesController extends Controller
     /**
      * Prepara los movimientos con días de diferencia entre la fecha anterior y la nueva.
      *
-     * @param array $filtros Filtros de colonia, circuito y fechas.
+     * @param  array  $filtros  Filtros de colonia, circuito y fechas.
      * @return array Lista ordenada de tandeos atrasados y su motivo.
      */
     private function filasAtrasosPorColonia(array $filtros): array
@@ -484,7 +486,7 @@ class ReportesController extends Controller
             ->get()
             ->map(function ($movimiento) {
                 $tandeo = $movimiento->tandeo;
-                if (!$tandeo || !$tandeo->circuito) {
+                if (! $tandeo || ! $tandeo->circuito) {
                     return null;
                 }
 
@@ -499,7 +501,7 @@ class ReportesController extends Controller
 
                 return [
                     'colonia' => $tandeo->circuito->zona->nombre ?? 'Sin colonia',
-                    'tandeo' => $tandeo->circuito->nombre . ' · ' . ($tandeo->circuito->descripcion ?: 'Sin calles registradas'),
+                    'tandeo' => $tandeo->circuito->nombre.' · '.($tandeo->circuito->descripcion ?: 'Sin calles registradas'),
                     'dias' => $diasAtraso,
                     'motivo' => $this->motivoDelMovimiento($movimiento),
                 ];
@@ -513,7 +515,7 @@ class ReportesController extends Controller
     /**
      * Prepara los tandeos de esta semana agrupados por las personas asignadas.
      *
-     * @param array $filtros Filtros opcionales de colonia y circuito.
+     * @param  array  $filtros  Filtros opcionales de colonia y circuito.
      * @return array Tandeos ordenados por tandeador, fecha y horario.
      */
     private function filasResumenSemanalTandeadores(array $filtros): array
@@ -543,9 +545,9 @@ class ReportesController extends Controller
                 $asignados = collect([$tandeo->tandeador]);
             }
 
-            $horaInicio = \Carbon\Carbon::parse($tandeo->hora_inicio_programada);
-            $horaFin = \Carbon\Carbon::parse($tandeo->hora_fin_programada);
-            $horario = $horaInicio->format('H:i') . ' - ' . $horaFin->format('H:i');
+            $horaInicio = Carbon::parse($tandeo->hora_inicio_programada);
+            $horaFin = Carbon::parse($tandeo->hora_fin_programada);
+            $horario = $horaInicio->format('H:i').' - '.$horaFin->format('H:i');
             if ($horaFin->lessThanOrEqualTo($horaInicio)) {
                 $horario .= ' (+1 día)';
             }
@@ -553,7 +555,7 @@ class ReportesController extends Controller
             foreach ($asignados as $tandeador) {
                 $filas[] = [
                     'tandeador_id' => $tandeador->id,
-                    'tandeador' => trim($tandeador->nombre . ' ' . $tandeador->apellido_paterno . ' ' . $tandeador->apellido_materno),
+                    'tandeador' => trim($tandeador->nombre.' '.$tandeador->apellido_paterno.' '.$tandeador->apellido_materno),
                     'circuito_id' => $tandeo->circuito_id,
                     'fecha' => $tandeo->fecha->locale('es')->translatedFormat('l d/m/Y'),
                     'fecha_iso' => $tandeo->fecha->format('Y-m-d'),
@@ -571,6 +573,7 @@ class ReportesController extends Controller
 
         $filas = array_map(function ($fila) {
             unset($fila['orden_fecha'], $fila['orden_hora']);
+
             return $fila;
         }, $filas);
 
@@ -580,7 +583,7 @@ class ReportesController extends Controller
     /**
      * Acomoda los horarios del tandeador en una fila por circuito y una columna por día.
      *
-     * @param array $filas Tandeos del tandeador seleccionado.
+     * @param  array  $filas  Tandeos del tandeador seleccionado.
      * @return array Filas listas para la vista previa y el PDF.
      */
     private function matrizResumenSemanalTandeador(array $filas): array
@@ -590,7 +593,7 @@ class ReportesController extends Controller
         foreach ($filas as $fila) {
             $circuitoId = $fila['circuito_id'];
 
-            if (!isset($porCircuito[$circuitoId])) {
+            if (! isset($porCircuito[$circuitoId])) {
                 $porCircuito[$circuitoId] = [
                     'tandeador' => $fila['tandeador'],
                     'colonia' => $fila['colonia'],
@@ -630,7 +633,7 @@ class ReportesController extends Controller
     /**
      * Devuelve un motivo entendible para el movimiento del tandeo.
      *
-     * @param Reprogramacion $movimiento Movimiento guardado en la reprogramación.
+     * @param  Reprogramacion  $movimiento  Movimiento guardado en la reprogramación.
      * @return string Motivo que se muestra en el reporte.
      */
     private function motivoDelMovimiento(Reprogramacion $movimiento): string

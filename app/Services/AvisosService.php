@@ -16,34 +16,59 @@ class AvisosService
     // Guarda avisos para los administradores y tandeadores relacionados.
     public function avisarCambiosHorario(array $movimientos, string $tipo): void
     {
+        if (empty($movimientos)) {
+            return;
+        }
+
+        $etiquetas = [
+            'reprogramacion' => 'reprogramación manual',
+            'apagon_general' => 'apagón general',
+            'fuga_laguna' => 'fuga en laguna',
+            'fuga_pozo' => 'fuga en pozo',
+        ];
+        $etiqueta = $etiquetas[$tipo] ?? 'incidencia';
+        $asunto = $tipo === 'reprogramacion'
+            ? 'Cambios de horario de tandeos'
+            : 'Aviso por '.$etiqueta;
+
+        $administradores = UsuarioModel::where('rol', 'administrador')
+            ->where('activo', true)
+            ->whereNotNull('email')
+            ->get();
+        $avisosPorUsuario = [];
+
         foreach ($movimientos as $movimiento) {
             $tandeo = $movimiento['tandeo'];
             $tandeo->loadMissing(['circuito.zona', 'tandeadores', 'tandeador']);
+            $usuarios = collect($this->buscarTandeadores($tandeo))
+                ->concat($administradores)
+                ->filter(fn ($usuario) => $usuario->email)
+                ->unique(fn ($usuario) => (int) $usuario->id);
 
-            $inicioAnterior = $movimiento['inicio_anterior'];
-            $finAnterior = $movimiento['fin_anterior'];
-            $inicioNuevo = $movimiento['inicio_nuevo'];
-            $finNuevo = $movimiento['fin_nuevo'];
-            $motivo = $movimiento['motivo'] ?? $tipo;
-            $etiquetas = [
-                'reprogramacion' => 'reprogramación',
-                'apagon_general' => 'apagón general',
-                'fuga_laguna' => 'fuga en laguna',
-                'fuga_pozo' => 'fuga en pozo',
+            $cambio = [
+                'circuito' => $tandeo->circuito->nombre ?? 'Sin circuito',
+                'colonia' => $tandeo->circuito->zona->nombre ?? 'Colonia no disponible',
+                'lugar' => $tandeo->circuito->descripcion ?: 'Sin lugar registrado',
+                'horario_anterior' => $this->formatearHorario($movimiento['inicio_anterior'], $movimiento['fin_anterior']),
+                'horario_nuevo' => $this->formatearHorario($movimiento['inicio_nuevo'], $movimiento['fin_nuevo']),
+                'motivo' => $movimiento['motivo'] ?? $etiqueta,
             ];
-            $etiqueta = $etiquetas[$tipo] ?? 'incidencia';
-            $asunto = $tipo === 'reprogramacion'
-                ? 'Cambio de horario de un tandeo'
-                : 'Aviso de atraso por ' . $etiqueta;
 
-            $mensaje = "Se modificó un tandeo del sistema.\n\n"
-                . 'Colonia: ' . ($tandeo->circuito->zona->nombre ?? 'No disponible') . "\n"
-                . 'Calles: ' . ($tandeo->circuito->descripcion ?: 'Sin calles registradas') . "\n"
-                . 'Horario anterior: ' . $inicioAnterior->format('d/m/Y H:i') . ' a ' . $finAnterior->format('d/m/Y H:i') . "\n"
-                . 'Horario nuevo: ' . $inicioNuevo->format('d/m/Y H:i') . ' a ' . $finNuevo->format('d/m/Y H:i') . "\n"
-                . 'Motivo: ' . $motivo;
+            foreach ($usuarios as $usuario) {
+                $id = (int) $usuario->id;
+                $avisosPorUsuario[$id]['usuario'] = $usuario;
+                $avisosPorUsuario[$id]['cambios'][] = $cambio;
+            }
+        }
 
-            $this->avisarUsuarios($tandeo, $asunto, $mensaje, $tipo);
+        foreach ($avisosPorUsuario as $aviso) {
+            $this->guardarAviso(
+                $aviso['usuario'],
+                null,
+                $tipo,
+                $asunto,
+                $this->mensajeCambios($aviso['cambios'], $etiqueta)
+            );
         }
     }
 
@@ -52,6 +77,7 @@ class AvisosService
     {
         $inicio = now()->startOfDay();
         $fin = $inicio->copy()->addDays(6)->endOfDay();
+        $inicioCiclo = $this->inicioCicloResumen();
         $tandeos = TandeoProgramado::with(['circuito.zona', 'tandeadores', 'tandeador'])
             ->whereBetween('fecha', [$inicio->toDateString(), $fin->toDateString()])
             ->orderBy('fecha')
@@ -69,7 +95,13 @@ class AvisosService
 
         foreach ($idsTandeadores as $id) {
             $tandeador = UsuarioModel::find($id);
-            if (!$tandeador || !$tandeador->email) continue;
+            if (! $tandeador || ! $tandeador->email) {
+                continue;
+            }
+
+            if ($this->yaSePreparoResumen($tandeador, $inicioCiclo)) {
+                continue;
+            }
 
             $asignados = collect();
             foreach ($tandeos as $tandeo) {
@@ -85,23 +117,33 @@ class AvisosService
                 null,
                 'resumen_semanal',
                 'Resumen semanal de tandeos',
-                $this->textoResumen($asignados, $inicio, $fin)
+                $this->mensajeResumen($asignados, $inicio, $fin)
             ) ? 1 : 0;
         }
 
         $administradores = UsuarioModel::where('rol', 'administrador')
             ->where('activo', true)->whereNotNull('email')->get();
         foreach ($administradores as $administrador) {
+            if ($this->yaSePreparoResumen($administrador, $inicioCiclo)) {
+                continue;
+            }
+
             $cantidad += $this->guardarAviso(
                 $administrador,
                 null,
                 'resumen_semanal',
                 'Resumen semanal de tandeos',
-                $this->textoResumen($tandeos, $inicio, $fin)
+                $this->mensajeResumen($tandeos, $inicio, $fin)
             ) ? 1 : 0;
         }
 
         return $cantidad;
+    }
+
+    // Prepara el resumen pendiente cuando se abre el sistema después del viernes a las nueve.
+    public function revisarResumenSemanalAlAbrir(): int
+    {
+        return $this->crearResumenSemanal();
     }
 
     // Intenta enviar de nuevo los avisos que siguen pendientes.
@@ -122,7 +164,9 @@ class AvisosService
     // Registra el aviso en la base y lo pone en la cola de correo.
     private function guardarAviso(?UsuarioModel $usuario, ?TandeoProgramado $tandeo, string $tipo, string $asunto, string $mensaje): bool
     {
-        if (!$usuario || !$usuario->email) return false;
+        if (! $usuario || ! $usuario->email) {
+            return false;
+        }
 
         try {
             $notificacion = Notificacion::create([
@@ -135,9 +179,11 @@ class AvisosService
                 'estado' => 'pendiente',
             ]);
             $this->ponerEnCola($notificacion);
+
             return true;
         } catch (Throwable $error) {
             Log::error('No se pudo guardar una notificación.', ['error' => $error->getMessage()]);
+
             return false;
         }
     }
@@ -150,6 +196,7 @@ class AvisosService
                 'ultimo_error' => 'Configura el servidor SMTP para enviar correos.',
                 'reintentar_en' => now()->addMinutes(5),
             ]);
+
             return;
         }
 
@@ -166,22 +213,66 @@ class AvisosService
     }
 
     // Arma el texto que recibe cada usuario.
-    private function textoResumen(Collection $tandeos, Carbon $inicio, Carbon $fin): string
+    private function mensajeResumen(Collection $tandeos, Carbon $inicio, Carbon $fin): string
     {
-        $lineas = [
-            'Tandeos programados del ' . $inicio->format('d/m/Y') . ' al ' . $fin->format('d/m/Y') . ':',
-            '',
-        ];
+        $filas = $tandeos->map(function ($tandeo) {
+            return [
+                'fecha' => $tandeo->fecha->copy()->locale('es')->translatedFormat('l d/m/Y'),
+                'colonia' => $tandeo->circuito->zona->nombre ?? 'Colonia no disponible',
+                'lugar' => $tandeo->circuito->descripcion ?: $tandeo->circuito->nombre,
+                'horario' => substr($tandeo->hora_inicio_programada, 0, 5)
+                    .' – '.substr($tandeo->hora_fin_programada, 0, 5),
+            ];
+        });
 
-        foreach ($tandeos as $tandeo) {
-            $lineas[] = $tandeo->fecha->format('d/m/Y') . ' | '
-                . ($tandeo->circuito->zona->nombre ?? 'Colonia no disponible') . ' | '
-                . ($tandeo->circuito->descripcion ?: $tandeo->circuito->nombre) . ' | '
-                . $tandeo->hora_inicio_programada . ' - ' . $tandeo->hora_fin_programada;
+        return view('correo-resumen-semanal', [
+            'filas' => $filas,
+            'inicio' => $inicio->format('d/m/Y'),
+            'fin' => $fin->format('d/m/Y'),
+        ])->render();
+    }
+
+    // Devuelve el viernes a las nueve que inicia el ciclo de envío actual.
+    private function inicioCicloResumen(): Carbon
+    {
+        $viernesActual = now()->startOfWeek(Carbon::MONDAY)
+            ->addDays(4)
+            ->setTime(9, 0);
+
+        if (now()->lt($viernesActual)) {
+            $viernesActual->subWeek();
         }
 
-        if ($tandeos->isEmpty()) $lineas[] = 'No hay tandeos programados para este periodo.';
-        return implode("\n", $lineas);
+        return $viernesActual;
+    }
+
+    // Evita preparar más de un resumen para la misma persona durante el ciclo semanal.
+    private function yaSePreparoResumen(UsuarioModel $usuario, Carbon $inicioCiclo): bool
+    {
+        return Notificacion::where('usuario_id', $usuario->id)
+            ->where('tipo', 'resumen_semanal')
+            ->where('created_at', '>=', $inicioCiclo)
+            ->where('created_at', '<', $inicioCiclo->copy()->addWeek())
+            ->exists();
+    }
+
+    // Ordena los cambios en bloques separados para facilitar su lectura.
+    private function mensajeCambios(array $cambios, string $evento): string
+    {
+        return view('correo-cambios', [
+            'cambios' => $cambios,
+            'evento' => $evento,
+        ])->render();
+    }
+
+    // Muestra una sola fecha cuando el tandeo empieza y termina el mismo día.
+    private function formatearHorario(Carbon $inicio, Carbon $fin): string
+    {
+        if ($inicio->isSameDay($fin)) {
+            return $inicio->format('d/m/Y').' · '.$inicio->format('H:i').'–'.$fin->format('H:i');
+        }
+
+        return $inicio->format('d/m/Y H:i').' – '.$fin->format('d/m/Y H:i');
     }
 
     // Devuelve los tandeadores directos y los relacionados con el tandeo.
@@ -196,7 +287,9 @@ class AvisosService
                     break;
                 }
             }
-            if (!$principalYaExiste) $personas[] = $tandeo->tandeador;
+            if (! $principalYaExiste) {
+                $personas[] = $tandeo->tandeador;
+            }
         }
 
         $tandeadores = [];
@@ -205,6 +298,7 @@ class AvisosService
                 $tandeadores[] = $persona;
             }
         }
+
         return $tandeadores;
     }
 

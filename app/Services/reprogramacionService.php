@@ -1,29 +1,29 @@
 <?php
 
 namespace App\Services;
+
 // archivo del sistema: archivo con procesos que utiliza el sistema
 
+use App\Models\CircuitosModel;
 use App\Models\CumplimientoTandeo;
 use App\Models\Reprogramacion;
-use App\Models\CircuitosModel;
 use App\Models\TandeoProgramado;
-use App\Services\HistorialActividadService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ReprogramacionService
 {
-
     /**
      * Calcula los movimientos de tandeos afectados sin guardarlos.
      *
-     * @param Carbon $desde Fecha y hora desde la que se revisa la incidencia.
-     * @param array $ajustes Horarios modificados manualmente.
-     * @param array $motivos Motivos capturados para los tandeos.
-     * @param string|null $tipoPunto Punto afectado, si se trata de una fuga.
-     * @param int|null $horasFuga Horas de atraso para la fuga, si aplica.
-     * @param string $motivoIncidencia Texto que describe la incidencia.
+     * @param  Carbon  $desde  Fecha y hora desde la que se revisa la incidencia.
+     * @param  array  $ajustes  Horarios modificados manualmente.
+     * @param  array  $motivos  Motivos capturados para los tandeos.
+     * @param  string|null  $tipoPunto  Punto afectado, si se trata de una fuga.
+     * @param  int|null  $horasFuga  Horas de atraso para la fuga, si aplica.
+     * @param  string  $motivoIncidencia  Texto que describe la incidencia.
      * @return array Movimientos propuestos y advertencias para la vista previa.
      */
     public function simularApagon(
@@ -33,8 +33,7 @@ class ReprogramacionService
         ?string $tipoPunto = null,
         ?int $horasFuga = null,
         string $motivoIncidencia = 'Afectado por el apagón'
-    ): array
-    {
+    ): array {
         $hasta = $desde->copy()->addDays(config('sigeta.ventana_dias'));
 
         // Buscamos tandeos pendientes dentro del periodo de 12 dias.
@@ -72,14 +71,14 @@ class ReprogramacionService
                 // Un tandeo ya cumplido no se modifica. Si se cambió su horario,
                 // ignoramos el cumplimiento viejo capturado antes del nuevo inicio.
                 $cumplimiento = $tandeo->cumplimientos->first();
-                if (!$cumplimiento || !$cumplimiento->fecha_captura) {
+                if (! $cumplimiento || ! $cumplimiento->fecha_captura) {
                     return true;
                 }
                 if (Carbon::parse($cumplimiento->fecha_captura)->lt($tandeo->inicio)) {
                     return true;
                 }
 
-                return !in_array($cumplimiento->resultado, ['cumplido', 'atraso', 'no_cumplido'], true);
+                return ! in_array($cumplimiento->resultado, ['cumplido', 'atraso', 'no_cumplido'], true);
             })
             ->sortBy('inicio')
             ->values();
@@ -113,7 +112,7 @@ class ReprogramacionService
                 $minutosMinimos = (int) round(($horasFuga ?? 0) * 60);
 
                 if ($minutosElegidos < $minutosMinimos) {
-                    throw \Illuminate\Validation\ValidationException::withMessages([
+                    throw ValidationException::withMessages([
                         'nuevo' => "El atraso de esta fuga no puede ser menor a {$horasFuga} horas.",
                     ]);
                 }
@@ -137,12 +136,12 @@ class ReprogramacionService
                     $anterior['fin_anterior']
                 );
 
-                if ($hayEmpalme && !$yaSeEmpalmaban) {
+                if ($hayEmpalme && ! $yaSeEmpalmaban) {
                     $nuevoInicio = $anterior['fin_nuevo']->copy();
                     $nuevoFin = $nuevoInicio->copy()->addMinutes($duracion);
                     $esCadena = true;
 
-                    if (!$puntoId) {
+                    if (! $puntoId) {
                         $puntoId = $anterior['punto_id'];
                     }
                 }
@@ -183,17 +182,17 @@ class ReprogramacionService
     /**
      * Calcula una reprogramación manual y revisa los empalmes sin guardar.
      *
-     * @param int $tandeoId Identificador del tandeo que se quiere mover.
-     * @param Carbon $nuevoInicio Fecha y hora propuestas para el tandeo.
-     * @param array $ajustes Horarios modificados manualmente para otros tandeos.
-     * @param array $motivos Motivos de los movimientos propuestos.
-     * @param string|null $motivoInicial Motivo del cambio principal.
-     * @param int|null $circuitoId Circuito alternativo, si se modificó.
-     * @param int|null $duracionManual Duración nueva en minutos, si se indicó.
+     * @param  int  $tandeoId  Identificador del tandeo que se quiere mover.
+     * @param  Carbon  $nuevoInicio  Fecha y hora propuestas para el tandeo.
+     * @param  array  $ajustes  Horarios modificados manualmente para otros tandeos.
+     * @param  array  $motivos  Motivos de los movimientos propuestos.
+     * @param  string|null  $motivoInicial  Motivo del cambio principal.
+     * @param  int|null  $circuitoId  Circuito alternativo, si se modificó.
+     * @param  int|null  $duracionManual  Duración nueva en minutos, si se indicó.
      * @return array Movimientos propuestos y advertencias para la vista previa.
      */
-    public function simularManual(int $tandeoId, Carbon $nuevoInicio, array $ajustes = [], array $motivos = [], ?string $motivoInicial = null, 
-                                    ?int $circuitoId = null, ?int $duracionManual = null): array
+    public function simularManual(int $tandeoId, Carbon $nuevoInicio, array $ajustes = [], array $motivos = [], ?string $motivoInicial = null,
+        ?int $circuitoId = null, ?int $duracionManual = null): array
     {
         $seleccionado = TandeoProgramado::with('circuito.puntoAbastecimiento', 'circuito.zona')->findOrFail($tandeoId);
         $circuitoNuevo = null;
@@ -232,7 +231,7 @@ class ReprogramacionService
             // salida: deja la condición agregada a la consulta
             ->where(function ($q) {
                 $q->whereNull('estado')
-                  ->orWhereNotIn('estado', ['cumplido', 'atraso', 'no_cumplido', 'con atraso', 'no cumplido']);
+                    ->orWhereNotIn('estado', ['cumplido', 'atraso', 'no_cumplido', 'con atraso', 'no cumplido']);
             })
             ->whereBetween('fecha', [$inicioVentana->toDateString(), $finVentana->toDateString()])
             ->get()
@@ -246,11 +245,10 @@ class ReprogramacionService
 
         $tandeo = $tandeos->firstWhere('id', $tandeoId);
         if (! $tandeo) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'tandeo_id' => 'No se puede reprogramar este tandeo porque ya tiene un estado final.',
             ]);
         }
-
 
         if ($circuitoNuevo) {
             $tandeo->circuito_id = $circuitoNuevo->id;
@@ -267,7 +265,7 @@ class ReprogramacionService
         // Si un horario choca, recorremos ese tandeo y revisamos de nuevo
         while ($actual = array_shift($cola)) {
             foreach ($tandeos as $otro) {
-                //este if evita que se mueva un tandeo que ya se movio en la cadena
+                // este if evita que se mueva un tandeo que ya se movio en la cadena
                 if (isset($movimientos[$otro->id])) {
                     continue;
                 }
@@ -277,7 +275,7 @@ class ReprogramacionService
                 if ($this->seEmpalman($actual['inicio_anterior'], $actual['fin_anterior'], $otro->inicio, $otro->fin)) {
                     continue;
                 }
-                //esta parte es para que si el tandeo ya se movio manualmente, no se mueva otra vez por la cadena
+                // esta parte es para que si el tandeo ya se movio manualmente, no se mueva otra vez por la cadena
                 $ajuste = $ajustes[$otro->id] ?? null;
 
                 $mov = $this->mover(
@@ -320,7 +318,7 @@ class ReprogramacionService
         // descripcion: agrupa los cambios para guardarlos como una sola operación.
         // entradas: registros que se actualizan durante la operación
         // salida: confirma los cambios o los revierte si ocurre un error
-        DB::transaction(function () use ($resultado, $cadena, $usuarioId, $tandeoId, $circuitoId, $tandeadorId, $horasAtraso, $cumplimientoId, $observacionesCumplimiento) {
+        DB::transaction(function () use ($resultado, $cadena, $usuarioId, $tandeoId, $circuitoId, $horasAtraso, $cumplimientoId, $observacionesCumplimiento) {
             foreach ($resultado['movimientos'] as $m) {
                 Reprogramacion::create([
                     'tandeo_id' => $m['tandeo']->id,
@@ -372,8 +370,11 @@ class ReprogramacionService
                         $cumplimiento = $cumplimientoId
                             ? CumplimientoTandeo::where('id', $cumplimientoId)->where('tandeo_id', $tandeoId)->first()
                             : null;
-                        if ($cumplimiento) $cumplimiento->update($valoresCumplimiento);
-                        else CumplimientoTandeo::create(array_merge($valoresCumplimiento, ['tandeo_id' => $tandeoId]));
+                        if ($cumplimiento) {
+                            $cumplimiento->update($valoresCumplimiento);
+                        } else {
+                            CumplimientoTandeo::create(array_merge($valoresCumplimiento, ['tandeo_id' => $tandeoId]));
+                        }
                     }
                 }
             }
@@ -394,8 +395,8 @@ class ReprogramacionService
                     return [
                         'tandeo_id' => $movimiento['tandeo']->id,
                         'circuito' => $movimiento['tandeo']->circuito->nombre,
-                        'horario_anterior' => $movimiento['inicio_anterior']->format('Y-m-d H:i') . ' a ' . $movimiento['fin_anterior']->format('Y-m-d H:i'),
-                        'horario_nuevo' => $movimiento['inicio_nuevo']->format('Y-m-d H:i') . ' a ' . $movimiento['fin_nuevo']->format('Y-m-d H:i'),
+                        'horario_anterior' => $movimiento['inicio_anterior']->format('Y-m-d H:i').' a '.$movimiento['fin_anterior']->format('Y-m-d H:i'),
+                        'horario_nuevo' => $movimiento['inicio_nuevo']->format('Y-m-d H:i').' a '.$movimiento['fin_nuevo']->format('Y-m-d H:i'),
                         'motivo' => $movimiento['motivo'],
                     ];
                 }, $resultado['movimientos']),
@@ -404,8 +405,10 @@ class ReprogramacionService
         );
 
         app(AvisosService::class)->avisarCambiosHorario($resultado['movimientos'], 'reprogramacion');
+
         return $cadena;
     }
+
     // guarda los horarios afectados por el apagon
     // Guarda el atraso por apagón y los movimientos en cadena necesarios.
     // descripcion: guarda el atraso por apagón y los movimientos en cadena necesarios.
@@ -419,12 +422,12 @@ class ReprogramacionService
     /**
      * Guarda la fuga y los movimientos de tandeos que produce en cadena.
      *
-     * @param Carbon $desde Fecha y hora desde la que se revisa la incidencia.
-     * @param int $usuarioId Identificador del usuario que confirma el cambio.
-     * @param string $tipoPunto Punto afectado: laguna o pozo.
-     * @param int $horasAtraso Horas de atraso aplicadas al tandeo.
-     * @param array $ajustes Horarios que se modificaron manualmente.
-     * @param array $motivos Motivos escritos para los tandeos afectados.
+     * @param  Carbon  $desde  Fecha y hora desde la que se revisa la incidencia.
+     * @param  int  $usuarioId  Identificador del usuario que confirma el cambio.
+     * @param  string  $tipoPunto  Punto afectado: laguna o pozo.
+     * @param  int  $horasAtraso  Horas de atraso aplicadas al tandeo.
+     * @param  array  $ajustes  Horarios que se modificaron manualmente.
+     * @param  array  $motivos  Motivos escritos para los tandeos afectados.
      * @return string Identificador de la cadena registrada.
      */
     public function aplicarFuga(
@@ -437,16 +440,17 @@ class ReprogramacionService
     ): string {
         $etiqueta = $tipoPunto === 'laguna' ? 'Fuga en laguna' : 'Fuga en pozo';
         $resultado = $this->simularApagon($desde, $ajustes, $motivos, $tipoPunto, $horasAtraso, $etiqueta);
+
         // Guardamos la incidencia y los cambios en la base de datos
-        return $this->guardarIncidencia($resultado, $usuarioId, 'fuga_' . $tipoPunto);
+        return $this->guardarIncidencia($resultado, $usuarioId, 'fuga_'.$tipoPunto);
     }
 
     /**
      * Guarda los cambios de horario y el historial de una incidencia.
      *
-     * @param array $resultado Movimientos calculados para los tandeos afectados.
-     * @param int $usuarioId Identificador del usuario que confirma los cambios.
-     * @param string $tipoOrigen Tipo de incidencia que inició la reprogramación.
+     * @param  array  $resultado  Movimientos calculados para los tandeos afectados.
+     * @param  int  $usuarioId  Identificador del usuario que confirma los cambios.
+     * @param  string  $tipoOrigen  Tipo de incidencia que inició la reprogramación.
      * @return string Identificador de la cadena guardada.
      */
     private function guardarIncidencia(array $resultado, int $usuarioId, string $tipoOrigen): string
@@ -461,19 +465,19 @@ class ReprogramacionService
         DB::transaction(function () use ($resultado, $cadena, $usuarioId, $tipoOrigen) {
             foreach ($resultado['movimientos'] as $m) {
                 Reprogramacion::create([
-                    'tandeo_id'               => $m['tandeo']->id,
-                    'cadena_uuid'             => $cadena,
-                    'tipo_origen'             => $tipoOrigen,
-                    'es_manual'               => $m['manual'],
-                    'es_efecto_cadena'        => $m['es_cadena'],
+                    'tandeo_id' => $m['tandeo']->id,
+                    'cadena_uuid' => $cadena,
+                    'tipo_origen' => $tipoOrigen,
+                    'es_manual' => $m['manual'],
+                    'es_efecto_cadena' => $m['es_cadena'],
                     'punto_abastecimiento_id' => $m['punto_id'],
-                    'inicio_anterior'         => $m['inicio_anterior'],
-                    'fin_anterior'            => $m['fin_anterior'],
-                    'inicio_nuevo'            => $m['inicio_nuevo'],
-                    'fin_nuevo'               => $m['fin_nuevo'],
-                    'horas_atraso'            => round($m['inicio_anterior']->diffInMinutes($m['inicio_nuevo']) / 60, 1),
-                    'usuario_id'              => $usuarioId,
-                    'observaciones'           => $m['motivo'],
+                    'inicio_anterior' => $m['inicio_anterior'],
+                    'fin_anterior' => $m['fin_anterior'],
+                    'inicio_nuevo' => $m['inicio_nuevo'],
+                    'fin_nuevo' => $m['fin_nuevo'],
+                    'horas_atraso' => round($m['inicio_anterior']->diffInMinutes($m['inicio_nuevo']) / 60, 1),
+                    'usuario_id' => $usuarioId,
+                    'observaciones' => $m['motivo'],
                 ]);
 
                 $m['tandeo']->aplicarHorario($m['inicio_nuevo'], $m['fin_nuevo']);
@@ -495,8 +499,8 @@ class ReprogramacionService
                     return [
                         'tandeo_id' => $movimiento['tandeo']->id,
                         'circuito' => $movimiento['tandeo']->circuito->nombre,
-                        'horario_anterior' => $movimiento['inicio_anterior']->format('Y-m-d H:i') . ' a ' . $movimiento['fin_anterior']->format('Y-m-d H:i'),
-                        'horario_nuevo' => $movimiento['inicio_nuevo']->format('Y-m-d H:i') . ' a ' . $movimiento['fin_nuevo']->format('Y-m-d H:i'),
+                        'horario_anterior' => $movimiento['inicio_anterior']->format('Y-m-d H:i').' a '.$movimiento['fin_anterior']->format('Y-m-d H:i'),
+                        'horario_nuevo' => $movimiento['inicio_nuevo']->format('Y-m-d H:i').' a '.$movimiento['fin_nuevo']->format('Y-m-d H:i'),
                     ];
                 }, $resultado['movimientos']),
             ],
@@ -504,19 +508,20 @@ class ReprogramacionService
         );
 
         app(AvisosService::class)->avisarCambiosHorario($resultado['movimientos'], $tipoOrigen);
+
         return $cadena;
     }
 
     /**
      * Prepara el horario anterior y el nuevo para un tandeo de la cadena.
      *
-     * @param TandeoProgramado $t Tandeo que se va a mover.
-     * @param Carbon $nuevoInicio Fecha y hora propuestas para el inicio.
-     * @param bool $esCadena Indica si el movimiento fue causado por otro tandeo.
-     * @param int|null $puntoId Identificador del punto de abastecimiento relacionado.
-     * @param bool $manual Indica si el horario fue ajustado manualmente.
-     * @param string|null $motivo Motivo asociado al movimiento.
-     * @param int|null $duracionNueva Duración propuesta en minutos, si se especificó.
+     * @param  TandeoProgramado  $t  Tandeo que se va a mover.
+     * @param  Carbon  $nuevoInicio  Fecha y hora propuestas para el inicio.
+     * @param  bool  $esCadena  Indica si el movimiento fue causado por otro tandeo.
+     * @param  int|null  $puntoId  Identificador del punto de abastecimiento relacionado.
+     * @param  bool  $manual  Indica si el horario fue ajustado manualmente.
+     * @param  string|null  $motivo  Motivo asociado al movimiento.
+     * @param  int|null  $duracionNueva  Duración propuesta en minutos, si se especificó.
      * @return array Datos del tandeo y de sus horarios anterior y nuevo.
      */
     private function mover(TandeoProgramado $t, Carbon $nuevoInicio, bool $esCadena, ?int $puntoId, bool $manual, ?string $motivo, ?int $duracionNueva = null): array
@@ -524,16 +529,16 @@ class ReprogramacionService
         $duracion = $t->inicio->diffInMinutes($t->fin);
 
         return [
-            'tandeo'          => $t,
+            'tandeo' => $t,
             'inicio_anterior' => $t->inicio->copy(),
-            'fin_anterior'    => $t->fin->copy(),
-            'inicio_nuevo'    => $nuevoInicio,
-            'fin_nuevo'       => $nuevoInicio->copy()->addMinutes($duracionNueva ?? $duracion),
-            'es_cadena'       => $esCadena,
-            'punto_id'        => $puntoId,
-            'manual'          => $manual,
-            'motivo'          => $motivo,
-            'es_repeticion'   => false,
+            'fin_anterior' => $t->fin->copy(),
+            'inicio_nuevo' => $nuevoInicio,
+            'fin_nuevo' => $nuevoInicio->copy()->addMinutes($duracionNueva ?? $duracion),
+            'es_cadena' => $esCadena,
+            'punto_id' => $puntoId,
+            'manual' => $manual,
+            'motivo' => $motivo,
+            'es_repeticion' => false,
         ];
     }
 
@@ -570,13 +575,13 @@ class ReprogramacionService
             $cambio = $cambios[$tandeo->id] ?? null;
             $circuitoId = $cambio['circuito_id'] ?? $tandeo->circuito_id;
             $inicio = $cambio['inicio'] ?? $tandeo->inicio;
-            $clave = $circuitoId . '|' . $inicio->format('Y-m-d H:i');
+            $clave = $circuitoId.'|'.$inicio->format('Y-m-d H:i');
             $horarios[$clave][] = $cambio !== null;
         }
 
         foreach ($horarios as $coincidencias) {
             if (count($coincidencias) > 1 && in_array(true, $coincidencias, true)) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'inicio_nuevo' => 'Ya existe un tandeo de este circuito con la misma fecha y hora de inicio.',
                 ]);
             }

@@ -1,7 +1,6 @@
 <?php
-// archivo del sistema: archivo con opciones de configuracion de laravel
 
-use App\Models\UsuarioModel;
+// archivo del sistema: archivo con opciones de configuracion de laravel
 
 return [
 

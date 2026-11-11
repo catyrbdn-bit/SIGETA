@@ -18,15 +18,15 @@ class RespaldoBaseDatosService
         $carpeta = storage_path('app/respaldos');
         File::ensureDirectoryExists($carpeta);
 
-        $nombre = 'sigeta_' . now()->format('Ymd_His_u') . '.sqlite';
-        $rutaCompleta = $carpeta . DIRECTORY_SEPARATOR . $nombre;
+        $nombre = 'sigeta_'.now()->format('Ymd_His_u').'.sqlite';
+        $rutaCompleta = $carpeta.DIRECTORY_SEPARATOR.$nombre;
         $rutaSql = str_replace("'", "''", $rutaCompleta);
         DB::connection()->getPdo()->exec("VACUUM INTO '{$rutaSql}'");
 
         return RespaldoBd::create([
             'usuario_id' => $usuarioId,
             'nombre_archivo' => $nombre,
-            'ruta_archivo' => 'respaldos/' . $nombre,
+            'ruta_archivo' => 'respaldos/'.$nombre,
             'tamano_bytes' => File::size($rutaCompleta),
             'estado' => 'disponible',
         ]);
@@ -37,9 +37,9 @@ class RespaldoBaseDatosService
     {
         $this->revisarMotor();
         $carpeta = realpath(storage_path('app/respaldos'));
-        $rutaRespaldo = realpath(storage_path('app/' . $respaldo->ruta_archivo));
+        $rutaRespaldo = realpath(storage_path('app/'.$respaldo->ruta_archivo));
 
-        if (!$carpeta || !$rutaRespaldo || !str_starts_with($rutaRespaldo, $carpeta . DIRECTORY_SEPARATOR)) {
+        if (! $carpeta || ! $rutaRespaldo || ! str_starts_with($rutaRespaldo, $carpeta.DIRECTORY_SEPARATOR)) {
             throw new RuntimeException('No se encontró el archivo de respaldo seleccionado.');
         }
 
@@ -49,12 +49,12 @@ class RespaldoBaseDatosService
         })->all();
 
         $baseActual = config('database.connections.sqlite.database');
-        if (!$baseActual || $baseActual === ':memory:' || !File::exists($baseActual)) {
+        if (! $baseActual || $baseActual === ':memory:' || ! File::exists($baseActual)) {
             throw new RuntimeException('No se pudo localizar el archivo de la base de datos actual.');
         }
 
-        $temporal = $baseActual . '.nuevo';
-        $anterior = $baseActual . '.anterior';
+        $temporal = $baseActual.'.nuevo';
+        $anterior = $baseActual.'.anterior';
 
         if (File::exists($anterior)) {
             throw new RuntimeException('Hay una copia anterior pendiente de revisar. No se modificó la base de datos.');
@@ -74,8 +74,10 @@ class RespaldoBaseDatosService
             File::move($baseActual, $anterior);
             $baseMovida = true;
 
-            foreach ([$baseActual . '-wal', $baseActual . '-shm'] as $archivoAuxiliar) {
-                if (File::exists($archivoAuxiliar)) File::delete($archivoAuxiliar);
+            foreach ([$baseActual.'-wal', $baseActual.'-shm'] as $archivoAuxiliar) {
+                if (File::exists($archivoAuxiliar)) {
+                    File::delete($archivoAuxiliar);
+                }
             }
 
             File::move($temporal, $baseActual);
@@ -85,8 +87,10 @@ class RespaldoBaseDatosService
 
             $registrosPrevios[] = $copiaActual->only(['usuario_id', 'nombre_archivo', 'ruta_archivo', 'tamano_bytes', 'estado']);
             foreach ($registrosPrevios as $datos) {
-                if (!RespaldoBd::where('ruta_archivo', $datos['ruta_archivo'])->exists()) {
-                    if (!UsuarioModel::whereKey($datos['usuario_id'])->exists()) $datos['usuario_id'] = null;
+                if (! RespaldoBd::where('ruta_archivo', $datos['ruta_archivo'])->exists()) {
+                    if (! UsuarioModel::whereKey($datos['usuario_id'])->exists()) {
+                        $datos['usuario_id'] = null;
+                    }
                     RespaldoBd::create($datos);
                 }
             }
@@ -97,14 +101,19 @@ class RespaldoBaseDatosService
             ];
 
             File::delete($anterior);
+
             return $resultado;
         } catch (\Throwable $error) {
             DB::purge();
 
             if ($baseMovida && File::exists($anterior)) {
-                if (File::exists($baseActual)) File::delete($baseActual);
-                foreach ([$baseActual . '-wal', $baseActual . '-shm'] as $archivoAuxiliar) {
-                    if (File::exists($archivoAuxiliar)) File::delete($archivoAuxiliar);
+                if (File::exists($baseActual)) {
+                    File::delete($baseActual);
+                }
+                foreach ([$baseActual.'-wal', $baseActual.'-shm'] as $archivoAuxiliar) {
+                    if (File::exists($archivoAuxiliar)) {
+                        File::delete($archivoAuxiliar);
+                    }
                 }
 
                 File::move($anterior, $baseActual);
@@ -114,7 +123,9 @@ class RespaldoBaseDatosService
 
             throw $error;
         } finally {
-            if (File::exists($temporal)) File::delete($temporal);
+            if (File::exists($temporal)) {
+                File::delete($temporal);
+            }
         }
     }
 
@@ -127,9 +138,11 @@ class RespaldoBaseDatosService
 
     private function revisarIntegridad(string $ruta): void
     {
-        $pdo = new PDO('sqlite:' . $ruta);
+        $pdo = new PDO('sqlite:'.$ruta);
         $resultado = $pdo->query('PRAGMA integrity_check')->fetchColumn();
         $pdo = null;
-        if ($resultado !== 'ok') throw new RuntimeException('El archivo de respaldo no pasó la revisión de integridad.');
+        if ($resultado !== 'ok') {
+            throw new RuntimeException('El archivo de respaldo no pasó la revisión de integridad.');
+        }
     }
 }

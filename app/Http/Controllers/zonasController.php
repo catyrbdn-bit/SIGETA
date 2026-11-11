@@ -1,15 +1,17 @@
 <?php
 
 namespace App\Http\Controllers;
+
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
-use Illuminate\Http\Request;
-use App\Models\ZonasModel;
-use App\Models\UsuarioModel;
 use App\Models\CircuitosModel;
+use App\Models\CumplimientoTandeo;
 use App\Models\TandeoProgramado;
 use App\Models\TandeoRepeticion;
-use App\Models\CumplimientoTandeo;
+use App\Models\UsuarioModel;
+use App\Models\ZonasModel;
+use App\Services\HistorialActividadService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -25,11 +27,11 @@ class ZonasController extends Controller
         $zonas = ZonasModel::with('tandeadores')
             ->withCount(['circuitos', 'tandeos'])
             ->get();
+
         return view('zonas.index', compact('zonas'));
     }
 
-
-    //funcion create para mostrar el formulario de creacion de zona
+    // funcion create para mostrar el formulario de creacion de zona
     // Prepara el formulario para registrar un nuevo dato.
     // descripcion: prepara el formulario para registrar un nuevo dato.
     // entradas: no requiere datos externos
@@ -44,8 +46,7 @@ class ZonasController extends Controller
         return view('zonas.create', compact('tandeadores'));
     }
 
-
-    //funcion store para guardar la zona en la base de datos
+    // funcion store para guardar la zona en la base de datos
     // Valida y guarda la información recibida desde el formulario.
     // descripcion: valida y guarda la información recibida desde el formulario.
     // entradas: solicitud con los datos enviados por el usuario
@@ -70,21 +71,22 @@ class ZonasController extends Controller
 
         $asignaciones = $zona->tandeadores()->sync($datos['tandeadores'] ?? []);
 
-        if (!empty($asignaciones['attached'])) {
+        if (! empty($asignaciones['attached'])) {
             $zona->touch();
         }
 
-        app(\App\Services\HistorialActividadService::class)->registrar(
+        app(HistorialActividadService::class)->registrar(
             'colonias',
             'registro',
             'Se registró una colonia.',
             ['colonia' => $zona->nombre, 'tandeadores_asignados' => $datos['tandeadores'] ?? []]
         );
+
         return redirect()->route('zonas.index')
             ->with('success', '¡Colonia registrada exitosamente!');
     }
 
-    //funcion edit para mostrar el formulario de edicion de zona
+    // funcion edit para mostrar el formulario de edicion de zona
     // Busca el registro y prepara el formulario para modificarlo.
     // descripcion: busca el registro y prepara el formulario para modificarlo.
     // entradas: identificador del registro relacionado
@@ -100,7 +102,7 @@ class ZonasController extends Controller
         return view('zonas.edit', compact('zona', 'tandeadores'));
     }
 
-    //funcion update para actualizar la zona en la base de datos
+    // funcion update para actualizar la zona en la base de datos
     // Valida y guarda los cambios del registro.
     // descripcion: valida y guarda los cambios del registro.
     // entradas: solicitud con los datos enviados por el usuario; identificador del registro relacionado
@@ -128,7 +130,7 @@ class ZonasController extends Controller
         // descripcion: agrupa los cambios para guardarlos como una sola operación.
         // entradas: registros que se actualizan durante la operación
         // salida: confirma los cambios o los revierte si ocurre un error
-        \Illuminate\Support\Facades\DB::transaction(function () use ($zona, $datos, $nuevosTandeadores, &$cantidadTandeosActualizados) {
+        DB::transaction(function () use ($zona, $datos, $nuevosTandeadores, &$cantidadTandeosActualizados) {
             $asignaciones = $zona->tandeadores()->sync($nuevosTandeadores);
 
             $zona->fill([
@@ -139,7 +141,7 @@ class ZonasController extends Controller
 
             if ($zona->isDirty()) {
                 $zona->save();
-            } elseif (!empty($asignaciones['attached']) || !empty($asignaciones['detached'])) {
+            } elseif (! empty($asignaciones['attached']) || ! empty($asignaciones['detached'])) {
                 $zona->touch();
             }
 
@@ -151,7 +153,7 @@ class ZonasController extends Controller
             // descripcion: filtra los registros según la relación que deben cumplir.
             // entradas: consulta y registros relacionados
             // salida: añade la condición correspondiente a la consulta
-            $tandeosFuturos = \App\Models\TandeoProgramado::whereHas('circuito', function ($consulta) use ($zona) {
+            $tandeosFuturos = TandeoProgramado::whereHas('circuito', function ($consulta) use ($zona) {
                 $consulta->where('zona_id', $zona->id);
             })->with('circuito')->get()
                 // Conserva solo los registros que cumplen la condición indicada.
@@ -168,13 +170,13 @@ class ZonasController extends Controller
                 if ($tandeo->tandeador_id != $tandeadorPrincipal) {
                     $tandeo->tandeador_id = $tandeadorPrincipal;
                     $tandeo->save();
-                } elseif (!empty($cambios['attached']) || !empty($cambios['detached'])) {
+                } elseif (! empty($cambios['attached']) || ! empty($cambios['detached'])) {
                 }
 
                 $cantidadTandeosActualizados++;
             }
 
-            $series = \App\Models\TandeoRepeticion::where('activa', true)
+            $series = TandeoRepeticion::where('activa', true)
                 // Filtra los registros según la relación que deben cumplir.
                 // descripcion: filtra los registros según la relación que deben cumplir.
                 // entradas: consulta y registros relacionados
@@ -191,7 +193,7 @@ class ZonasController extends Controller
             }
         });
 
-        app(\App\Services\HistorialActividadService::class)->registrar(
+        app(HistorialActividadService::class)->registrar(
             'colonias',
             'edicion',
             'Se actualizaron los datos de una colonia.',
@@ -200,24 +202,25 @@ class ZonasController extends Controller
                 'antes' => $antes,
                 'despues' => $zona->only(['nombre', 'activo']),
                 'tandeadores_asignados' => $nuevosTandeadores,
-                'se_actualizaron_tandeos_futuros' => !empty($datos['actualizar_tandeos_futuros']),
+                'se_actualizaron_tandeos_futuros' => ! empty($datos['actualizar_tandeos_futuros']),
                 'tandeos_futuros_actualizados' => $cantidadTandeosActualizados,
             ]
         );
 
-        $mensaje = !empty($datos['actualizar_tandeos_futuros'])
+        $mensaje = ! empty($datos['actualizar_tandeos_futuros'])
             ? "Colonia actualizada. Se actualizaron {$cantidadTandeosActualizados} tandeos futuros; las próximas repeticiones usarán los tandeadores seleccionados."
             : 'Colonia actualizada exitosamente.';
 
         return redirect()->route('zonas.index')->with('success', $mensaje);
     }
+
     // Desactiva la colonia y conserva sus circuitos y tandeos.
     public function desactivar($id)
     {
         $zona = ZonasModel::findOrFail($id);
         $zona->update(['activo' => false]);
 
-        app(\App\Services\HistorialActividadService::class)->registrar(
+        app(HistorialActividadService::class)->registrar(
             'colonias',
             'edicion',
             'Se desactivó una colonia para conservar sus datos asociados.',
@@ -252,7 +255,7 @@ class ZonasController extends Controller
             $zona->delete();
         });
 
-        app(\App\Services\HistorialActividadService::class)->registrar(
+        app(HistorialActividadService::class)->registrar(
             'colonias',
             'eliminacion',
             'Se eliminó una colonia y sus datos asociados.',
@@ -267,7 +270,7 @@ class ZonasController extends Controller
             ->with('success', "Colonia eliminada junto con {$cantidadCircuitos} circuitos y {$cantidadTandeos} tandeos asociados.");
     }
 
-    //alertas para confirmar la eliminacion de la zona
+    // alertas para confirmar la eliminacion de la zona
     // Prepara la confirmación para eliminar la colonia y sus datos asociados.
     // descripcion: prepara la confirmación para eliminar la colonia y sus datos asociados.
     // entradas: identificador del registro relacionado
@@ -275,8 +278,8 @@ class ZonasController extends Controller
     public function confirmDelete($id)
     {
         $zona = ZonasModel::findOrFail($id);
+
         return view('zonas.delete', compact('zona'));
 
     }
 }
-

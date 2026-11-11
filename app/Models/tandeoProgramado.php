@@ -1,9 +1,8 @@
 <?php
 
 namespace App\Models;
+
 // archivo del sistema: archivo que representa datos y relaciones de la base de datos
-
-
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -60,7 +59,6 @@ class TandeoProgramado extends Model
         return $this->belongsToMany(UsuarioModel::class, 'tandeo_tandeador', 'tandeo_id', 'usuario_id');
     }
 
-
     // relaciona el tandeo con sus registros de cumplimiento
     // Relaciona el tandeo con sus registros de cumplimiento.
     // descripcion: relaciona el tandeo con sus registros de cumplimiento.
@@ -78,7 +76,7 @@ class TandeoProgramado extends Model
     // salida: devuelve la fecha y hora de inicio
     public function getInicioAttribute(): Carbon
     {
-        return Carbon::parse($this->fecha->format('Y-m-d') . ' ' . $this->hora_inicio_programada);
+        return Carbon::parse($this->fecha->format('Y-m-d').' '.$this->hora_inicio_programada);
     }
 
     // Fecha y hora de fin completas; si termina "antes" de empezar, cruzó la medianoche
@@ -88,7 +86,7 @@ class TandeoProgramado extends Model
     // salida: devuelve la fecha y hora de término, considerando el cambio de día
     public function getFinAttribute(): Carbon
     {
-        $fin = Carbon::parse($this->fecha->format('Y-m-d') . ' ' . $this->hora_fin_programada);
+        $fin = Carbon::parse($this->fecha->format('Y-m-d').' '.$this->hora_fin_programada);
 
         return $fin <= $this->inicio ? $fin->addDay() : $fin;
     }
@@ -101,9 +99,9 @@ class TandeoProgramado extends Model
     public function aplicarHorario(Carbon $inicio, Carbon $fin): void
     {
         $this->update([
-            'fecha'                  => $inicio->toDateString(),
+            'fecha' => $inicio->toDateString(),
             'hora_inicio_programada' => $inicio->format('H:i:s'),
-            'hora_fin_programada'    => $fin->format('H:i:s'),
+            'hora_fin_programada' => $fin->format('H:i:s'),
         ]);
     }
 }

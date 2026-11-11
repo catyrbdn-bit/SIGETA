@@ -1,4 +1,5 @@
 <?php
+
 // archivo del sistema: archivo que aplica cambios a la estructura de la base de datos
 
 use Illuminate\Database\Migrations\Migration;
@@ -33,7 +34,7 @@ return new class extends Migration
             // salida: deja preparada la estructura que utilizará el sistema
             Schema::table($tableName, function (Blueprint $table) use ($tableName) {
                 $table->uuid('sync_uuid')->nullable();
-                $table->unique('sync_uuid', $tableName . '_sync_uuid_unique');
+                $table->unique('sync_uuid', $tableName.'_sync_uuid_unique');
             });
 
             DB::table($tableName)
@@ -66,7 +67,7 @@ return new class extends Migration
             // entradas: columnas de la tabla que se crea o modifica
             // salida: deja preparada la estructura que utilizará el sistema
             Schema::table($tableName, function (Blueprint $table) use ($tableName) {
-                $table->dropUnique($tableName . '_sync_uuid_unique');
+                $table->dropUnique($tableName.'_sync_uuid_unique');
                 $table->dropColumn('sync_uuid');
             });
         }

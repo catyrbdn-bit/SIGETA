@@ -1,10 +1,11 @@
 <?php
 
 namespace App\Services;
+
 // archivo del sistema: archivo con procesos que utiliza el sistema
 
-use App\Models\TandeoRepeticion;
 use App\Models\TandeoProgramado;
+use App\Models\TandeoRepeticion;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -29,7 +30,7 @@ class RepeticionTandeoService
             DB::transaction(function () use ($serie, $fechaLimite) {
                 $cadaDias = (int) $serie->cada_dias;
                 $proximaFecha = Carbon::parse(
-                    $serie->fecha_ancla->format('Y-m-d') . ' ' . $serie->hora_inicio
+                    $serie->fecha_ancla->format('Y-m-d').' '.$serie->hora_inicio
                 )->addDays($cadaDias);
 
                 while ($proximaFecha->lt(now())) {
@@ -50,15 +51,14 @@ class RepeticionTandeoService
                             // descripcion: comprueba si algún tandeo de la lista cumple la condición indicada.
                             // entradas: tandeo que se está comparando
                             // salida: indica si se encontró un tandeo que cumple la condición
-                            ->contains(fn ($tandeo) =>
-                                Carbon::parse($tandeo->fecha->format('Y-m-d') . ' ' . $tandeo->hora_inicio_programada)
-                                    ->format('H:i') === $proximaFecha->format('H:i')
+                            ->contains(fn ($tandeo) => Carbon::parse($tandeo->fecha->format('Y-m-d').' '.$tandeo->hora_inicio_programada)
+                                ->format('H:i') === $proximaFecha->format('H:i')
                             );
 
                         if (! $mismoHorario) {
                             $fin = $proximaFecha->copy()->addMinutes((int) $serie->duracion_minutos);
                             $fecha = $proximaFecha->toDateString();
-                            $tandeo = new TandeoProgramado();
+                            $tandeo = new TandeoProgramado;
                             $tandeo->forceFill([
                                 'circuito_id' => $serie->circuito_id,
                                 'fecha' => $proximaFecha->toDateString(),

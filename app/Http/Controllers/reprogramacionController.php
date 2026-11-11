@@ -1,14 +1,15 @@
 <?php
 
 namespace App\Http\Controllers;
+
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
-use App\Models\TandeoProgramado;
 use App\Models\CircuitosModel;
 use App\Models\UsuarioModel;
 use App\Services\ReprogramacionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ReprogramacionController extends Controller
 {
@@ -17,9 +18,7 @@ class ReprogramacionController extends Controller
     // descripcion: recibe y guarda los datos que necesita este componente.
     // entradas: dato necesario para realizar el proceso
     // salida: deja preparados los datos para usarlos en el componente
-    public function __construct(private ReprogramacionService $servicio)
-    {
-    }
+    public function __construct(private ReprogramacionService $servicio) {}
 
     // prepara la vista previa de una reprogramacion manual
     // Calcula una reprogramación manual y prepara la vista previa.
@@ -40,6 +39,7 @@ class ReprogramacionController extends Controller
         $returnTo = $this->destinoRegreso($request->input('return_to', 'tandeos.index'));
         $urlRegreso = $this->urlRegreso($returnTo, $periodo, $fechaConsulta);
         $tandeoId = $id;
+
         return view('reprogramaciones.previa', compact('desde', 'resultado', 'modo', 'tandeoId', 'circuitoId', 'tandeadorId', 'duracionManual', 'horasAtraso', 'origenCumplimiento', 'cumplimientoId', 'cumplimientoObservaciones', 'periodo', 'fechaConsulta', 'returnTo', 'urlRegreso'));
     }
 
@@ -50,13 +50,13 @@ class ReprogramacionController extends Controller
     // salida: guarda los cambios y regresa con un mensaje
     public function storeManual(Request $request)
     {
-        [$id, $inicio, $ajustes, $motivos, $motivo, $circuitoId, $tandeadorId, $duracionManual, $horasAtraso] = 
+        [$id, $inicio, $ajustes, $motivos, $motivo, $circuitoId, $tandeadorId, $duracionManual, $horasAtraso] =
         $this->datosManual($request);
-        
+
         $origenCumplimiento = $request->boolean('origen_cumplimiento');
         $horasCumplimiento = $origenCumplimiento ? $horasAtraso : null;
         $cumplimientoId = $origenCumplimiento && $request->filled('cumplimiento_id') ? (int) $request->cumplimiento_id : null;
-        
+
         $observacionesCumplimiento = $origenCumplimiento ? $request->input('cumplimiento_observaciones') : null;
         $this->servicio->aplicarManual($id, $inicio, (int) auth()->user()->id, $ajustes, $motivos, $motivo, $circuitoId, $tandeadorId, $duracionManual, $horasCumplimiento, $cumplimientoId, $observacionesCumplimiento);
         $mensaje = $origenCumplimiento
@@ -116,8 +116,8 @@ class ReprogramacionController extends Controller
                 })
                 ->exists();
 
-            if (!$asignado) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+            if (! $asignado) {
+                throw ValidationException::withMessages([
                     'tandeador_id' => 'El tandeador seleccionado no está asignado a la colonia de este circuito.',
                 ]);
             }
@@ -125,10 +125,10 @@ class ReprogramacionController extends Controller
 
         $inicioTexto = $request->input("nuevo.$id") ?: $request->input('inicio_nuevo');
         if (! $inicioTexto && $request->filled('fecha_nueva') && $request->filled('hora_inicio_nueva')) {
-            $inicioTexto = $request->fecha_nueva . ' ' . $request->hora_inicio_nueva;
+            $inicioTexto = $request->fecha_nueva.' '.$request->hora_inicio_nueva;
         }
         if (! $inicioTexto) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'inicio_nuevo' => 'Indica la nueva fecha y hora del tandeo.',
             ]);
         }
@@ -138,7 +138,7 @@ class ReprogramacionController extends Controller
             : null;
         $duracionManual = $request->input('duracion_manual');
         if ($duracionManual === null && $request->filled('fecha_nueva') && $request->filled('hora_fin_nueva')) {
-            $finNuevo = Carbon::parse($request->fecha_nueva . ' ' . $request->hora_fin_nueva);
+            $finNuevo = Carbon::parse($request->fecha_nueva.' '.$request->hora_fin_nueva);
             $inicioNuevo = Carbon::parse($inicioTexto);
 
             if ($finNuevo->lessThanOrEqualTo($inicioNuevo)) {
@@ -173,11 +173,11 @@ class ReprogramacionController extends Controller
     private function urlRegreso(string $destino, string $periodo, string $fecha, array $filtros = []): string
     {
         if (in_array($destino, ['cumplimiento.index', 'dashboard'], true)) {
-            if (!in_array($periodo, ['mes', 'semana', 'dia'], true)) {
+            if (! in_array($periodo, ['mes', 'semana', 'dia'], true)) {
                 $periodo = 'semana';
             }
 
-            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+            if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
                 $fecha = now()->toDateString();
             }
 
@@ -192,6 +192,7 @@ class ReprogramacionController extends Controller
 
         return route($destino);
     }
+
     // Vista previa: calcula los movimientos pero NO guarda nada.
     // También se usa para "Recalcular" con los ajustes escritos a mano.
     // Calcula los tandeos afectados por un apagón y prepara la vista previa.
@@ -201,8 +202,8 @@ class ReprogramacionController extends Controller
     public function previa(Request $request)
     {
         $request->validate([
-            'desde'    => ['nullable', 'date'],
-            'nuevo.*'  => ['nullable', 'date'],
+            'desde' => ['nullable', 'date'],
+            'nuevo.*' => ['nullable', 'date'],
             'motivo.*' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -223,6 +224,7 @@ class ReprogramacionController extends Controller
         $estado = $request->input('estado', 'todos');
         $filtros = ['buscar' => $busqueda, 'estado' => $estado];
         $urlRegreso = $this->urlRegreso($returnTo, $periodo, $fechaConsulta, $filtros);
+
         return view('reprogramaciones.previa', compact('desde', 'resultado', 'modo', 'tandeoId', 'periodo', 'fechaConsulta', 'returnTo', 'urlRegreso', 'busqueda', 'estado'));
     }
 
@@ -234,8 +236,8 @@ class ReprogramacionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'desde'    => ['required', 'date'],
-            'nuevo.*'  => ['nullable', 'date'],
+            'desde' => ['required', 'date'],
+            'nuevo.*' => ['nullable', 'date'],
             'motivo.*' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -351,11 +353,11 @@ class ReprogramacionController extends Controller
     // salida: devuelve los ajustes para volver a calcular los movimientos
     private function leerAjustes(Request $request): array
     {
-        $nuevos     = $request->input('nuevo', []);
+        $nuevos = $request->input('nuevo', []);
         $propuestos = $request->input('propuesto', []);
-        $previos    = $request->input('manual_prev', []);
-        $textos     = $request->input('motivo', []);
-        $bases      = $request->input('motivo_base', []);
+        $previos = $request->input('manual_prev', []);
+        $textos = $request->input('motivo', []);
+        $bases = $request->input('motivo_base', []);
 
         $ajustes = [];
         foreach ($nuevos as $id => $valor) {

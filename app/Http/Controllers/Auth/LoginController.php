@@ -1,9 +1,12 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
+
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Http\Controllers\Controller;
+use App\Services\HistorialActividadService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -24,8 +27,8 @@ class LoginController extends Controller
     /**
      * Valida las credenciales y registra el resultado del inicio de sesión.
      *
-     * @param Request $request Datos de usuario y contraseña enviados desde el formulario
-     * @return \Illuminate\Http\RedirectResponse Abre el panel o vuelve al formulario con un aviso
+     * @param  Request  $request  Datos de usuario y contraseña enviados desde el formulario
+     * @return RedirectResponse Abre el panel o vuelve al formulario con un aviso
      */
     public function iniciarSesion(Request $request)
     {
@@ -35,7 +38,7 @@ class LoginController extends Controller
             'password' => 'required|string',
         ]);
 
-        //Este bloque de código intenta autenticar al usuario con las credenciales proporcionadas
+        // Este bloque de código intenta autenticar al usuario con las credenciales proporcionadas
         if (Auth::attempt([
             'usuario' => $credenciales['usuario'],
             'password' => $credenciales['password'],
@@ -45,7 +48,7 @@ class LoginController extends Controller
             $request->session()->regenerate();
 
             // Se registra el inicio de sesión exitoso en el historial de actividad
-            app(\App\Services\HistorialActividadService::class)->registrar(
+            app(HistorialActividadService::class)->registrar(
                 'inicio_sesion', 'exitoso', 'Inicio de sesión exitoso',
                 ['usuario' => Auth::user()->usuario]
             );
@@ -54,8 +57,8 @@ class LoginController extends Controller
         }
 
         // Si la autenticación falla, se registra el intento fallido en el historial de actividad
-        app(\App\Services\HistorialActividadService::class)->registrar(
-            'inicio_sesion','fallido','Intento de inicio de sesión fallido.',
+        app(HistorialActividadService::class)->registrar(
+            'inicio_sesion', 'fallido', 'Intento de inicio de sesión fallido.',
             ['usuario' => (string) $request->input('usuario', '')],
             null, (string) $request->input('usuario', '') ?: 'Usuario desconocido'
         );
@@ -66,14 +69,14 @@ class LoginController extends Controller
         ])->onlyInput('usuario');
     }
 
-     //funcion para cerrar sesion
+    // funcion para cerrar sesion
     // Cierra la sesión activa y regresa a la pantalla de inicio.
     // descripcion: cierra la sesión activa y regresa a la pantalla de inicio.
     // entradas: solicitud con los datos enviados por el usuario
     // salida: cierra la sesión y muestra la pantalla de acceso
     public function cerrarSesion(Request $request)
     {
-        app(\App\Services\HistorialActividadService::class)->registrar(
+        app(HistorialActividadService::class)->registrar(
             'sesion',
             'cierre',
             'El usuario cerró sesión.'

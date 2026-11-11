@@ -1,4 +1,5 @@
 <?php
+
 // archivo del sistema: archivo que define las rutas de acceso del sistema
 
 use Illuminate\Foundation\Inspiring;
@@ -13,5 +14,5 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('avisos:resumen-semanal')->weeklyOn(5, '08:00')->withoutOverlapping();
+Schedule::command('avisos:resumen-semanal')->weeklyOn(5, '09:00')->withoutOverlapping();
 Schedule::command('avisos:revisar-pendientes')->everyFiveMinutes()->withoutOverlapping();

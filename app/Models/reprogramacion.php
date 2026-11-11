@@ -1,15 +1,14 @@
 <?php
 
 namespace App\Models;
+
 // archivo del sistema: archivo que representa datos y relaciones de la base de datos
-
-
 
 use Illuminate\Database\Eloquent\Model;
 
 class Reprogramacion extends Model
 {
-    //Estas variables estan definidas como protegidas para que solo puedan ser accedidas desde la clase misma o sus subclases, 
+    // Estas variables estan definidas como protegidas para que solo puedan ser accedidas desde la clase misma o sus subclases,
     // evitando modificaciones externas no deseadas
     protected $table = 'reprogramaciones';
 
@@ -22,10 +21,10 @@ class Reprogramacion extends Model
 
     protected $casts = [
         'inicio_anterior' => 'datetime',
-        'fin_anterior'    => 'datetime',
-        'inicio_nuevo'    => 'datetime',
-        'fin_nuevo'       => 'datetime',
-        'es_manual'       => 'boolean',
+        'fin_anterior' => 'datetime',
+        'inicio_nuevo' => 'datetime',
+        'fin_nuevo' => 'datetime',
+        'es_manual' => 'boolean',
         'es_efecto_cadena' => 'boolean',
     ];
 

@@ -1,9 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
+
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Models\UsuarioModel;
+use App\Services\HistorialActividadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -67,7 +69,7 @@ class UsuarioController extends Controller
         $datos['activo'] = true;
         $usuario = UsuarioModel::create($datos);
 
-        app(\App\Services\HistorialActividadService::class)->registrar(
+        app(HistorialActividadService::class)->registrar(
             'usuarios',
             'registro',
             'Se registró un usuario.',
@@ -123,7 +125,7 @@ class UsuarioController extends Controller
             'activo.required' => 'Selecciona el estado del usuario.',
         ]);
 
-        if (!empty($datos['password'])) {
+        if (! empty($datos['password'])) {
             $datos['password'] = Hash::make($datos['password']);
         } else {
             unset($datos['password']);
@@ -132,7 +134,7 @@ class UsuarioController extends Controller
         $antes = $usuario->only(['nombre', 'apellido_paterno', 'apellido_materno', 'usuario', 'rol', 'activo']);
         $usuario->update($datos);
 
-        app(\App\Services\HistorialActividadService::class)->registrar(
+        app(HistorialActividadService::class)->registrar(
             'usuarios',
             'edicion',
             'Se actualizaron los datos de un usuario.',
@@ -157,7 +159,7 @@ class UsuarioController extends Controller
         $datosUsuario = $usuario->only(['nombre', 'apellido_paterno', 'apellido_materno', 'usuario', 'rol']);
         $usuario->delete();
 
-        app(\App\Services\HistorialActividadService::class)->registrar(
+        app(HistorialActividadService::class)->registrar(
             'usuarios',
             'eliminacion',
             'Se eliminó un usuario.',

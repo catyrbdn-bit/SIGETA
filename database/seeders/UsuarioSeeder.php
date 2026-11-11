@@ -1,6 +1,7 @@
 <?php
 
 namespace Database\Seeders;
+
 // archivo del sistema: archivo que carga datos iniciales de ejemplo
 
 use App\Models\UsuarioModel;

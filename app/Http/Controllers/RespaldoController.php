@@ -14,6 +14,7 @@ class RespaldoController extends Controller
     public function index()
     {
         $respaldos = RespaldoBd::with('usuario')->latest()->get();
+
         return view('respaldos.index', compact('respaldos'));
     }
 
@@ -29,6 +30,7 @@ class RespaldoController extends Controller
             $mensaje = $error instanceof \RuntimeException
                 ? $error->getMessage()
                 : 'No se pudo generar el respaldo. Revisa que la base de datos esté disponible e inténtalo de nuevo.';
+
             return redirect()->route('respaldos.index')->with('error', $mensaje);
         }
     }
@@ -57,6 +59,7 @@ class RespaldoController extends Controller
             $mensaje = $error instanceof \RuntimeException
                 ? $error->getMessage()
                 : 'No se pudo completar la restauración. Revisa el registro de errores antes de intentarlo de nuevo.';
+
             return redirect()->route('respaldos.index')->with('error', $mensaje);
         }
     }

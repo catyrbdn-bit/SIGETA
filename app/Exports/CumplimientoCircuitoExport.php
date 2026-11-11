@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Exports;
+
 // archivo del sistema: archivo que prepara datos para exportar
 
 use Maatwebsite\Excel\Concerns\FromArray;
@@ -13,9 +14,7 @@ class CumplimientoCircuitoExport implements FromArray, WithHeadings
     // descripcion: recibe y guarda los datos que necesita este componente.
     // entradas: lista de datos que se deben procesar
     // salida: deja preparados los datos para usarlos en el componente
-    public function __construct(private array $filas)
-    {
-    }
+    public function __construct(private array $filas) {}
 
     // prepara los datos que se van a exportar
     // Entrega las filas que se incluirán en el archivo de Excel.

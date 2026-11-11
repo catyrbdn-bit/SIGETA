@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+
 // archivo del sistema: archivo que representa datos y relaciones de la base de datos
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -31,10 +32,9 @@ class UsuarioModel extends Authenticatable
         'activo' => 'boolean',
     ];
 
+    // Indica a Laravel qué campo utilizar
+    // como identificador para iniciar sesión.
 
- //Indica a Laravel qué campo utilizar
- //como identificador para iniciar sesión.
- 
     // Indica qué dato identifica la cuenta del usuario.
     // descripcion: indica qué dato identifica la cuenta del usuario.
     // entradas: no requiere datos externos

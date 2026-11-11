@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
+
 // archivo del sistema: archivo con acciones para las pantallas del sistema
 
 use App\Http\Controllers\Controller;
@@ -86,6 +87,6 @@ class PasswordResetController extends Controller
         }
 
         return back()->withErrors(['email' => 'El enlace ya no es válido o venció. Solicita uno nuevo'])
-        ->withInput($request->only('email'));
+            ->withInput($request->only('email'));
     }
 }
