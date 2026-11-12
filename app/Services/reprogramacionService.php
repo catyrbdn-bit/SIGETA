@@ -107,15 +107,10 @@ class ReprogramacionService
                 $nuevoInicio = $tandeo->inicio->copy();
             }
 
-            if ($tipoPunto && $esAfectado && $ajusteManual) {
-                $minutosElegidos = $nuevoInicio->getTimestamp() - $tandeo->inicio->getTimestamp();
-                $minutosMinimos = (int) round(($horasFuga ?? 0) * 60);
-
-                if ($minutosElegidos < $minutosMinimos) {
-                    throw ValidationException::withMessages([
-                        'nuevo' => "El atraso de esta fuga no puede ser menor a {$horasFuga} horas.",
-                    ]);
-                }
+            if ($tipoPunto && $esAfectado && $ajusteManual && $nuevoInicio->lt($tandeo->inicio)) {
+                throw ValidationException::withMessages([
+                    'nuevo' => 'El horario de una fuga no puede adelantarse al horario original.',
+                ]);
             }
 
             $duracion = $tandeo->inicio->diffInMinutes($tandeo->fin);

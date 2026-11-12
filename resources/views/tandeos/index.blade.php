@@ -59,7 +59,7 @@
             <option value="no_cumplido">No cumplido</option>
         </select>
     </div>
-    <div class="col-12 d-flex justify-content-end">
+    <div class="col-12 col-md-9 d-flex align-items-end justify-content-end">
         <button type="button" id="limpiar-filtros-tandeos" data-quitar-filtros="tandeos" class="btn btn-outline-secondary">Quitar filtros</button>
     </div>
 </div>

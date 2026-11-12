@@ -165,13 +165,13 @@
                             </td>
 
                             <td class="num" style="text-align:center;">
-                                <input type="number" class="atraso" step="any" @if ($modo === 'fuga' && !$m['es_cadena']) min="{{ $horasAtraso }}" @endif
+                                <input type="number" class="atraso" step="any" min="0"
                                        value="{{ round($m['inicio_anterior']->diffInMinutes($m['inicio_nuevo']) / 60, 2) }}">
                             </td>
 
                             <td>
                                 <input type="text" class="motivo" name="motivo[{{ $id }}]"
-                                       value="{{ $m['motivo'] ?? $motivoBase }}" maxlength="255">
+                                       value="{{ $m['motivo'] ?? $motivoBase }}" maxlength="255" required>
                                 <input type="hidden" name="motivo_base[{{ $id }}]" value="{{ $motivoBase }}">
                             </td>
                         </tr>

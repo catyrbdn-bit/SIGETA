@@ -120,6 +120,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // entradas: campo de fecha u hora que se configura
     // salida: deja el campo listo para la captura
     document.querySelectorAll('input[type="date"]').forEach(function (campo) {
+        const esObligatorio = campo.required;
+        campo.required = false;
+
         flatpickr(campo, {
             locale: Spanish,
             dateFormat: 'Y-m-d',
@@ -127,6 +130,9 @@ document.addEventListener('DOMContentLoaded', function () {
             altFormat: 'd/m/Y',
             altInputClass: (campo.className ? campo.className + ' ' : '') + 'fecha-calendario-espanol',
             allowInput: true,
+            onReady: function (fechas, fecha, calendario) {
+                calendario.altInput.required = esObligatorio;
+            },
         });
     });
 

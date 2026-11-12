@@ -95,7 +95,8 @@ class ReprogramacionController extends Controller
             'cumplimiento_observaciones' => ['nullable', 'string', 'max:1000'],
             'nuevo.*' => ['nullable', 'date'],
             'motivo_inicio' => ['nullable', 'string', 'max:255'],
-            'motivo.*' => ['nullable', 'string', 'max:255'],
+            'motivo' => ['required', 'array', 'min:1'],
+            'motivo.*' => ['required', 'string', 'max:255'],
         ]);
 
         $id = (int) $request->tandeo_id;
@@ -204,7 +205,8 @@ class ReprogramacionController extends Controller
         $request->validate([
             'desde' => ['nullable', 'date'],
             'nuevo.*' => ['nullable', 'date'],
-            'motivo.*' => ['nullable', 'string', 'max:255'],
+            'motivo' => ['sometimes', 'array'],
+            'motivo.*' => ['required', 'string', 'max:255'],
         ]);
 
         $desde = $request->filled('desde')
@@ -238,7 +240,8 @@ class ReprogramacionController extends Controller
         $request->validate([
             'desde' => ['required', 'date'],
             'nuevo.*' => ['nullable', 'date'],
-            'motivo.*' => ['nullable', 'string', 'max:255'],
+            'motivo' => ['required', 'array', 'min:1'],
+            'motivo.*' => ['required', 'string', 'max:255'],
         ]);
 
         $desde = Carbon::parse($request->desde);
@@ -271,7 +274,8 @@ class ReprogramacionController extends Controller
             'horas_atraso' => ['required', 'integer', 'min:1', 'max:24'],
             'desde' => ['nullable', 'date'],
             'nuevo.*' => ['nullable', 'date'],
-            'motivo.*' => ['nullable', 'string', 'max:255'],
+            'motivo' => ['sometimes', 'array'],
+            'motivo.*' => ['required', 'string', 'max:255'],
         ]);
 
         $desde = $request->filled('desde') ? Carbon::parse($request->desde) : now()->startOfMinute();
@@ -314,7 +318,8 @@ class ReprogramacionController extends Controller
             'horas_atraso' => ['required', 'integer', 'min:1', 'max:24'],
             'desde' => ['required', 'date'],
             'nuevo.*' => ['nullable', 'date'],
-            'motivo.*' => ['nullable', 'string', 'max:255'],
+            'motivo' => ['required', 'array', 'min:1'],
+            'motivo.*' => ['required', 'string', 'max:255'],
         ]);
 
         [$ajustes, $motivos] = $this->leerAjustes($request);

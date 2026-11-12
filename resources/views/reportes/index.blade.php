@@ -60,7 +60,7 @@
                         <label class="form-label" for="hasta">Hasta</label>
                         <input class="form-control" type="date" id="hasta" name="hasta" value="{{ $hasta }}">
                     </div>
-                    <div class="col-12 col-xl-2 d-flex gap-2">
+                    <div class="col-12 d-flex justify-content-end">
                         <a href="{{ route('reportes.index', ['limpiar' => 1]) }}" class="btn btn-outline-secondary" data-quitar-filtros="reportes">Quitar filtros</a>
                     </div>
                 </div>

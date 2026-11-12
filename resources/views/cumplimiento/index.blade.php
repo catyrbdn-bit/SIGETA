@@ -20,7 +20,7 @@
         </div>
     @endif
 
-    <form action="{{ route('cumplimiento.index') }}" method="GET" class="row g-2 align-items-end mb-3" data-filtros-persistentes="cumplimiento">
+    <form action="{{ route('cumplimiento.index') }}" method="GET" class="filtros-panel-principal row g-3 align-items-end mb-3" data-filtros-persistentes="cumplimiento">
         <div class="col-12 col-sm-4 col-lg-2">
             <label for="periodo" class="form-label">Mostrar por</label>
             <select id="periodo" name="periodo" class="form-select">
@@ -42,15 +42,13 @@
                 <input type="search" id="buscar-tandeo" name="buscar" class="form-control" value="{{ $busqueda }}" placeholder="Buscar por circuito, colonia o lugar/tandeo..." aria-label="Buscar por circuito, colonia o lugar/tandeo">
             </div>
         </div>
-        <div class="col-12 col-lg-2">
-            <a href="{{ route('cumplimiento.index') }}" class="btn btn-outline-secondary w-100" data-quitar-filtros="cumplimiento">Quitar filtros</a>
+        <div class="col-12 d-flex justify-content-end">
+            <a href="{{ route('cumplimiento.index') }}" class="btn btn-outline-secondary" data-quitar-filtros="cumplimiento">Quitar filtros</a>
         </div>
     </form>
 
-    <div class="cumplimiento-barra mb-3">
-        <div class="cumplimiento-acciones-superiores">
-          <button type="submit" form="form-cumplimientos" class="btn btn-primary text-nowrap">Guardar cambios</button>
-        </div>
+    <div class="cumplimiento-barra d-flex justify-content-end mb-3">
+        <button type="submit" form="form-cumplimientos" class="btn btn-primary text-nowrap">Guardar cambios</button>
     </div>
 
     <form id="form-cumplimientos" action="{{ route('storeCumplimiento') }}" method="POST">
