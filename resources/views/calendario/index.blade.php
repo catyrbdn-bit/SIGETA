@@ -125,8 +125,8 @@
             <p><strong>Horario propuesto:</strong> <span id="cambio-propuesto"></span></p>
             <div class="mb-3 text-start">
                 <label for="cambio-hora" class="form-label"><strong>Ajustar hora de inicio</strong></label>
-                <input type="time" id="cambio-hora" class="form-control" required>
-                <small class="text-muted">Se conserva la fecha elegida y la duración del tandeo.</small>
+                <input type="text" id="cambio-hora" class="form-control" inputmode="numeric" placeholder="18:30" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" autocomplete="off" required>
+                <small class="text-muted">Escribe la hora en formato de 24 horas, por ejemplo 18:30. En Semana o Día también puedes arrastrar el tandeo a otra hora. Se conserva la duración.</small>
             </div>
             <div id="error-empalme" class="alert alert-danger dialogo-error" role="alert" hidden></div>
             <div class="dialogo-acciones">

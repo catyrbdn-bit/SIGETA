@@ -73,6 +73,7 @@ class ReportesController extends Controller
 
         $periodoReporte = null;
         $diasSemana = [];
+        $semanasReporte = [];
         $tandeadorReporte = null;
 
         if ($tipo === 'atrasos-colonia') {
@@ -84,14 +85,15 @@ class ReportesController extends Controller
             ]);
             $filtros['tandeador_id'] = (int) $request->input('tandeador_id');
             $tandeadorReporte = UsuarioModel::where('rol', 'tandeador')->findOrFail($filtros['tandeador_id']);
-            $diasSemana = $this->diasSemanaActual();
+            $diasSemana = $this->diasDelRango($filtros);
+            $semanasReporte = array_chunk($diasSemana, 7);
             $filas = $this->matrizResumenSemanalTandeador(
                 $this->filasResumenSemanalTandeadores($filtros)
             );
-            $inicioSemana = now()->startOfWeek();
-            $finSemana = now()->endOfWeek();
-            $periodoReporte = $inicioSemana->locale('es')->translatedFormat('d/m/Y')
-                .' a '.$finSemana->locale('es')->translatedFormat('d/m/Y');
+            $inicioPeriodo = Carbon::parse($diasSemana[0]['fecha']);
+            $finPeriodo = Carbon::parse($diasSemana[count($diasSemana) - 1]['fecha']);
+            $periodoReporte = $inicioPeriodo->locale('es')->translatedFormat('d/m/Y')
+                .' a '.$finPeriodo->locale('es')->translatedFormat('d/m/Y');
             $titulo = 'Resumen semanal por tandeador';
         } elseif ($tipo === 'cumplimiento-zona') {
             $registros = $this->tandeosFiltrados($filtros)->get()
@@ -176,7 +178,7 @@ class ReportesController extends Controller
                     'zona' => $tandeo->circuito->zona->nombre,
                     'calle' => $tandeo->circuito->descripcion,
                     'fecha' => $tandeo->fecha->format('d/m/Y'),
-                    'horario' => $tandeo->hora_inicio_programada.' - '.$tandeo->hora_fin_programada,
+                    'horario' => Carbon::parse($tandeo->hora_inicio_programada)->format('H:i').' - '.Carbon::parse($tandeo->hora_fin_programada)->format('H:i'),
                 ])
                 ->values()
                 ->all();
@@ -198,6 +200,7 @@ class ReportesController extends Controller
             'tandeadorSeleccionado' => $filtros['tandeador_id'] ?? '',
             'tandeadorReporte' => $tandeadorReporte,
             'diasSemana' => $diasSemana,
+            'semanasReporte' => $semanasReporte,
             'tipoReporte' => $tipo,
             'tituloReporte' => $titulo,
             'filasPreview' => $filas,
@@ -224,7 +227,9 @@ class ReportesController extends Controller
         $total = 0;
         $periodoReporte = null;
         $diasSemana = [];
+        $semanasReporte = [];
         $tandeadorReporte = null;
+        $despachadorReporte = auth()->user();
 
         if ($tipo === 'atrasos-colonia') {
             $filas = $this->filasAtrasosPorColonia($filtros);
@@ -236,15 +241,16 @@ class ReportesController extends Controller
             ]);
             $filtros['tandeador_id'] = (int) $request->input('tandeador_id');
             $tandeadorReporte = UsuarioModel::where('rol', 'tandeador')->findOrFail($filtros['tandeador_id']);
-            $diasSemana = $this->diasSemanaActual();
+            $diasSemana = $this->diasDelRango($filtros);
+            $semanasReporte = array_chunk($diasSemana, 7);
             $filas = $this->matrizResumenSemanalTandeador(
                 $this->filasResumenSemanalTandeadores($filtros)
             );
             $total = count($filas);
-            $inicioSemana = now()->startOfWeek();
-            $finSemana = now()->endOfWeek();
-            $periodoReporte = $inicioSemana->locale('es')->translatedFormat('d/m/Y')
-                .' a '.$finSemana->locale('es')->translatedFormat('d/m/Y');
+            $inicioPeriodo = Carbon::parse($diasSemana[0]['fecha']);
+            $finPeriodo = Carbon::parse($diasSemana[count($diasSemana) - 1]['fecha']);
+            $periodoReporte = $inicioPeriodo->locale('es')->translatedFormat('d/m/Y')
+                .' a '.$finPeriodo->locale('es')->translatedFormat('d/m/Y');
             $titulo = 'Resumen semanal por tandeador';
         } elseif ($tipo === 'cumplimiento-zona') {
             $tandeos = $this->tandeosFiltrados($filtros)->get();
@@ -365,7 +371,7 @@ class ReportesController extends Controller
                     'zona' => $tandeo->circuito->zona->nombre,
                     'calle' => $tandeo->circuito->descripcion,
                     'fecha' => $tandeo->fecha->format('d/m/Y'),
-                    'horario' => $tandeo->hora_inicio_programada.' - '.$tandeo->hora_fin_programada,
+                    'horario' => Carbon::parse($tandeo->hora_inicio_programada)->format('H:i').' - '.Carbon::parse($tandeo->hora_fin_programada)->format('H:i'),
                 ])
                 ->values()
                 ->all();
@@ -389,7 +395,9 @@ class ReportesController extends Controller
             'titulo',
             'filas',
             'diasSemana',
+            'semanasReporte',
             'tandeadorReporte',
+            'despachadorReporte',
             'total',
             'periodo',
             'zona',
@@ -474,7 +482,7 @@ class ReportesController extends Controller
      */
     private function filasAtrasosPorColonia(array $filtros): array
     {
-        return Reprogramacion::with('tandeo.circuito.zona')
+        $movimientosPorTandeo = Reprogramacion::with('tandeo.circuito.zona')
             ->when($filtros['circuito_id'] ?? null, function ($consulta, $circuitoId) {
                 $consulta->whereHas('tandeo', fn ($tandeos) => $tandeos->where('circuito_id', $circuitoId));
             })
@@ -484,26 +492,46 @@ class ReportesController extends Controller
             ->when($filtros['desde'] ?? null, fn ($consulta, $desde) => $consulta->whereDate('created_at', '>=', $desde))
             ->when($filtros['hasta'] ?? null, fn ($consulta, $hasta) => $consulta->whereDate('created_at', '<=', $hasta))
             ->get()
-            ->map(function ($movimiento) {
-                $tandeo = $movimiento->tandeo;
-                if (! $tandeo || ! $tandeo->circuito) {
+            ->filter(fn ($movimiento) => $movimiento->tandeo && $movimiento->tandeo->circuito)
+            ->groupBy('tandeo_id');
+
+        return $movimientosPorTandeo
+            ->map(function ($movimientos) {
+                $tandeo = $movimientos->first()->tandeo;
+                $inicios = $movimientos
+                    ->flatMap(fn ($movimiento) => [$movimiento->inicio_anterior, $movimiento->inicio_nuevo])
+                    ->filter()
+                    ->sortBy(fn ($inicio) => $inicio->timestamp)
+                    ->values();
+
+                if ($inicios->count() < 2) {
                     return null;
                 }
 
-                $inicioAnterior = $movimiento->inicio_anterior;
-                $inicioNuevo = $movimiento->inicio_nuevo;
-                $diasAtraso = 0;
-
-                if ($inicioNuevo->greaterThan($inicioAnterior)) {
-                    $diasAtraso = (int) $inicioAnterior->copy()->startOfDay()
-                        ->diffInDays($inicioNuevo->copy()->startOfDay());
+                $inicioAnterior = $inicios->first();
+                $inicioFinal = $inicios->last();
+                if (! $inicioFinal->greaterThan($inicioAnterior)) {
+                    return null;
                 }
+
+                $diasAtraso = (int) $inicioAnterior->copy()->startOfDay()
+                    ->diffInDays($inicioFinal->copy()->startOfDay());
+                if ($diasAtraso < 1) {
+                    return null;
+                }
+
+                $motivos = $movimientos
+                    ->map(fn ($movimiento) => $this->motivoDelMovimiento($movimiento))
+                    ->filter()
+                    ->unique()
+                    ->values();
 
                 return [
                     'colonia' => $tandeo->circuito->zona->nombre ?? 'Sin colonia',
                     'tandeo' => $tandeo->circuito->nombre.' · '.($tandeo->circuito->descripcion ?: 'Sin lugar/tandeo registrado'),
+                    'fecha' => $tandeo->fecha->format('d/m/Y'),
                     'dias' => $diasAtraso,
-                    'motivo' => $this->motivoDelMovimiento($movimiento),
+                    'motivo' => $motivos->implode(', '),
                 ];
             })
             ->filter()
@@ -520,9 +548,10 @@ class ReportesController extends Controller
      */
     private function filasResumenSemanalTandeadores(array $filtros): array
     {
+        $diasRango = $this->diasDelRango($filtros);
         $filtrosSemana = [
-            'desde' => now()->startOfWeek()->toDateString(),
-            'hasta' => now()->endOfWeek()->toDateString(),
+            'desde' => $diasRango[0]['fecha'],
+            'hasta' => $diasRango[count($diasRango) - 1]['fecha'],
             'zona_id' => $filtros['zona_id'] ?? null,
             'circuito_id' => $filtros['circuito_id'] ?? null,
         ];
@@ -614,13 +643,22 @@ class ReportesController extends Controller
      *
      * @return array Fechas que se muestran en las columnas del calendario semanal.
      */
-    private function diasSemanaActual(): array
+    private function diasDelRango(array $filtros): array
     {
-        $inicioSemana = now()->startOfWeek();
-        $dias = [];
+        $inicio = ! empty($filtros['desde']) ? Carbon::parse($filtros['desde']) : null;
+        $fin = ! empty($filtros['hasta']) ? Carbon::parse($filtros['hasta']) : null;
 
-        for ($numeroDia = 0; $numeroDia < 7; $numeroDia++) {
-            $dia = $inicioSemana->copy()->addDays($numeroDia);
+        if (! $inicio && ! $fin) {
+            $inicio = now()->startOfWeek();
+            $fin = now()->endOfWeek();
+        } elseif (! $inicio) {
+            $inicio = $fin->copy()->subDays(6);
+        } elseif (! $fin) {
+            $fin = $inicio->copy()->addDays(6);
+        }
+
+        $dias = [];
+        for ($dia = $inicio->copy()->startOfDay(); $dia->lte($fin->copy()->startOfDay()); $dia->addDay()) {
             $dias[] = [
                 'fecha' => $dia->toDateString(),
                 'titulo' => $dia->locale('es')->translatedFormat('D d/m'),

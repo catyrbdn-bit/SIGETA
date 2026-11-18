@@ -41,9 +41,22 @@ class RespaldoController extends Controller
             'confirmar.accepted' => 'Confirma la restauración antes de continuar.',
         ]);
 
+        $copiaActual = null;
+        $restauracionCompleta = false;
+
         try {
-            $copiaActual = $servicio->crear((int) $request->user()->getKey());
-            $archivos = $servicio->restaurar($respaldo, $copiaActual);
+            $archivos = $servicio->ejecutarConColaPausada(function () use (
+                $servicio,
+                $request,
+                $respaldo,
+                &$copiaActual
+            ) {
+                $copiaActual = $servicio->crearTemporal((int) $request->user()->getKey());
+
+                return $servicio->restaurar($respaldo, $copiaActual);
+            });
+            $restauracionCompleta = true;
+
             $historial->registrar('respaldos', 'creacion', 'Se generó una copia antes de una restauración.',
                 ['archivo' => $copiaActual->nombre_archivo], null, null, (int) $archivos['respaldo_actual']->id);
             $historial->registrar('respaldos', 'restauracion', 'Se restauró la base de datos desde un respaldo.',
@@ -51,6 +64,17 @@ class RespaldoController extends Controller
 
             return redirect()->route('respaldos.index')->with('success', 'La base de datos se restauró correctamente. Se creó una copia de la información anterior.');
         } catch (Throwable $error) {
+            if ($copiaActual && ! $restauracionCompleta) {
+                try {
+                    $servicio->descartarTemporal($copiaActual);
+                } catch (Throwable $errorLimpieza) {
+                    Log::error('No se pudo eliminar la copia temporal de una restauración fallida.', [
+                        'archivo' => $copiaActual->nombre_archivo,
+                        'error' => $errorLimpieza->getMessage(),
+                    ]);
+                }
+            }
+
             Log::error('Falló la restauración de un respaldo.', [
                 'respaldo_id' => $respaldo->id,
                 'error' => $error->getMessage(),

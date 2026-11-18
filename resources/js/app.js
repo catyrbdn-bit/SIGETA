@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // descripcion: configura cada campo de fecha u hora de la pantalla.
     // entradas: campo de fecha u hora que se configura
     // salida: deja el campo listo para la captura
-    document.querySelectorAll('input[type="time"]').forEach(function (campo) {
+    document.querySelectorAll('input[type="time"]:not(#cambio-hora)').forEach(function (campo) {
         flatpickr(campo, {
             locale: Spanish,
             enableTime: true,
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // salida: devuelve la hora y los minutos como texto
     function hora(fecha) {
         return new Intl.DateTimeFormat('es-MX', {
-            hour: '2-digit', minute: '2-digit', hour12: false,
+            hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
         }).format(fecha);
     }
 
@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function fechaHora(fecha) {
         return new Intl.DateTimeFormat('es-MX', {
             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', hour12: false,
+            hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
         }).format(fecha);
     }
 
@@ -251,10 +251,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // descripcion: actualiza la hora final al cambiar el horario propuesto.
     // entradas: no requiere datos externos
     // salida: muestra el horario final calculado
-    function actualizarHoraPropuesta() {
-        if (!cambioPendiente || !campoHoraCambio.value) return;
+    function obtenerHoraCambio() {
+        return campoHoraCambio.value.trim();
+    }
 
-        const [horas, minutos] = campoHoraCambio.value.split(':').map(Number);
+    function actualizarHoraPropuesta() {
+        const valorHora = obtenerHoraCambio();
+        if (!cambioPendiente || !/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(valorHora)) return;
+
+        const [horas, minutos] = valorHora.split(':').map(Number);
         const [anio, mes, dia] = cambioPendiente.inicio.slice(0, 10).split('-').map(Number);
         const inicio = new Date(anio, mes - 1, dia, horas, minutos);
         const fin = new Date(inicio.getTime() + cambioPendiente.duracionMinutos * 60000);
@@ -281,11 +286,7 @@ document.addEventListener('DOMContentLoaded', function () {
             inicio: formatoLocal(nuevoInicio),
             duracionMinutos: Math.round((nuevoFin - nuevoInicio) / 60000),
         };
-        if (campoHoraCambio._flatpickr) {
-            campoHoraCambio._flatpickr.setDate(hora(nuevoInicio), false, 'H:i');
-        } else {
-            campoHoraCambio.value = hora(nuevoInicio);
-        }
+        campoHoraCambio.value = hora(nuevoInicio);
 
         info.revert();
 
@@ -316,6 +317,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // salida: guarda el cambio o muestra el aviso de empalme
     async function guardarMovimiento() {
         if (!cambioPendiente) return;
+
+        const valorHora = obtenerHoraCambio();
+        if (!/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(valorHora)) {
+            mostrarError('Escribe una hora válida de 00:00 a 23:59, por ejemplo 18:30.');
+            return;
+        }
+        actualizarHoraPropuesta();
 
         botonConfirmar.disabled = true;
         botonConfirmar.textContent = 'Guardando...';

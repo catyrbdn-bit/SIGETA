@@ -14,7 +14,10 @@ class ResumenSemanal extends Command
     public function handle(AvisosService $avisos): int
     {
         $cantidad = $avisos->crearResumenSemanal();
-        $this->info("Se prepararon {$cantidad} resúmenes semanales.");
+        $pendientes = $avisos->revisarAvisosPendientes();
+        $this->info("Se agregaron {$cantidad} resúmenes semanales a la cola de correo.");
+        $this->line("Se reactivaron {$pendientes} avisos pendientes.");
+        $this->line("Para enviarlos desde esta terminal, ejecuta: php artisan queue:work --stop-when-empty");
 
         return self::SUCCESS;
     }

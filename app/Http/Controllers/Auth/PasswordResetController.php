@@ -51,6 +51,14 @@ class PasswordResetController extends Controller
     // salida: muestra el formulario o informa que el enlace no es válido
     public function cambiar($token)
     {
+        $usuario = Password::broker()->getUser(['email' => request('email')]);
+
+        if (! $usuario || ! Password::broker()->tokenExists($usuario, $token)) {
+            return redirect()->route('password.request')->withErrors([
+                'email' => 'El enlace de recuperación ya se utilizó o venció. Solicita uno nuevo.',
+            ]);
+        }
+
         return view('auth.reset-password', [
             'token' => $token,
             'email' => request('email'),
@@ -83,7 +91,9 @@ class PasswordResetController extends Controller
         });
 
         if ($estado === Password::PASSWORD_RESET) {
-            return redirect()->route('login')->with('success', 'Contraseña cambiada. Ya puedes iniciar sesión.');
+            return view('auth.password-reset-success', [
+                'enlaceAplicacion' => config('nativephp.deeplink_scheme', 'sigeta').'://login',
+            ]);
         }
 
         return back()->withErrors(['email' => 'El enlace ya no es válido o venció. Solicita uno nuevo'])

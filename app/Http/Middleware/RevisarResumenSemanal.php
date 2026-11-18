@@ -13,6 +13,9 @@ class RevisarResumenSemanal
     public function handle(Request $request, Closure $next)
     {
         if ($request->isMethod('GET') && $request->hasSession()) {
+            $avisos = app(AvisosService::class);
+            $avisos->revisarAvisosPendientes();
+
             $viernes = now()->startOfWeek(Carbon::MONDAY)
                 ->addDays(4)
                 ->setTime(9, 0);
@@ -24,7 +27,7 @@ class RevisarResumenSemanal
             $claveRevision = 'sigeta_resumen_semanal_' . $viernes->format('Ymd');
 
             if (! $request->session()->has($claveRevision)) {
-                app(AvisosService::class)->revisarResumenSemanalAlAbrir();
+                $avisos->revisarResumenSemanalAlAbrir();
                 $request->session()->put($claveRevision, true);
             }
         }

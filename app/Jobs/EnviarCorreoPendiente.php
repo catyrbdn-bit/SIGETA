@@ -15,9 +15,11 @@ class EnviarCorreoPendiente implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 5;
+    public int $tries = 0;
 
-    public int $backoff = 300;
+    public array $backoff = [30, 60, 120];
+
+    public int $timeout = 20;
 
     public function __construct(public int $notificacionId) {}
 
@@ -55,7 +57,10 @@ class EnviarCorreoPendiente implements ShouldQueue
                 'enviado_at' => now(),
             ]);
         } catch (Throwable $error) {
-            $notificacion->update(['ultimo_error' => $error->getMessage()]);
+            $notificacion->update([
+                'ultimo_error' => $error->getMessage(),
+                'reintentar_en' => now()->addSeconds(30),
+            ]);
             throw $error;
         }
     }
@@ -70,7 +75,7 @@ class EnviarCorreoPendiente implements ShouldQueue
         $notificacion->update([
             'estado' => 'pendiente',
             'ultimo_error' => $error?->getMessage() ?: 'No se pudo enviar el correo.',
-            'reintentar_en' => now()->addMinutes(5),
+            'reintentar_en' => now()->addSeconds(30),
         ]);
     }
 }

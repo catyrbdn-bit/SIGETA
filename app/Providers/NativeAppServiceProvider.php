@@ -15,7 +15,13 @@ class NativeAppServiceProvider implements ProvidesPhpIni
     public function boot(): void
     {
         if (config('database.default') === 'nativephp') {
-            $archivoMarca = storage_path('app/sigeta-inicializado');
+            config(['session.expire_on_close' => true]);
+            $directorioDatos = storage_path('app');
+            if (! is_dir($directorioDatos)) {
+                mkdir($directorioDatos, 0755, true);
+            }
+
+            $archivoMarca = $directorioDatos . DIRECTORY_SEPARATOR . 'sigeta-inicializado';
 
             if (
                 ! file_exists($archivoMarca)
@@ -33,7 +39,12 @@ class NativeAppServiceProvider implements ProvidesPhpIni
             }
         }
 
-        Window::open();
+        Window::open()
+            ->width(1280)
+            ->height(850)
+            ->minWidth(1024)
+            ->minHeight(680)
+            ->maximized();
     }
 
     public function phpIni(): array

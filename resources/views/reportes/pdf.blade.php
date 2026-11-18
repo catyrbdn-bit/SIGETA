@@ -20,7 +20,7 @@
         .leyenda { margin-top: 8px; text-align: center; }
         .punto { display: inline-block; width: 9px; height: 9px; margin-left: 14px; }
         .vacio { text-align: center; padding: 16px; color: #666; }
-        .firma { width: 44%; display: inline-block; margin: 38px 2% 18px; text-align: center; vertical-align: top; }
+        .firma { width: 44%; display: inline-block; margin: 58px 2% 18px; text-align: center; vertical-align: top; }
         .firma-linea { border-top: 1px solid #333; padding-top: 7px; }
         .nota-horarios { margin-top: 18px; text-align: center; font-size: 10px; }
         .tandeador { margin-top: 22px; page-break-inside: avoid; }
@@ -40,6 +40,30 @@
     </div>
 
     @if ($tipo === 'cumplimiento-zona')
+        <h2>Gráfica comparativa por colonia</h2>
+        <table>
+            <thead><tr><th>Colonia</th><th>Comparación de resultados</th><th>Conteos</th></tr></thead>
+            <tbody>
+                @forelse ($filas as $fila)
+                    <tr>
+                        <td>{{ $fila['zona'] }}</td>
+                        <td>
+                            <div class="barra">
+                                <span class="verde" style="width: {{ $fila['porcentaje_cumplidos'] }}%;"></span><span class="naranja" style="width: {{ $fila['porcentaje_atrasados'] }}%;"></span><span class="rojo" style="width: {{ $fila['porcentaje_no_cumplidos'] }}%;"></span>
+                            </div>
+                        </td>
+                        <td class="centro">Cumplidos: {{ $fila['cumplidos'] }} | Atrasos: {{ $fila['atrasados'] }} | No cumplidos: {{ $fila['no_cumplidos'] }}</td>
+                    </tr>
+                @empty
+                    <tr><td class="vacio" colspan="3">No hay cumplimientos para comparar con los filtros seleccionados.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+        <div class="leyenda">
+            <span class="punto" style="background:#3b8d63;"></span> Cumplido
+            <span class="punto" style="background:#e59b36;"></span> Con atraso
+            <span class="punto" style="background:#c94c4c;"></span> No cumplido
+        </div>
         <table>
             <thead>
                 <tr>
@@ -80,37 +104,46 @@
         <p>La efectividad se calcula como tandeos cumplidos entre el total de cumplimientos registrados.</p>
     @elseif ($tipo === 'atrasos-colonia')
         <table>
-            <thead><tr><th>Colonia</th><th>Tandeo / lugar</th><th>Días de atraso</th><th>Motivo</th></tr></thead>
+            <thead><tr><th>Colonia</th><th>Tandeo / lugar</th><th>Fecha</th><th>Días de atraso</th><th>Motivos registrados</th></tr></thead>
             <tbody>
                 @forelse ($filas as $fila)
-                    <tr><td>{{ $fila['colonia'] }}</td><td>{{ $fila['tandeo'] }}</td><td class="centro">{{ $fila['dias'] }}</td><td>{{ $fila['motivo'] }}</td></tr>
+                    <tr><td>{{ $fila['colonia'] }}</td><td>{{ $fila['tandeo'] }}</td><td class="centro">{{ $fila['fecha'] }}</td><td class="centro">{{ $fila['dias'] }}</td><td>{{ $fila['motivo'] }}</td></tr>
                 @empty
-                    <tr><td class="vacio" colspan="4">No hay atrasos para los filtros seleccionados.</td></tr>
+                    <tr><td class="vacio" colspan="5">No hay atrasos de al menos un día para los filtros seleccionados.</td></tr>
                 @endforelse
             </tbody>
         </table>
     @elseif ($tipo === 'resumen-semanal-tandeador')
         <h2>Tandeador: {{ $tandeadorReporte->nombre }} {{ $tandeadorReporte->apellido_paterno }} {{ $tandeadorReporte->apellido_materno }}</h2>
-        <div class="semana-titulo">Semana del {{ $periodo }}</div>
-        <table class="tabla-semanal">
-            <thead>
-                <tr><th>Colonia</th><th>Descripción</th>@foreach ($diasSemana as $dia)<th>{{ $dia['titulo'] }}</th>@endforeach</tr>
-            </thead>
-            <tbody>
-                @forelse ($filas as $fila)
-                    <tr>
-                        <td>{{ $fila['colonia'] }}</td><td class="descripcion">{{ $fila['calle'] }}</td>
-                        @foreach ($diasSemana as $dia)
-                            <td>@foreach (($fila['horarios'][$dia['fecha']] ?? []) as $horario)<div>{{ $horario }}</div>@endforeach</td>
-                        @endforeach
-                    </tr>
-                @empty
-                    <tr><td class="vacio" colspan="{{ 2 + count($diasSemana) }}">Este tandeador no tiene tandeos asignados esta semana.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-        <div class="firma"><div class="firma-linea">Despachador</div></div>
-        <div class="firma"><div class="firma-linea">Trabajador</div></div>
+        <div class="semana-titulo">Periodo seleccionado: {{ $periodo }}</div>
+        @foreach ($semanasReporte as $diasBloque)
+            <div class="semana-titulo">Del {{ \Carbon\Carbon::parse($diasBloque[0]['fecha'])->format('d/m/Y') }} al {{ \Carbon\Carbon::parse($diasBloque[count($diasBloque) - 1]['fecha'])->format('d/m/Y') }}</div>
+            <table class="tabla-semanal">
+                <thead>
+                    <tr><th>Colonia</th><th>Descripción</th>@foreach ($diasBloque as $dia)<th>{{ $dia['titulo'] }}</th>@endforeach</tr>
+                </thead>
+                <tbody>
+                    @forelse ($filas as $fila)
+                        <tr>
+                            <td>{{ $fila['colonia'] }}</td><td class="descripcion">{{ $fila['calle'] }}</td>
+                            @foreach ($diasBloque as $dia)
+                                <td>@foreach (($fila['horarios'][$dia['fecha']] ?? []) as $horario)<div>{{ $horario }}</div>@endforeach</td>
+                            @endforeach
+                        </tr>
+                    @empty
+                        <tr><td class="vacio" colspan="{{ 2 + count($diasBloque) }}">Este tandeador no tiene tandeos en el rango seleccionado.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        @endforeach
+        <div class="firma">
+            <div class="firma-linea">Despachador</div>
+            <strong>{{ trim(collect([$despachadorReporte?->nombre, $despachadorReporte?->apellido_paterno, $despachadorReporte?->apellido_materno])->filter()->implode(' ')) }}</strong>
+        </div>
+        <div class="firma">
+            <div class="firma-linea">Trabajador</div>
+            <strong>{{ trim(collect([$tandeadorReporte?->nombre, $tandeadorReporte?->apellido_paterno, $tandeadorReporte?->apellido_materno])->filter()->implode(' ')) }}</strong>
+        </div>
         <p class="nota-horarios">Los cambios en los horarios dependerán de circunstancias ajenas (fallas de luz, fugas, apagones, etc.).</p>
     @elseif ($tipo === 'reprogramaciones-motivo')
         <table>

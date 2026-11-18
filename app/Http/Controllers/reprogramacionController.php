@@ -94,8 +94,8 @@ class ReprogramacionController extends Controller
             'cumplimiento_id' => ['nullable', 'exists:cumplimiento_tandeos,id'],
             'cumplimiento_observaciones' => ['nullable', 'string', 'max:1000'],
             'nuevo.*' => ['nullable', 'date'],
-            'motivo_inicio' => ['nullable', 'string', 'max:255'],
-            'motivo' => ['required', 'array', 'min:1'],
+            'motivo_inicio' => ['required_without:motivo', 'string', 'max:255'],
+            'motivo' => ['required_without:motivo_inicio', 'array', 'min:1'],
             'motivo.*' => ['required', 'string', 'max:255'],
         ]);
 
@@ -240,7 +240,7 @@ class ReprogramacionController extends Controller
         $request->validate([
             'desde' => ['required', 'date'],
             'nuevo.*' => ['nullable', 'date'],
-            'motivo' => ['required', 'array', 'min:1'],
+            'motivo' => ['required_without:motivo_inicio', 'array', 'min:1'],
             'motivo.*' => ['required', 'string', 'max:255'],
         ]);
 
@@ -318,7 +318,7 @@ class ReprogramacionController extends Controller
             'horas_atraso' => ['required', 'integer', 'min:1', 'max:24'],
             'desde' => ['required', 'date'],
             'nuevo.*' => ['nullable', 'date'],
-            'motivo' => ['required', 'array', 'min:1'],
+            'motivo' => ['required_without:motivo_inicio', 'array', 'min:1'],
             'motivo.*' => ['required', 'string', 'max:255'],
         ]);
 

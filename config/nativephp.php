@@ -26,7 +26,7 @@ return [
      * This would allow you to open your application using a URL like:
      * nativephp://some/path
      */
-    'deeplink_scheme' => env('NATIVEPHP_DEEPLINK_SCHEME'),
+    'deeplink_scheme' => env('NATIVEPHP_DEEPLINK_SCHEME', 'sigeta'),
 
     /**
      * The author of your application.
@@ -108,7 +108,7 @@ return [
          * updater will only work when your application is bundled
          * for production.
          */
-        'enabled' => env('NATIVEPHP_UPDATER_ENABLED', true),
+        'enabled' => env('NATIVEPHP_UPDATER_ENABLED', false),
 
         /**
          * Whether an available update is downloaded automatically. Set this

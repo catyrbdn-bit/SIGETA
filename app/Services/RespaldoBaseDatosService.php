@@ -6,13 +6,73 @@ use App\Models\RespaldoBd;
 use App\Models\UsuarioModel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Native\Desktop\Contracts\ChildProcess as ChildProcessContract;
+use Native\Desktop\Contracts\QueueWorker as QueueWorkerContract;
 use PDO;
 use RuntimeException;
 
 class RespaldoBaseDatosService
 {
-    // Crea un archivo con una copia completa de la base SQLite actual.
+    // Crea y registra un respaldo manual en el listado.
     public function crear(int $usuarioId): RespaldoBd
+    {
+        return $this->ejecutarConColaPausada(
+            fn () => $this->crearCopia($usuarioId, true)
+        );
+    }
+
+    /**
+     * Pausa los trabajadores de cola administrados por NativePHP durante el mantenimiento de SQLite.
+     */
+    public function ejecutarConColaPausada(callable $operacion): mixed
+    {
+        $configuraciones = config('nativephp.queue_workers', []);
+        if (! config('nativephp-internal.running') || empty($configuraciones)) {
+            return $operacion();
+        }
+
+        $procesos = app(ChildProcessContract::class);
+        $trabajadores = app(QueueWorkerContract::class);
+        $aliasPausados = [];
+
+        try {
+            foreach (array_keys($configuraciones) as $alias) {
+                if (! $procesos->get('queue_'.$alias)) {
+                    continue;
+                }
+
+                $trabajadores->down($alias);
+                $aliasPausados[] = $alias;
+            }
+
+            return $operacion();
+        } finally {
+            foreach ($aliasPausados as $alias) {
+                $trabajadores->up($alias);
+            }
+        }
+    }
+
+    // Crea una copia temporal para proteger la restauración sin mostrarla todavía en el listado.
+    public function crearTemporal(int $usuarioId): RespaldoBd
+    {
+        return $this->crearCopia($usuarioId, false);
+    }
+
+    // Elimina la copia temporal cuando la restauración no logra completarse.
+    public function descartarTemporal(RespaldoBd $respaldo): void
+    {
+        $ruta = storage_path('app/'.$respaldo->ruta_archivo);
+        if (File::exists($ruta)) {
+            File::delete($ruta);
+        }
+
+        if ($respaldo->exists) {
+            $respaldo->delete();
+        }
+    }
+
+    private function crearCopia(int $usuarioId, bool $registrar): RespaldoBd
     {
         $this->revisarMotor();
         $carpeta = storage_path('app/respaldos');
@@ -23,13 +83,15 @@ class RespaldoBaseDatosService
         $rutaSql = str_replace("'", "''", $rutaCompleta);
         DB::connection()->getPdo()->exec("VACUUM INTO '{$rutaSql}'");
 
-        return RespaldoBd::create([
+        $datos = [
             'usuario_id' => $usuarioId,
             'nombre_archivo' => $nombre,
             'ruta_archivo' => 'respaldos/'.$nombre,
             'tamano_bytes' => File::size($rutaCompleta),
             'estado' => 'disponible',
-        ]);
+        ];
+
+        return $registrar ? RespaldoBd::create($datos) : new RespaldoBd($datos);
     }
 
     // Restaura una copia y conserva el listado de respaldos que ya existía.
@@ -48,7 +110,7 @@ class RespaldoBaseDatosService
             return $registro->only(['usuario_id', 'nombre_archivo', 'ruta_archivo', 'tamano_bytes', 'estado']);
         })->all();
 
-        $baseActual = config('database.connections.sqlite.database');
+        $baseActual = DB::connection()->getDatabaseName();
         if (! $baseActual || $baseActual === ':memory:' || ! File::exists($baseActual)) {
             throw new RuntimeException('No se pudo localizar el archivo de la base de datos actual.');
         }
