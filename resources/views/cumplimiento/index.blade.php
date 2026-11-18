@@ -104,7 +104,7 @@
 
                             $busqueda = $tandeo->circuito->nombre.' '.$tandeo->circuito->zona->nombre.' '.$tandeo->circuito->descripcion;
                         @endphp
-                        <tr class="fila-tandeo" id="tandeo-{{ $tandeo->id }}" data-busqueda="{{ \Illuminate\Support\Str::lower($busqueda) }}">
+                        <tr class="fila-tandeo {{ (string) request('tandeo_id') === (string) $tandeo->id ? 'table-warning tandeo-resaltado' : '' }}" id="tandeo-{{ $tandeo->id }}" data-busqueda="{{ \Illuminate\Support\Str::lower($busqueda) }}">
                             <td>
                                 <strong>{{ $tandeo->circuito->nombre }}</strong><br>
                                 <span class="text-muted">{{ $tandeo->circuito->zona->nombre }}</span>
@@ -183,6 +183,11 @@
 
 {{-- interacciones de la pantalla --}}
 <script>
+    const tandeoResaltado = document.querySelector('.tandeo-resaltado');
+    if (tandeoResaltado) {
+        tandeoResaltado.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     document.querySelectorAll('.estado-select').forEach(function (select) {
         const estadosConColor = ['programado', 'en_curso', 'pendiente', 'cumplido', 'atraso', 'no_cumplido'];
 

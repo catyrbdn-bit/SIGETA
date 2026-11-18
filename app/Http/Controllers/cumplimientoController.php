@@ -30,7 +30,7 @@ class CumplimientoController extends Controller
     {
         $repeticiones->crearSiguientes();
 
-        $periodo = $request->input('periodo', 'semana');
+        $periodo = $request->input('periodo', 'mes');
         if (! in_array($periodo, ['mes', 'semana', 'dia'], true)) {
             $periodo = 'semana';
         }

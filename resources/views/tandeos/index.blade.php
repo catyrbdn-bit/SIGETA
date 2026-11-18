@@ -21,42 +21,42 @@
     </div>
 @endif
 
-<div class="filtros-panel-principal row g-2 align-items-end mb-3" data-filtros-persistentes="tandeos">
+<div class="filtros-panel-principal row g-2 align-items-end mb-3" data-filtros-persistentes="tandeos" id="filtros-tandeos">
     <div class="col-md-4">
         <label for="buscar-tandeo" class="form-label">Circuito, colonia o lugar/tandeo</label>
-        <input type="search" id="buscar-tandeo" name="buscar" class="form-control" placeholder="Escribe para buscar circuito, colonia o lugar/tandeo">
+        <input type="search" id="buscar-tandeo" name="buscar" class="form-control" value="{{ request('buscar', '') }}" placeholder="Escribe para buscar circuito, colonia o lugar/tandeo">
     </div>
     <div class="col-md-3">
         <label for="filtro-zona" class="form-label">Colonia</label>
         <select id="filtro-zona" name="zona" class="form-select">
-            <option value="todas">Todas las colonias</option>
+            <option value="todas" @selected(request('zona', 'todas') === 'todas')>Todas las colonias</option>
             @foreach ($zonas as $zona)
-                <option value="{{ $zona->id }}">{{ $zona->nombre }}</option>
+                <option value="{{ $zona->id }}" @selected((string) request('zona') === (string) $zona->id)>{{ $zona->nombre }}</option>
             @endforeach
         </select>
     </div>
     <div class="col-md-2">
         <label for="filtro-periodo" class="form-label">Mostrar por</label>
         <select id="filtro-periodo" name="periodo" class="form-select">
-            <option value="mes">Mes</option>
-            <option value="semana" selected>Semana</option>
-            <option value="dia">Día</option>
+            <option value="mes" @selected(request('periodo', 'semana') === 'mes')>Mes</option>
+            <option value="semana" @selected(request('periodo', 'semana') === 'semana')>Semana</option>
+            <option value="dia" @selected(request('periodo', 'semana') === 'dia')>Día</option>
         </select>
     </div>
     <div class="col-md-2">
         <label for="fecha-referencia" class="form-label">Fecha de referencia</label>
-        <input type="date" lang="es-MX" id="fecha-referencia" name="fecha" data-fecha-referencia="hoy" class="form-control" value="{{ now()->toDateString() }}">
+        <input type="date" lang="es-MX" id="fecha-referencia" name="fecha" data-fecha-referencia="hoy" class="form-control" value="{{ request('fecha', now()->toDateString()) }}">
     </div>
     <div class="col-md-3">
         <label for="filtro-estado" class="form-label">Estado</label>
         <select id="filtro-estado" name="estado" class="form-select">
-            <option value="todos">Todos los estados</option>
-            <option value="programado">Programado</option>
-            <option value="en_curso">En curso</option>
-            <option value="pendiente">Pendiente de registrar</option>
-            <option value="cumplido">Cumplido</option>
-            <option value="atraso">Con atraso</option>
-            <option value="no_cumplido">No cumplido</option>
+            <option value="todos" @selected(request('estado', 'todos') === 'todos')>Todos los estados</option>
+            <option value="programado" @selected(request('estado') === 'programado')>Programado</option>
+            <option value="en_curso" @selected(request('estado') === 'en_curso')>En curso</option>
+            <option value="pendiente" @selected(request('estado') === 'pendiente')>Pendiente de registrar</option>
+            <option value="cumplido" @selected(request('estado') === 'cumplido')>Cumplido</option>
+            <option value="atraso" @selected(request('estado') === 'atraso')>Con atraso</option>
+            <option value="no_cumplido" @selected(request('estado') === 'no_cumplido')>No cumplido</option>
         </select>
     </div>
     <div class="col-12 col-md-9 d-flex align-items-end justify-content-end">
@@ -109,7 +109,8 @@
                     ];
                     $textoBusqueda = \Illuminate\Support\Str::lower($tandeo->circuito->nombre.' '.$tandeo->circuito->zona->nombre.' '.$tandeo->circuito->descripcion);
                 @endphp
-                <tr class="fila-tandeo"
+                <tr class="fila-tandeo {{ (string) request('tandeo_id') === (string) $tandeo->id ? 'table-warning tandeo-resaltado' : '' }}"
+                    id="tandeo-{{ $tandeo->id }}"
                     data-busqueda="{{ $textoBusqueda }}"
                     data-zona="{{ $tandeo->circuito->zona_id }}"
                     data-fecha="{{ $tandeo->fecha->format('Y-m-d') }}"
@@ -217,10 +218,21 @@
         document.getElementById('filtro-estado').value = 'todos';
         document.getElementById('filtro-periodo').value = 'semana';
         document.getElementById('fecha-referencia').value = '{{ now()->toDateString() }}';
+        const direccionSinFiltros = new URL(window.location.href);
+        direccionSinFiltros.search = '';
+        window.history.replaceState({}, '', direccionSinFiltros);
+        document.querySelector('.tandeo-resaltado')?.classList.remove('table-warning', 'tandeo-resaltado');
         filtrarTandeos();
     });
 
+    document.getElementById('filtros-tandeos').addEventListener('sigeta:filtros-restaurados', filtrarTandeos);
+
     filtrarTandeos();
+
+    const tandeoResaltado = document.querySelector('.tandeo-resaltado');
+    if (tandeoResaltado) {
+        tandeoResaltado.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 </script>
 @endsection
 

@@ -167,7 +167,7 @@
                         <td>{{ $tandeo->tandeadores->pluck('nombre')->implode(', ') ?: 'Sin asignar' }}</td>
                         <td><div class="acciones-tandeo-panel">
                             <a href="{{ route('editTandeo', ['id' => $tandeo->id, 'return_to' => 'dashboard']) }}" class="btn btn-sm btn-outline-warning"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-editar"/></svg></span>Editar tandeo</a>
-                            <a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id]) }}" class="btn btn-sm btn-outline-secondary"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-completar"/></svg></span>Registrar cumplimiento</a>
+                            <a href="{{ route('cumplimiento.index', ['tandeo_id' => $tandeo->id, 'periodo' => $periodo, 'fecha' => $fechaConsulta, 'buscar' => $busqueda]) }}" class="btn btn-sm btn-outline-secondary"><span class="icono-boton" aria-hidden="true"><svg><use href="#icono-completar"/></svg></span>Registrar cumplimiento</a>
                         </div>
                         </td>
                     @endif

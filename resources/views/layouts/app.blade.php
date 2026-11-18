@@ -347,7 +347,7 @@
                 <aside class="menu-lateral col-12 col-md-3 col-lg-2 border-end p-3 d-flex flex-column">
                     <div class="mb-4">
                         <h1 class="marca-sigeta mb-3"><span class="" aria-hidden="true"></span>SIGETA</h1>
-                        <p class="mb-1"><strong>{{ Auth::user()->nombre }}</strong></p>
+                        <p class="mb-1"><strong>{{ trim(collect([Auth::user()->nombre, Auth::user()->apellido_paterno, Auth::user()->apellido_materno])->filter()->implode(' ')) }}</strong></p>
                         <p class="small mb-1 texto-menu-secundario">Usuario: {{ Auth::user()->usuario }}</p>
                     </div>
 
@@ -395,6 +395,8 @@
     </dialog>
     <script>
         const prefijoFiltrosSigeta = 'sigeta_filtros_' + @json(Auth::id() ?? 'invitado') + '_';
+        const gruposFiltrosConectados = ['dashboard', 'cumplimiento', 'tandeos'];
+        const camposFiltrosConectados = ['periodo', 'fecha', 'buscar', 'estado'];
         document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.alert-success, .alert-warning, .alert-info, .alert-danger, [role="status"], [role="alert"]').forEach(function (aviso) {
                 if (aviso.classList.contains('d-none') || aviso.hidden) return;
@@ -409,27 +411,31 @@
             document.querySelectorAll('[data-filtros-persistentes]').forEach(function (grupo) {
                 const nombre = grupo.dataset.filtrosPersistentes;
                 const clave = prefijoFiltrosSigeta + nombre;
+                const claveCompartida = prefijoFiltrosSigeta + 'compartidos';
                 const controles = Array.from(grupo.querySelectorAll('input[name], select[name]'));
                 let guardados = {};
+                let compartidos = {};
 
                 try { guardados = JSON.parse(localStorage.getItem(clave) || '{}'); } catch (error) { guardados = {}; }
+                try { compartidos = JSON.parse(localStorage.getItem(claveCompartida) || '{}'); } catch (error) { compartidos = {}; }
 
                 const direccion = new URL(window.location.href);
                 let faltaAplicar = false;
+                const valoresRestaurados = {};
 
                 controles.forEach(function (control) {
-                    if (control.dataset.fechaReferencia === 'hoy') {
-                        if (direccion.searchParams.has(control.name)) {
-                            control.value = direccion.searchParams.get(control.name);
-                        }
-                        return;
-                    }
-
                     if (direccion.searchParams.has(control.name)) {
                         control.value = direccion.searchParams.get(control.name);
-                    } else if (Object.prototype.hasOwnProperty.call(guardados, control.name)) {
-                        control.value = guardados[control.name];
-                        if (control.value !== '' && grupo.tagName === 'FORM' && grupo.method.toLowerCase() === 'get') {
+                    } else {
+                        const valores = camposFiltrosConectados.includes(control.name)
+                            ? { ...guardados, ...compartidos }
+                            : guardados;
+                        if (Object.prototype.hasOwnProperty.call(valores, control.name)) {
+                            control.value = valores[control.name];
+                            valoresRestaurados[control.name] = control.value;
+                        }
+                        if (control.value !== '' && valoresRestaurados[control.name] !== undefined
+                            && grupo.tagName === 'FORM' && grupo.method.toLowerCase() === 'get') {
                             faltaAplicar = true;
                         }
                     }
@@ -437,25 +443,28 @@
 
                 function guardarFiltros() {
                     const datos = {};
+                    const datosCompartidos = { ...compartidos };
                     controles.forEach(function (control) {
-                        if (control.dataset.fechaReferencia === 'hoy') return;
                         datos[control.name] = control.value;
+                        if (camposFiltrosConectados.includes(control.name)) {
+                            datosCompartidos[control.name] = control.value;
+                        }
                     });
                     localStorage.setItem(clave, JSON.stringify(datos));
+                    localStorage.setItem(claveCompartida, JSON.stringify(datosCompartidos));
                 }
 
                 controles.forEach(function (control) {
                     control.addEventListener('input', guardarFiltros);
                     control.addEventListener('change', guardarFiltros);
-                    control.dispatchEvent(new Event('input', { bubbles: true }));
-                    control.dispatchEvent(new Event('change', { bubbles: true }));
                 });
 
-                if (faltaAplicar && Object.keys(guardados).length > 0) {
+                if (faltaAplicar && Object.keys(valoresRestaurados).length > 0) {
                     const destino = new URL(grupo.action || window.location.href, window.location.href);
                     Object.entries(guardados).forEach(function ([campo, valor]) {
                         const control = controles.find(function (elemento) { return elemento.name === campo; });
                         if (control && control.dataset.fechaReferencia === 'hoy') return;
+                        if (direccion.searchParams.has(campo)) return;
                         if (valor !== '') destino.searchParams.set(campo, valor);
                     });
                     controles.forEach(function (control) {
@@ -463,13 +472,26 @@
                             destino.searchParams.set(control.name, direccion.searchParams.get(control.name));
                         }
                     });
-                    window.location.replace(destino.toString());
+                    Object.entries(valoresRestaurados).forEach(function ([campo, valor]) {
+                        if (!direccion.searchParams.has(campo) && valor !== '') destino.searchParams.set(campo, valor);
+                    });
+                    if (destino.toString() !== window.location.href) {
+                        window.location.replace(destino.toString());
+                    }
                 }
+
+                grupo.dispatchEvent(new CustomEvent('sigeta:filtros-restaurados'));
             });
 
             document.querySelectorAll('[data-quitar-filtros]').forEach(function (boton) {
                 boton.addEventListener('click', function () {
                     localStorage.removeItem(prefijoFiltrosSigeta + boton.dataset.quitarFiltros);
+                    if (gruposFiltrosConectados.includes(boton.dataset.quitarFiltros)) {
+                        localStorage.removeItem(prefijoFiltrosSigeta + 'compartidos');
+                        gruposFiltrosConectados.forEach(function (grupo) {
+                            localStorage.removeItem(prefijoFiltrosSigeta + grupo);
+                        });
+                    }
                 });
             });
         });
